@@ -27,6 +27,9 @@ public class BlocksCooldown
     public bool Flash = false;
     public bool Random = false;
     public bool Fire = false;
+    public bool Gravity = false;
+    public bool Damage = false;
+    public bool Health = false;
 }
 
 public class BuildingData

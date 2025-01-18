@@ -1,14 +1,16 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using static CounterStrikeSharp.API.Core.Listeners;
 
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
+    public static MemoryFunctionVoid<CCSPlayerPawnBase>? CCSPlayerPawnBase_PostThinkFunc;
     public void RegisterEvents()
     {
-        RegisterListener<OnTick>(OnTick);
+        RegisterListener<OnTick>(Blocks.OnTick);
         RegisterListener<OnMapStart>(OnMapStart);
         RegisterListener<OnServerPrecacheResources>(OnServerPrecacheResources);
 
@@ -17,14 +19,19 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         RegisterEventHandler<EventRoundEnd>(EventRoundEnd);
         RegisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
 
-        HookEntityOutput("*", "OnStartTouch", OnStartTouch, HookMode.Pre);
+        /*HookEntityOutput("*", "OnStartTouch", OnStartTouch, HookMode.Pre);
         HookEntityOutput("*", "OnTouching", OnTouching, HookMode.Pre);
-        HookEntityOutput("*", "OnEndTouch", OnEndTouch, HookMode.Pre);
+        HookEntityOutput("*", "OnEndTouch", OnEndTouch, HookMode.Pre); */
+
+        RegisterListener<OnEntityDeleted>(OnEntityDeleted);
+        CCSPlayerPawnBase_PostThinkFunc = new(GameData.GetSignature("CCSPlayerPawnBase_PostThink"));
+        CCSPlayerPawnBase_PostThinkFunc.Hook(PawnPostThinkFunc, HookMode.Pre);
+
     }
 
     public void UnregisterEvents()
     {
-        RemoveListener<OnTick>(OnTick);
+        RemoveListener<OnTick>(Blocks.OnTick);
         RemoveListener<OnMapStart>(OnMapStart);
         RemoveListener<OnServerPrecacheResources>(OnServerPrecacheResources);
 
@@ -33,11 +40,15 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         DeregisterEventHandler<EventRoundEnd>(EventRoundEnd);
         DeregisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
 
-        UnhookEntityOutput("*", "OnStartTouch", OnStartTouch, HookMode.Pre);
+        /*UnhookEntityOutput("*", "OnStartTouch", OnStartTouch, HookMode.Pre);
         UnhookEntityOutput("*", "OnTouching", OnTouching, HookMode.Pre);
-        UnhookEntityOutput("*", "OnEndTouch", OnEndTouch, HookMode.Pre);
+        UnhookEntityOutput("*", "OnEndTouch", OnEndTouch, HookMode.Pre);*/
+
+        RemoveListener<OnEntityDeleted>(OnEntityDeleted);
+        CCSPlayerPawnBase_PostThinkFunc?.Unhook(PawnPostThinkFunc, HookMode.Pre);
     }
 
+    /*
     private HookResult OnStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
         return HookResult.Continue;
@@ -52,6 +63,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     {
         return HookResult.Continue;
     }
+    */
 
     public void OnServerPrecacheResources(ResourceManifest manifest)
     {
@@ -84,13 +96,13 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
     public void OnMapStart(string mapname)
     {
-        savedBlocksPath = Path.Combine(blocksFolder, $"{GetMapName()}.json");
+        Blocks.savedPath = Path.Combine(blocksFolder, $"{GetMapName()}.json");
 
         if (Config.Settings.Building.AutoSave)
         {
             AddTimer(Config.Settings.Building.SaveTime, () => {
                 PrintToChatAll("Auto-Saving Blocks");
-                SaveBlocks();
+                Blocks.Save();
             }, TimerFlags.STOP_ON_MAPCHANGE);
         }
 
@@ -114,11 +126,10 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         if (player == null || player.NotValid())
             return HookResult.Continue;
 
+        playerData[player.Slot] = new PlayerData();
+
         if (buildMode)
         {
-            playerData[player.Slot] = new PlayerData();
-            PlayerHolds[player] = new BuildingData();
-
             if (HasPermission(player))
                 playerData[player.Slot].Builder = true;
         }
@@ -129,11 +140,11 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     HookResult EventRoundStart(EventRoundStart @event, GameEventInfo info)
     {
         Timers.Clear();
-        UsedBlocks.Clear();
-        PlayerHolds.Clear();
+        Blocks.UsedBlocks.Clear();
+        Blocks.PlayerHolds.Clear();
         Blocks.blocksCooldown.Clear();
 
-        SpawnBlocks();
+        Blocks.Spawn();
 
         return HookResult.Continue;
     }
@@ -141,7 +152,9 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     HookResult EventRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
         if (buildMode && Config.Settings.Building.AutoSave)
-            SaveBlocks();
+            Blocks.Save();
+
+        ClearAllManagedEntities();
 
         return HookResult.Continue;
     }

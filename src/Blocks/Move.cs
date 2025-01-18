@@ -5,16 +5,16 @@ using System.Data;
 using System.Drawing;
 using static VectorUtils;
 
-public partial class Plugin
+public partial class Blocks
 {
-    public Dictionary<CCSPlayerController, BuildingData> PlayerHolds = new Dictionary<CCSPlayerController, BuildingData>();
+    public static Dictionary<CCSPlayerController, BuildingData> PlayerHolds = new Dictionary<CCSPlayerController, BuildingData>();
 
-    public void OnTick()
+    public static void OnTick()
     {
-        if (!buildMode)
+        if (!instance.buildMode)
             return;
 
-        foreach (var player in Utilities.GetPlayers().Where(p => p.IsLegal() && p.IsAlive() && playerData.ContainsKey(p.Slot) && playerData[p.Slot].Builder))
+        foreach (var player in Utilities.GetPlayers().Where(p => p.IsLegal() && p.IsAlive() && instance.playerData.ContainsKey(p.Slot) && instance.playerData[p.Slot].Builder))
         {
             if (!PlayerHolds.ContainsKey(player))
             {
@@ -44,14 +44,14 @@ public partial class Plugin
 
                     PlayerHolds.Remove(player);
 
-                    if (Config.Sounds.Building.Enabled)
-                        player.PlaySound(Config.Sounds.Building.Place);
+                    if (instance.Config.Sounds.Building.Enabled)
+                        player.PlaySound(instance.Config.Sounds.Building.Place);
                 }
             }
         }
     }
 
-    public void GrabBlock(CCSPlayerController player)
+    public static void GrabBlock(CCSPlayerController player)
     {
         var block = player.GetBlockAimTarget();
 
@@ -59,7 +59,7 @@ public partial class Plugin
         {
             if (!UsedBlocks.ContainsKey(block))
             {
-                PrintToChat(player, $"{ChatColors.Red}Block not found in UsedBlocks");
+                instance.PrintToChat(player, $"{ChatColors.Red}Block not found in UsedBlocks");
                 return;
             }
 
@@ -67,7 +67,7 @@ public partial class Plugin
         }
     }
 
-    public void GrabBlockAdd(CCSPlayerController player, CBaseProp block)
+    public static void GrabBlockAdd(CCSPlayerController player, CBaseProp block)
     {
         var hitPoint = RayTrace.TraceShape(new Vector(player.PlayerPawn.Value!.AbsOrigin!.X, player.PlayerPawn.Value!.AbsOrigin!.Y, player.PlayerPawn.Value!.AbsOrigin!.Z + player.PlayerPawn.Value.CameraServices!.OldPlayerViewOffsetZ), player.PlayerPawn.Value!.EyeAngles!, false, true);
 
@@ -75,22 +75,22 @@ public partial class Plugin
         {
             if (CalculateDistance(block.AbsOrigin!, RayTrace.Vector3toVector(hitPoint.Value)) > 150)
             {
-                PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
+                instance.PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
                 return;
             }
 
             int distance = (int)CalculateDistance(block.AbsOrigin!, player.PlayerPawn.Value!.AbsOrigin!);
 
-            block.Render = ParseColor(Config.Settings.Building.BlockGrabColor);
+            block.Render = instance.ParseColor(instance.Config.Settings.Building.BlockGrabColor);
             Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
 
             PlayerHolds.Add(player, new BuildingData() { block = block, distance = distance });
         }
     }
 
-    public void DistanceRepeat(CCSPlayerController player, CBaseProp block)
+    public static void DistanceRepeat(CCSPlayerController player, CBaseProp block)
     {
-        var (position, rotation) = GetEndXYZ(player, block, PlayerHolds[player].distance, playerData[player.Slot].Grid, playerData[player.Slot].GridValue, playerData[player.Slot].Snapping);
+        var (position, rotation) = GetEndXYZ(player, block, PlayerHolds[player].distance, instance.playerData[player.Slot].Grid, instance.playerData[player.Slot].GridValue, instance.playerData[player.Slot].Snapping);
         
         block.Teleport(position, rotation);
 
@@ -107,9 +107,9 @@ public partial class Plugin
         }
     }
 
-    public void RotateRepeat(CCSPlayerController player, CBaseProp block)
+    public static void RotateRepeat(CCSPlayerController player, CBaseProp block)
     {
-        var (position, rotation) = GetEndXYZ(player, block, PlayerHolds[player].distance, playerData[player.Slot].Grid, playerData[player.Slot].GridValue, playerData[player.Slot].Snapping);
+        var (position, rotation) = GetEndXYZ(player, block, PlayerHolds[player].distance, instance.playerData[player.Slot].Grid, instance.playerData[player.Slot].GridValue, instance.playerData[player.Slot].Snapping);
 
         block.Teleport(position, rotation);
 

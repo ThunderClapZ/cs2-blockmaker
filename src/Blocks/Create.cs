@@ -4,53 +4,54 @@ using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-public partial class Plugin
+public partial class Blocks
 {
-    public Dictionary<CBaseProp, BlockData> UsedBlocks = new Dictionary<CBaseProp, BlockData>();
+    public static Dictionary<CBaseProp, BlockData> UsedBlocks = new Dictionary<CBaseProp, BlockData>();
 
-    public void CreateBlock(CCSPlayerController player)
+    public static void CreateBlock(CCSPlayerController player)
     {
         var hitPoint = RayTrace.TraceShape(new Vector(player.PlayerPawn.Value!.AbsOrigin!.X, player.PlayerPawn.Value!.AbsOrigin!.Y, player.PlayerPawn.Value!.AbsOrigin!.Z + player.PlayerPawn.Value.CameraServices!.OldPlayerViewOffsetZ), player.PlayerPawn.Value!.EyeAngles!, false, true);
 
         if (hitPoint == null && !hitPoint.HasValue)
         {
-            PrintToChat(player, $"Create Block: {ChatColors.Red}Distance too large between block and aim location");
+            instance.PrintToChat(player, $"Create Block: {ChatColors.Red}Distance too large between block and aim location");
             return;
         }
 
-        string selectedBlock = playerData[player.Slot].BlockType;
+        string selectedBlock = instance.playerData[player.Slot].BlockType;
 
         if (string.IsNullOrEmpty(selectedBlock))
         {
-            PrintToChat(player, $"Create Block: Select a Block first");
+            instance.PrintToChat(player, $"Create Block: Select a Block first");
             return;
         }
 
-        string blockmodel = GetModelFromSelectedBlock(player, playerData[player.Slot].BlockSize);
+        string blockmodel = instance.GetModelFromSelectedBlock(player, instance.playerData[player.Slot].BlockSize);
 
         try
         {
-            CreateBlockEntity(selectedBlock, blockmodel, playerData[player.Slot].BlockSize, RayTrace.Vector3toVector(hitPoint.Value), new QAngle());
+            CreateEntity(selectedBlock, blockmodel, instance.playerData[player.Slot].BlockSize, RayTrace.Vector3toVector(hitPoint.Value), new QAngle());
 
-            if (Config.Sounds.Building.Enabled)
-                player.PlaySound(Config.Sounds.Building.Create);
+            if (instance.Config.Sounds.Building.Enabled)
+                player.PlaySound(instance.Config.Sounds.Building.Create);
 
-            PrintToChat(player, $"Create Block: Created type: {ChatColors.White}{playerData[player.Slot].BlockType}{ChatColors.Grey}, size: {ChatColors.White}{playerData[player.Slot].BlockSize}");
+            instance.PrintToChat(player, $"Create Block: Created type: {ChatColors.White}{instance.playerData[player.Slot].BlockType}{ChatColors.Grey}, size: {ChatColors.White}{instance.playerData[player.Slot].BlockSize}");
         }
         catch
         {
-            PrintToChat(player, $"Create Block: Failed to create block");
+            instance.PrintToChat(player, $"Create Block: Failed to create block");
             return;
         }
     }
 
-    public void CreateBlockEntity(string blockType, string blockModel, string blockSize, Vector blockPosition, QAngle blockRotation)
+    public static void CreateEntity(string blockType, string blockModel, string blockSize, Vector blockPosition, QAngle blockRotation)
     {
         var block = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override")!;
 
         if (block != null && block.IsValid)
         {
             block.DispatchSpawn();
+
             block.SetModel(blockModel);
 
             block.Entity!.Name = blockType;
@@ -60,42 +61,44 @@ public partial class Plugin
             block.AcceptInput("DisableMotion", block, block);
             block.Teleport(new Vector(blockPosition.X, blockPosition.Y, blockPosition.Z), new QAngle(blockRotation.X, blockRotation.Y, blockRotation.Z));
 
-            block.ShadowStrength = Config.Settings.Blocks.DisableShadows ? 0.0f : 1.0f;
+            block.ShadowStrength = instance.Config.Settings.Blocks.DisableShadows ? 0.0f : 1.0f;
+
+            Plugin.StartTouch(block);
 
             UsedBlocks[block] = new BlockData(block, blockType, blockModel, blockSize);
         }
 
-        else Logger.LogError("(CreateBlock) failed to create block");
+        else instance.Logger.LogError("(CreateBlock) failed to create block");
     }
 
-    public void SpawnBlocks()
+    public static void Spawn()
     {
-        bool isValidJson = IsValidJson(savedBlocksPath);
+        bool isValidJson = instance.IsValidJson(savedPath);
 
         if (isValidJson)
         {
-            var jsonString = File.ReadAllText(savedBlocksPath);
+            var jsonString = File.ReadAllText(savedPath);
 
             var blockDataList = JsonSerializer.Deserialize<List<SaveBlockData>>(jsonString);
 
             if (jsonString == null || blockDataList == null || jsonString.ToString() == "[]")
             {
-                PrintToChatAll($"{ChatColors.Red}{noSpawnBlocksMessage()}");
+                instance.PrintToChatAll($"{ChatColors.Red}{noSpawnBlocksMessage()}");
                 return;
             }
 
             foreach (var blockData in blockDataList)
-                CreateBlockEntity(blockData.Name, blockData.Model, blockData.Size, new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z), new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll));
+                CreateEntity(blockData.Name, blockData.Model, blockData.Size, new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z), new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll));
         }
         else
         {
-            PrintToChatAll($"{ChatColors.Red}{noSpawnBlocksMessage()}");
-            Logger.LogError(noSpawnBlocksMessage());
+            instance.PrintToChatAll($"{ChatColors.Red}{noSpawnBlocksMessage()}");
+            instance.Logger.LogError(noSpawnBlocksMessage());
         }
     }
 
-    private string noSpawnBlocksMessage()
+    private static string noSpawnBlocksMessage()
     {
-        return $"Failed to spawn Blocks. File for {GetMapName()} is empty or invalid";
+        return $"Failed to spawn Blocks. File for {instance.GetMapName()} is empty or invalid";
     }
 }

@@ -5,7 +5,6 @@ using System.Text.Json;
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
     private string blocksFolder = "";
-    private string savedBlocksPath = "";
     private string modelsPath = "";
 
     public static BlockModels BlockModels { get; set; } = new BlockModels();

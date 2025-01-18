@@ -1,9 +1,10 @@
-﻿using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 
-public partial class Plugin
+public partial class Blocks
 {
-    public void DeleteBlock(CCSPlayerController player)
+    public static void Delete(CCSPlayerController player)
     {
         var entity = player.GetBlockAimTarget();
 
@@ -14,20 +15,33 @@ public partial class Plugin
                 block.Entity.Remove();
                 UsedBlocks.Remove(block.Entity);
 
-                if (Config.Sounds.Building.Enabled)
-                    player.PlaySound(Config.Sounds.Building.Delete);
+                Plugin.RemoveTouch(block.Entity);
 
-                PrintToChat(player, $"Delete Block: Deleted type: {ChatColors.White}{block.Name}{ChatColors.Grey}, size: {ChatColors.White}{block.Size}");
+                if (instance.Config.Sounds.Building.Enabled)
+                    player.PlaySound(instance.Config.Sounds.Building.Delete);
+
+                instance.PrintToChat(player, $"Delete Block: Deleted type: {ChatColors.White}{block.Name}{ChatColors.Grey}, size: {ChatColors.White}{block.Size}");
             }
         }
-        else PrintToChat(player, "Delete Block: Could not find a block");
+        else instance.PrintToChat(player, "Delete Block: Could not find a block");
     }
 
-    public void RotateBlock(CCSPlayerController player, string rotation)
+    public static void Clear()
+    {
+        foreach (var block in UsedBlocks)
+            block.Key.Remove();
+
+        foreach (var block in Utilities.GetAllEntities().Where(b => b.DesignerName == "prop_physics_override"))
+            block.Remove();
+
+        UsedBlocks.Clear();
+    }
+
+    public static void Rotate(CCSPlayerController player, string rotation)
     {
         var block = player.GetBlockAimTarget();
 
-        float selectedRotation = playerData[player.Slot].RotationValue;
+        float selectedRotation = instance.playerData[player.Slot].RotationValue;
 
         if (block != null)
         {
@@ -35,7 +49,7 @@ public partial class Plugin
             {
                 if (string.IsNullOrEmpty(rotation))
                 {
-                    PrintToChat(player, $"Rotate Block: Option cannot be empty");
+                    instance.PrintToChat(player, $"Rotate Block: Option cannot be empty");
                     return;
                 }
 
@@ -59,16 +73,16 @@ public partial class Plugin
 
                 else
                 {
-                    PrintToChat(player, $"Rotate Block: {ChatColors.White}'{rotation}' {ChatColors.Grey}is not a valid option");
+                    instance.PrintToChat(player, $"Rotate Block: {ChatColors.White}'{rotation}' {ChatColors.Grey}is not a valid option");
                     return;
                 }
 
-                if (Config.Sounds.Building.Enabled)
-                    player.PlaySound(Config.Sounds.Building.Rotate);
+                if (instance.Config.Sounds.Building.Enabled)
+                    player.PlaySound(instance.Config.Sounds.Building.Rotate);
 
-                PrintToChat(player, $"Rotate Block: {ChatColors.White}{rotation} {(string.Equals(rotation, "reset", StringComparison.OrdinalIgnoreCase) ? $"" : $"by {selectedRotation} Units")}");
+                instance.PrintToChat(player, $"Rotate Block: {ChatColors.White}{rotation} {(string.Equals(rotation, "reset", StringComparison.OrdinalIgnoreCase) ? $"" : $"by {selectedRotation} Units")}");
             }
         }
-        else PrintToChat(player, $"Rotate Block: Could not find a block");
+        else instance.PrintToChat(player, $"Rotate Block: Could not find a block");
     }
 }

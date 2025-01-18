@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Core.Translations;
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Block Maker";
-    public override string ModuleVersion => "0.0.6";
+    public override string ModuleVersion => "0.0.7";
     public override string ModuleAuthor => "exkludera";
 
     public static Plugin Instance { get; set; } = new();
@@ -20,7 +20,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         RegisterEvents();
 
-        Commands();
+        AddCommands();
 
         Blocks.Load();
 
@@ -28,7 +28,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (hotReload)
         {
-            savedBlocksPath = Path.Combine(blocksFolder, $"{GetMapName()}.json");
+            Blocks.savedPath = Path.Combine(blocksFolder, $"{GetMapName()}.json");
 
             foreach (var player in Utilities.GetPlayers().Where(p => !p.IsBot && !playerData.ContainsKey(p.Slot)))
             {
@@ -38,17 +38,16 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
                     playerData[player.Slot].Builder = true;
             }
 
-            foreach (var block in Utilities.GetAllEntities().Where(b => b.DesignerName == "prop_physics_override"))
-                block.Remove();
+            Blocks.Clear();
 
-            SpawnBlocks();
+            Blocks.Spawn();
         }
     }
 
     public override void Unload(bool hotReload)
     {
         UnregisterEvents();
-
+        RemoveCommands();
         playerData.Clear();
     }
 

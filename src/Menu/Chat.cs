@@ -53,7 +53,7 @@ public static class MenuChat
             MenuManager.OpenChatMenu(player, BlockMenu);
         });
 
-        MainMenu.AddMenuOption("Settings", (player, menuOption) =>
+        MainMenu.AddMenuOption("Build Settings", (player, menuOption) =>
         {
             SettingsOptions(player);
         });
@@ -193,6 +193,26 @@ public static class MenuChat
             Instance.Command_SaveBlocks(player);
 
             SettingsOptions(player);
+        });
+
+
+        SettingsMenu.AddMenuOption("Clear Blocks", (player, menuOption) =>
+        {
+            ChatMenu ConfirmMenu = new("Confirm");
+
+            ConfirmMenu.AddMenuOption("NO - keep blocks", (player, menuOption) =>
+            {
+                SettingsOptions(player);
+            });
+
+            ConfirmMenu.AddMenuOption("YES - remove blocks", (player, menuOption) =>
+            {
+                Instance.Command_ClearBlocks(player);
+
+                SettingsOptions(player);
+            });
+
+            MenuManager.OpenChatMenu(player, ConfirmMenu);
         });
 
         MenuManager.OpenChatMenu(player, SettingsMenu);

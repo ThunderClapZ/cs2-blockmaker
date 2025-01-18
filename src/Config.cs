@@ -39,15 +39,15 @@ public class Settings
             public float Value { get; set; }
         }
 
-        public Settings_Block Bhop { get; set; } = new Settings_Block { Cooldown = 2.0f };
-        public Settings_Block Health { get; set; } = new Settings_Block { Value = 2.0f };
+        public Settings_Block Bhop { get; set; } = new Settings_Block { Duration = 0.25f, Cooldown = 2.0f };
+        public Settings_Block Health { get; set; } = new Settings_Block { Value = 2.0f, Cooldown = 0.5f };
         public Settings_Block Grenade { get; set; } = new Settings_Block { Cooldown = 60.0f };
-        public Settings_Block Gravity { get; set; } = new Settings_Block { Duration = 4.0f, Value = 0.4f };
+        public Settings_Block Gravity { get; set; } = new Settings_Block { Duration = 4.0f, Value = 0.4f, Cooldown = 5.0f };
         public Settings_Block Frost { get; set; } = new Settings_Block { Cooldown = 60.0f };
         public Settings_Block Flash { get; set; } = new Settings_Block { Cooldown = 60.0f };
-        public Settings_Block Fire { get; set; } = new Settings_Block { Duration = 5.0f, Value = 8.0f };
+        public Settings_Block Fire { get; set; } = new Settings_Block { Duration = 5.0f, Value = 8.0f, Cooldown = 5.0f };
         public Settings_Block Delay { get; set; } = new Settings_Block { Duration = 1.0f, Cooldown = 2.0f };
-        public Settings_Block Damage { get; set; } = new Settings_Block { Value = 5.0f };
+        public Settings_Block Damage { get; set; } = new Settings_Block { Value = 5.0f, Cooldown = 0.5f };
         public Settings_Block Stealth { get; set; } = new Settings_Block { Duration = 10.0f, Cooldown = 60.0f };
         public Settings_Block Speed { get; set; } = new Settings_Block { Duration = 3.0f, Value = 1.5f, Cooldown = 60.0f };
         public Settings_Block Slap { get; set; } = new Settings_Block { Value = 2.0f };

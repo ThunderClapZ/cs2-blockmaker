@@ -52,7 +52,7 @@ public static class MenuWASD
             WasdManager.OpenMainMenu(player, BlockMenu);
         });
 
-        MainMenu.Add("Settings", (player, menuOption) =>
+        MainMenu.Add("Build Settings", (player, menuOption) =>
         {
             SettingsOptions(player);
         });
@@ -192,6 +192,25 @@ public static class MenuWASD
             Instance.Command_SaveBlocks(player);
 
             SettingsOptions(player);
+        });
+
+        SettingsMenu.Add("Clear Blocks", (player, menuOption) =>
+        {
+            IWasdMenu ConfirmMenu = WasdManager.CreateMenu("Confirm");
+
+            ConfirmMenu.Add("NO - keep blocks", (player, menuOption) =>
+            {
+                SettingsOptions(player);
+            });
+
+            ConfirmMenu.Add("YES - remove blocks", (player, menuOption) =>
+            {
+                Instance.Command_ClearBlocks(player);
+
+                SettingsOptions(player);
+            });
+
+            WasdManager.OpenMainMenu(player, ConfirmMenu);
         });
 
         WasdManager.OpenMainMenu(player, SettingsMenu);

@@ -12,6 +12,11 @@ public partial class Plugin
     {
         if (buildMode && playerData[player.Slot].Builder)
             return true;
+        else if (!buildMode && playerData[player.Slot].Builder)
+        {
+            PrintToChat(player, $"{ChatColors.Red}Build Mode is disabled");
+            return false;
+        }
         else
         {
             PrintToChat(player, $"{ChatColors.Red}You don't have access to Build Mode");
@@ -102,7 +107,7 @@ public partial class Plugin
         return Server.MapName.ToString();
     }
 
-    private Color ParseColor(string colorValue)
+    public Color ParseColor(string colorValue)
     {
         var colorParts = colorValue.Split(',');
         if (colorParts.Length == 4 &&

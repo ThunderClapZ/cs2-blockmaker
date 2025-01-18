@@ -53,7 +53,7 @@ public static class MenuHTML
             MenuManager.OpenCenterHtmlMenu(Instance, player, BlockMenu);
         });
 
-        MainMenu.AddMenuOption("Settings", (player, menuOption) =>
+        MainMenu.AddMenuOption("Build Settings", (player, menuOption) =>
         {
             SettingsOptions(player);
         });
@@ -193,6 +193,25 @@ public static class MenuHTML
             Instance.Command_SaveBlocks(player);
 
             SettingsOptions(player);
+        });
+
+        SettingsMenu.AddMenuOption("Clear Blocks", (player, menuOption) =>
+        {
+            CenterHtmlMenu ConfirmMenu = new("Confirm", Instance);
+
+            ConfirmMenu.AddMenuOption("NO - keep blocks", (player, menuOption) =>
+            {
+                SettingsOptions(player);
+            });
+
+            ConfirmMenu.AddMenuOption("YES - remove blocks", (player, menuOption) =>
+            {
+                Instance.Command_ClearBlocks(player);
+
+                SettingsOptions(player);
+            });
+
+            MenuManager.OpenCenterHtmlMenu(Instance, player, ConfirmMenu);
         });
 
         MenuManager.OpenCenterHtmlMenu(Instance, player, SettingsMenu);

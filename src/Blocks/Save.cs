@@ -3,15 +3,17 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using static VectorUtils;
 
-public partial class Plugin
+public partial class Blocks
 {
-    public void SaveBlocks()
+    public static string savedPath = "";
+
+    public static void Save()
     {
-        if (!File.Exists(savedBlocksPath))
+        if (!File.Exists(savedPath))
         {
-            using (FileStream fs = File.Create(savedBlocksPath))
+            using (FileStream fs = File.Create(savedPath))
             {
-                Logger.LogInformation($"File does not exist, creating one ({savedBlocksPath})");
+                instance.Logger.LogInformation($"File does not exist, creating one ({savedPath})");
                 fs.Close();
             }
         }
@@ -38,26 +40,26 @@ public partial class Plugin
                 }
             }
 
-            if (blockDataList.Count() == 0 || GetPlacedBlocksCount() == 0)
+            if (blockDataList.Count() == 0 || instance.GetPlacedBlocksCount() == 0)
             {
-                PrintToChatAll($"{ChatColors.Red}No blocks to save");
+                instance.PrintToChatAll($"{ChatColors.Red}No blocks to save");
                 return;
             }
 
             var jsonString = JsonSerializer.Serialize(blockDataList, new JsonSerializerOptions { WriteIndented = true });
 
-            File.WriteAllText(savedBlocksPath, jsonString);
+            File.WriteAllText(savedPath, jsonString);
 
-            if (Config.Sounds.Building.Enabled)
-                PlaySoundAll(Config.Sounds.Building.Save);
+            if (instance.Config.Sounds.Building.Enabled)
+                instance.PlaySoundAll(instance.Config.Sounds.Building.Save);
 
-            PrintToChatAll($"Saved {ChatColors.White}{GetPlacedBlocksCount()} {ChatColors.Grey}Block{(GetPlacedBlocksCount() == 1 ? "" : "s")} on {ChatColors.White}{GetMapName()}");
+            instance.PrintToChatAll($"Saved {ChatColors.White}{instance.GetPlacedBlocksCount()} {ChatColors.Grey}Block{(instance.GetPlacedBlocksCount() == 1 ? "" : "s")} on {ChatColors.White}{instance.GetMapName()}");
 
-            Logger.LogInformation($"Saved {GetPlacedBlocksCount()} Block{(GetPlacedBlocksCount() == 1 ? "" : "s")} on {GetMapName()}");
+            instance.Logger.LogInformation($"Saved {instance.GetPlacedBlocksCount()} Block{(instance.GetPlacedBlocksCount() == 1 ? "" : "s")} on {instance.GetMapName()}");
         }
         catch
         {
-            Logger.LogError("Failed to save blocks :(");
+            instance.Logger.LogError("Failed to save blocks :(");
             return;
         }
     }

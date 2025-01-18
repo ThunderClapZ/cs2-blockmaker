@@ -52,39 +52,76 @@
       "BuildMode": false,
       "BuildModeConfig": false,
       "BlockGrabColor": "255,255,255,128",
-      "GridValues": [ 16, 32, 64, 128, 256 ],
-      "RotationValues": [ 15, 30, 45, 60, 90, 120 ],
+      "GridValues": [ 16, 32, 64, 128, 256
+      ],
+      "RotationValues": [ 15, 30, 45, 60, 90, 120
+      ],
       "AutoSave": false,
       "SaveTime": 300
     },
     "Blocks": {
-      "Durations": {
-        "Gravity": 4,
-        "Speed": 3,
-        "Invincibility": 5,
-        "Camouflage": 5,
-        "Stealth": 5,
-        "Delay": 2
+      "DisableShadows": true,
+      "Bhop": {
+        "Duration": 0.25,
+        "Cooldown": 2
       },
-      "Values": {
-        "Gravity": 0.4,
-        "Speed": 1.5,
-        "Camouflage": 25,
-        "Slap": 2,
-        "Fire": 5,
-        "Damage": 5
+      "Health": {
+        "Cooldown": 0.5,
+        "Value": 2
       },
-      "Cooldowns": {
-        "Bhop": 2,
-        "FrostGrenade": 60,
-        "HEGrenade": 60,
-        "Flashbang": 60,
-        "Stealth": 60,
-        "Camouflage": 60,
-        "Invincibility": 60,
-        "Speed": 60,
-        "Delay": 2,
-        "Random": 60
+      "Grenade": {
+        "Cooldown": 60,
+        "Value": 0
+      },
+      "Gravity": {
+        "Duration": 4,
+        "Cooldown": 5,
+        "Value": 0.4
+      },
+      "Frost": {
+        "Cooldown": 60
+      },
+      "Flash": {
+        "Cooldown": 60
+      },
+      "Fire": {
+        "Duration": 5,
+        "Cooldown": 5,
+        "Value": 8
+      },
+      "Delay": {
+        "Duration": 1,
+        "Cooldown": 2
+      },
+      "Damage": {
+        "Cooldown": 0.5,
+        "Value": 5
+      },
+      "Stealth": {
+        "Duration": 10,
+        "Cooldown": 60
+      },
+      "Speed": {
+        "Duration": 3,
+        "Cooldown": 60,
+        "Value": 1.5
+      },
+      "Slap": {
+        "Cooldown": 0,
+        "Value": 2
+      },
+      "Random": {
+        "Cooldown": 60
+      },
+      "Invincibility": {
+        "Duration": 5,
+        "Cooldown": 60
+      },
+      "Camouflage": {
+        "ModelT": "characters/models/ctm_fbi/ctm_fbi.vmdl",
+        "ModelCT": "characters/models/tm_leet/tm_leet_variantb.vmdl",
+        "Duration": 10,
+        "Cooldown": 60
       }
     }
   },
@@ -96,14 +133,16 @@
     },
     "Building": {
       "BuildMenu": "buildmenu,blockmenu,blocksmenu",
-      "CreateBlock": "create,block,createblock",
+      "SelectBlockType": "block, blocktype",
+      "CreateBlock": "create,createblock,place,placeblock",
       "DeleteBlock": "delete,deleteblock,remove,removeblock",
       "RotateBlock": "rotate,rotateblock",
       "SaveBlocks": "save,saveblocks,saveblock",
-      "Snapping": "snap,togglesnap,snapping",
-      "Grid": "grid,togglegrid",
+      "Snapping": "snap,snapblock,blocksnap",
+      "Grid": "grid",
       "Noclip": "nc,noclip",
-      "Godmode": "god,godmode"
+      "Godmode": "god,godmode",
+      "TestBlock": "testblock"
     }
   },
   "Sounds": {
