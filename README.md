@@ -52,10 +52,8 @@
       "BuildMode": false,
       "BuildModeConfig": false,
       "BlockGrabColor": "255,255,255,128",
-      "GridValues": [ 16, 32, 64, 128, 256
-      ],
-      "RotationValues": [ 15, 30, 45, 60, 90, 120
-      ],
+      "GridValues": [ 16, 32, 64, 128, 256 ],
+      "RotationValues": [ 15, 30, 45, 60, 90, 120 ],
       "AutoSave": false,
       "SaveTime": 300
     },
@@ -70,8 +68,7 @@
         "Value": 2
       },
       "Grenade": {
-        "Cooldown": 60,
-        "Value": 0
+        "Cooldown": 60
       },
       "Gravity": {
         "Duration": 4,
@@ -107,7 +104,6 @@
         "Value": 1.5
       },
       "Slap": {
-        "Cooldown": 0,
         "Value": 2
       },
       "Random": {
