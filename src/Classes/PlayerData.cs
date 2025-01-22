@@ -6,6 +6,7 @@ public class PlayerData
     public bool Builder = false;
     public string BlockType = "Platform";
     public string BlockSize = "Medium";
+    public string BlockColor = "default";
     public bool Grid = false;
     public float GridValue = 32f;
     public float RotationValue = 30f;
@@ -30,6 +31,7 @@ public class BlocksCooldown
     public bool Gravity = false;
     public bool Damage = false;
     public bool Health = false;
+    public bool Slap = false;
 }
 
 public class BuildingData

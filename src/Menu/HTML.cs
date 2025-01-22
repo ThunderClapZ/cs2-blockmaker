@@ -50,6 +50,22 @@ public static class MenuHTML
                 TypeMenuOptions(player);
             });
 
+            BlockMenu.AddMenuOption($"Color: {Instance.playerData[player.Slot].BlockColor}", (player, menuOption) =>
+            {
+                ColorMenuOptions(player);
+            });
+
+            BlockMenu.AddMenuOption("Convert Block", (player, menuOption) =>
+            {
+                Instance.Command_ConvertBlock(player);
+            });
+
+            BlockMenu.AddMenuOption("Copy Block", (player, menuOption) =>
+            {
+                Instance.Command_CopyBlock(player);
+                MenuManager.OpenCenterHtmlMenu(Instance, player, MainMenu);
+            });
+
             MenuManager.OpenCenterHtmlMenu(Instance, player, BlockMenu);
         });
 
@@ -161,6 +177,23 @@ public static class MenuHTML
             });
         }
         MenuManager.OpenCenterHtmlMenu(Instance, player, TypeMenu);
+    }
+
+    private static void ColorMenuOptions(CCSPlayerController player)
+    {
+        CenterHtmlMenu ColorMenu = new($"Select Color ({Instance.playerData[player.Slot].BlockColor})", Instance);
+
+        foreach (var color in ColorMapping.Keys)
+        {
+            ColorMenu.AddMenuOption(color, (player, menuOption) =>
+            {
+                Instance.Command_SelectBlockColor(player, color);
+
+                TypeMenuOptions(player);
+            });
+        }
+
+        MenuManager.OpenCenterHtmlMenu(Instance, player, ColorMenu);
     }
 
     private static void SettingsOptions(CCSPlayerController player)

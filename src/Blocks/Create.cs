@@ -6,9 +6,7 @@ using System.Text.Json;
 
 public partial class Blocks
 {
-    public static Dictionary<CBaseProp, BlockData> UsedBlocks = new Dictionary<CBaseProp, BlockData>();
-
-    public static void CreateBlock(CCSPlayerController player)
+    public static void Create(CCSPlayerController player)
     {
         var hitPoint = RayTrace.TraceShape(new Vector(player.PlayerPawn.Value!.AbsOrigin!.X, player.PlayerPawn.Value!.AbsOrigin!.Y, player.PlayerPawn.Value!.AbsOrigin!.Z + player.PlayerPawn.Value.CameraServices!.OldPlayerViewOffsetZ), player.PlayerPawn.Value!.EyeAngles!, false, true);
 
@@ -30,7 +28,7 @@ public partial class Blocks
 
         try
         {
-            CreateEntity(selectedBlock, blockmodel, instance.playerData[player.Slot].BlockSize, RayTrace.Vector3toVector(hitPoint.Value), new QAngle());
+            CreateBlock(selectedBlock, blockmodel, instance.playerData[player.Slot].BlockSize, RayTrace.Vector3toVector(hitPoint.Value), new QAngle(), instance.playerData[player.Slot].BlockColor);
 
             if (instance.Config.Sounds.Building.Enabled)
                 player.PlaySound(instance.Config.Sounds.Building.Create);
@@ -44,31 +42,54 @@ public partial class Blocks
         }
     }
 
-    public static void CreateEntity(string blockType, string blockModel, string blockSize, Vector blockPosition, QAngle blockRotation)
+    public static Dictionary<CBaseProp, BlockData> UsedBlocks = new Dictionary<CBaseProp, BlockData>();
+    public static void CreateBlock(string blockType, string blockModel, string blockSize, Vector blockPosition, QAngle blockRotation, string blockColor = "default")
     {
-        var block = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override")!;
+        var block = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override");
 
         if (block != null && block.IsValid)
         {
-            block.DispatchSpawn();
+            block.Entity!.Name = "blockmaker_" + blockType;
+            block.EnableUseOutput = true;
+            block.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
+            block.ShadowStrength = instance.Config.Settings.Blocks.DisableShadows ? 0.0f : 1.0f;
+
+            block.Render = Plugin.GetColor(blockColor);
+            Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
 
             block.SetModel(blockModel);
-
-            block.Entity!.Name = blockType;
-            block.EnableUseOutput = true;
-            block.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags = (uint)(block.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags & ~(1 << 2));
-
+            block.DispatchSpawn();
             block.AcceptInput("DisableMotion", block, block);
             block.Teleport(new Vector(blockPosition.X, blockPosition.Y, blockPosition.Z), new QAngle(blockRotation.X, blockRotation.Y, blockRotation.Z));
 
-            block.ShadowStrength = instance.Config.Settings.Blocks.DisableShadows ? 0.0f : 1.0f;
+            CreateTrigger(block);
 
-            Plugin.StartTouch(block);
-
-            UsedBlocks[block] = new BlockData(block, blockType, blockModel, blockSize);
+            UsedBlocks[block] = new BlockData(block, blockType, blockModel, blockSize, blockColor);
         }
 
         else instance.Logger.LogError("(CreateBlock) failed to create block");
+    }
+
+    public static Dictionary<CEntityInstance, CEntityInstance> BlockTriggers = new Dictionary<CEntityInstance, CEntityInstance>();
+    public static void CreateTrigger(CBaseEntity block)
+    {
+        var trigger = Utilities.CreateEntityByName<CTriggerMultiple>("trigger_multiple");
+
+        if (trigger != null && trigger.IsValid)
+        {
+            trigger.Entity!.Name = "blockmaker_" + block.Entity!.Name + "_trigger";
+            trigger.Spawnflags = 1;
+            trigger.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
+
+            trigger.DispatchSpawn();
+            trigger.Teleport(block.AbsOrigin, block.AbsRotation);
+
+            block.AcceptInput("SetParent", trigger, block, "!activator");
+
+            BlockTriggers.Add(trigger, block);
+        }
+
+        else instance.Logger.LogError("(CreateTrigger) failed to create trigger");
     }
 
     public static void Spawn()
@@ -83,22 +104,17 @@ public partial class Blocks
 
             if (jsonString == null || blockDataList == null || jsonString.ToString() == "[]")
             {
-                instance.PrintToChatAll($"{ChatColors.Red}{noSpawnBlocksMessage()}");
+                instance.PrintToChatAll($"{ChatColors.Red}Failed to spawn Blocks. File for {instance.GetMapName()} is empty or invalid");
                 return;
             }
 
             foreach (var blockData in blockDataList)
-                CreateEntity(blockData.Name, blockData.Model, blockData.Size, new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z), new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll));
+                CreateBlock(blockData.Name, blockData.Model, blockData.Size, new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z), new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll), blockData.Color);
         }
         else
         {
-            instance.PrintToChatAll($"{ChatColors.Red}{noSpawnBlocksMessage()}");
-            instance.Logger.LogError(noSpawnBlocksMessage());
+            instance.PrintToChatAll($"{ChatColors.Red}Failed to spawn Blocks. File for {instance.GetMapName()} is empty or invalid");
+            instance.Logger.LogError($"Failed to spawn Blocks. File for {instance.GetMapName()} is empty or invalid");
         }
-    }
-
-    private static string noSpawnBlocksMessage()
-    {
-        return $"Failed to spawn Blocks. File for {instance.GetMapName()} is empty or invalid";
     }
 }

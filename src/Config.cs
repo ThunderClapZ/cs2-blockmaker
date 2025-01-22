@@ -39,33 +39,35 @@ public class Settings
             public float Value { get; set; }
         }
 
-        public Settings_Block Bhop { get; set; } = new Settings_Block { Duration = 0.25f, Cooldown = 2.0f };
+        public Settings_Block Bhop { get; set; } = new Settings_Block { Duration = 0.25f, Cooldown = 1.5f };
         public Settings_Block Health { get; set; } = new Settings_Block { Value = 2.0f, Cooldown = 0.5f };
         public Settings_Block Grenade { get; set; } = new Settings_Block { Cooldown = 60.0f };
         public Settings_Block Gravity { get; set; } = new Settings_Block { Duration = 4.0f, Value = 0.4f, Cooldown = 5.0f };
         public Settings_Block Frost { get; set; } = new Settings_Block { Cooldown = 60.0f };
         public Settings_Block Flash { get; set; } = new Settings_Block { Cooldown = 60.0f };
         public Settings_Block Fire { get; set; } = new Settings_Block { Duration = 5.0f, Value = 8.0f, Cooldown = 5.0f };
-        public Settings_Block Delay { get; set; } = new Settings_Block { Duration = 1.0f, Cooldown = 2.0f };
+        public Settings_Block Delay { get; set; } = new Settings_Block { Duration = 1.0f, Cooldown = 1.5f };
         public Settings_Block Damage { get; set; } = new Settings_Block { Value = 5.0f, Cooldown = 0.5f };
         public Settings_Block Stealth { get; set; } = new Settings_Block { Duration = 10.0f, Cooldown = 60.0f };
         public Settings_Block Speed { get; set; } = new Settings_Block { Duration = 3.0f, Value = 1.5f, Cooldown = 60.0f };
-        public Settings_Block Slap { get; set; } = new Settings_Block { Value = 2.0f };
+        public Settings_Block Slap { get; set; } = new Settings_Block { Value = 2.0f, Cooldown = 0.5f };
         public Settings_Block Random { get; set; } = new Settings_Block { Cooldown = 60.0f };
         public Settings_Block Invincibility { get; set; } = new Settings_Block { Duration = 5.0f, Cooldown = 60.0f };
-        //public Settings_Block SpeedBoost { get; set; } = new Settings_Block();
-        //public Settings_Block Trampoline { get; set; } = new Settings_Block();
+
         //public Settings_Block Death { get; set; } = new Settings_Block();
         //public Settings_Block Deagle { get; set; } = new Settings_Block();
         //public Settings_Block AWP { get; set; } = new Settings_Block();
+        //public Settings_Block Nuke { get; set; } = new Settings_Block();
+
         //public Settings_Block NoFallDmg { get; set; } = new Settings_Block();
+        //public Settings_Block SpeedBoost { get; set; } = new Settings_Block();
+        //public Settings_Block Trampoline { get; set; } = new Settings_Block();
+        //public Settings_Block Ice { get; set; } = new Settings_Block();
         //public Settings_Block Glass { get; set; } = new Settings_Block();
         //public Settings_Block TBarrier { get; set; } = new Settings_Block();
         //public Settings_Block CTBarrier { get; set; } = new Settings_Block();
-        //public Settings_Block Nuke { get; set; } = new Settings_Block();
         //public Settings_Block NoSlowDown { get; set; } = new Settings_Block();
         //public Settings_Block Honey { get; set; } = new Settings_Block();
-        //public Settings_Block Ice { get; set; } = new Settings_Block();
 
         public class Settings_BlockCamouflage : Settings_Block
         {
@@ -117,13 +119,16 @@ public class Commands
     public class Commands_Building
     {
         public string BuildMenu { get; set; } = "buildmenu,blockmenu,blocksmenu";
-        public string SelectBlockType { get; set; } = "block, blocktype";
-        public string CreateBlock { get; set; } = "create,createblock,place,placeblock";
+        public string CreateBlock { get; set; } = "block,create,createblock,place,placeblock";
         public string DeleteBlock { get; set; } = "delete,deleteblock,remove,removeblock";
         public string RotateBlock { get; set; } = "rotate,rotateblock";
+        public string SelectBlockType { get; set; } = "type, blocktype";
+        public string SelectBlockColor { get; set; } = "color, blockcolor";
+        public string CopyBlock { get; set; } = "copy, copyblock";
+        public string ConvertBlock { get; set; } = "convert,convertblock,replace,replaceblock";
         public string SaveBlocks { get; set; } = "save,saveblocks,saveblock";
         public string Snapping { get; set; } = "snap,snapblock,blocksnap";
-        public string Grid { get; set; } = "grid";
+        public string Grid { get; set; } = "grid,togglegrid";
         public string Noclip { get; set; } = "nc,noclip";
         public string Godmode { get; set; } = "god,godmode";
         public string TestBlock { get; set; } = "testblock";

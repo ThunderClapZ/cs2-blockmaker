@@ -15,7 +15,12 @@ public partial class Blocks
                 block.Entity.Remove();
                 UsedBlocks.Remove(block.Entity);
 
-                Plugin.RemoveTouch(block.Entity);
+                var trigger = BlockTriggers.FirstOrDefault(kvp => kvp.Value == block.Entity).Key;
+                if (trigger != null)
+                {
+                    trigger.Remove();
+                    BlockTriggers.Remove(trigger);
+                }
 
                 if (instance.Config.Sounds.Building.Enabled)
                     player.PlaySound(instance.Config.Sounds.Building.Delete);
@@ -28,13 +33,17 @@ public partial class Blocks
 
     public static void Clear()
     {
-        foreach (var block in UsedBlocks)
-            block.Key.Remove();
+        foreach (var rest in Utilities.GetAllEntities().Where(r => r.DesignerName == "prop_physics_override" || r.DesignerName == "trigger_multiple"))
+        {
+            if (rest == null || !rest.IsValid || rest.Entity == null)
+                continue;
 
-        foreach (var block in Utilities.GetAllEntities().Where(b => b.DesignerName == "prop_physics_override"))
-            block.Remove();
+            if (!String.IsNullOrEmpty(rest.Entity.Name) && rest.Entity.Name.StartsWith("blockmaker"))
+                rest.Remove();
+        }
 
         UsedBlocks.Clear();
+        BlockTriggers.Clear();
     }
 
     public static void Rotate(CCSPlayerController player, string rotation)
@@ -84,5 +93,42 @@ public partial class Blocks
             }
         }
         else instance.PrintToChat(player, $"Rotate Block: Could not find a block");
+    }
+
+    public static void Convert(CCSPlayerController player)
+    {
+        var entity = player.GetBlockAimTarget();
+
+        if (entity == null)
+        {
+            instance.PrintToChat(player, $"{ChatColors.Red}could not find a block to convert");
+            return;
+        }
+
+        if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+            return;
+
+        string blockmodel = instance.GetModelFromSelectedBlock(player, instance.playerData[player.Slot].BlockSize);
+
+        if (UsedBlocks.TryGetValue(entity, out var block))
+        {
+            Vector pos = new(block.Entity.AbsOrigin!.X, block.Entity.AbsOrigin.Y, block.Entity.AbsOrigin.Z);
+            QAngle rotation = new(block.Entity.AbsRotation!.X, block.Entity.AbsRotation.Y, block.Entity.AbsRotation.Z);
+
+            block.Entity.Remove();
+            UsedBlocks.Remove(block.Entity);
+
+            var trigger = BlockTriggers.FirstOrDefault(kvp => kvp.Value == block.Entity).Key;
+            if (trigger != null)
+            {
+                trigger.Remove();
+                BlockTriggers.Remove(trigger);
+            }
+
+            CreateBlock(instance.playerData[player.Slot].BlockType, blockmodel, instance.playerData[player.Slot].BlockSize, pos, rotation, instance.playerData[player.Slot].BlockColor);
+
+            instance.PrintToChat(player, $"Convert Block: Converted to type: {ChatColors.White}{instance.playerData[player.Slot].BlockType}{ChatColors.Grey}, size: {ChatColors.White}{instance.playerData[player.Slot].BlockSize}");
+        }
+        else instance.PrintToChat(player, "Convert Block: Could not find the block");
     }
 }

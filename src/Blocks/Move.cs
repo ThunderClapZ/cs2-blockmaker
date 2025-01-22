@@ -2,7 +2,6 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using System.Data;
-using System.Drawing;
 using static VectorUtils;
 
 public partial class Blocks
@@ -39,7 +38,7 @@ public partial class Blocks
 
                 else
                 {
-                    blockData.block.Render = Color.White;
+                    blockData.block.Render = Plugin.GetColor(UsedBlocks[blockData.block].Color);
                     Utilities.SetStateChanged(blockData.block, "CBaseModelEntity", "m_clrRender");
 
                     PlayerHolds.Remove(player);

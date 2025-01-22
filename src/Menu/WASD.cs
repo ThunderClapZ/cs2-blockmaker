@@ -49,6 +49,22 @@ public static class MenuWASD
                 TypeMenuOptions(player);
             });
 
+            BlockMenu.Add($"Color: {Instance.playerData[player.Slot].BlockColor}", (player, menuOption) =>
+            {
+                ColorMenuOptions(player);
+            });
+
+            BlockMenu.Add("Convert Block", (player, menuOption) =>
+            {
+                Instance.Command_ConvertBlock(player);
+            });
+
+            BlockMenu.Add("Copy Block", (player, menuOption) =>
+            {
+                Instance.Command_CopyBlock(player);
+                WasdManager.OpenMainMenu(player, MainMenu);
+            });
+
             WasdManager.OpenMainMenu(player, BlockMenu);
         });
 
@@ -160,6 +176,23 @@ public static class MenuWASD
             });
         }
         WasdManager.OpenMainMenu(player, TypeMenu);
+    }
+
+    private static void ColorMenuOptions(CCSPlayerController player)
+    {
+        IWasdMenu ColorMenu = WasdManager.CreateMenu($"Select Color ({Instance.playerData[player.Slot].BlockColor})");
+
+        foreach (var color in ColorMapping.Keys)
+        {
+            ColorMenu.Add(color, (player, menuOption) =>
+            {
+                Instance.Command_SelectBlockColor(player, color);
+
+                TypeMenuOptions(player);
+            });
+        }
+
+        WasdManager.OpenMainMenu(player, ColorMenu);
     }
 
     private static void SettingsOptions(CCSPlayerController player)

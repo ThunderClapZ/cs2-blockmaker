@@ -11,8 +11,6 @@ public class BlockModels
 {
     public BlockPlatform Platform { get; set; } = new BlockPlatform();
     public BlockBhop Bhop { get; set; } = new BlockBhop();
-    public BlockNoFallDmg NoFallDmg { get; set; } = new BlockNoFallDmg();
-    public BlockHoney Honey { get; set; } = new BlockHoney();
     public BlockHealth Health { get; set; } = new BlockHealth();
     public BlockGrenade Grenade { get; set; } = new BlockGrenade();
     public BlockGravity Gravity { get; set; } = new BlockGravity();
@@ -25,19 +23,21 @@ public class BlockModels
     public BlockDamage Damage { get; set; } = new BlockDamage();
     public BlockDeagle Deagle { get; set; } = new BlockDeagle();
     public BlockAWP AWP { get; set; } = new BlockAWP();
-    public BlockTrampoline Trampoline { get; set; } = new BlockTrampoline();
     public BlockStealth Stealth { get; set; } = new BlockStealth();
-    public BlockSpeedBoost SpeedBoost { get; set; } = new BlockSpeedBoost();
     public BlockSpeed Speed { get; set; } = new BlockSpeed();
-    public BlockTBarrier TBarrier { get; set; } = new BlockTBarrier();
-    public BlockCTBarrier CTBarrier { get; set; } = new BlockCTBarrier();
     public BlockSlap Slap { get; set; } = new BlockSlap();
     public BlockRandom Random { get; set; } = new BlockRandom();
     public BlockNuke Nuke { get; set; } = new BlockNuke();
-    public BlockNoSlowDown NoSlowDown { get; set; } = new BlockNoSlowDown();
     public BlockInvincibility Invincibility { get; set; } = new BlockInvincibility();
     public BlockIce Ice { get; set; } = new BlockIce();
     public BlockCamouflage Camouflage { get; set; } = new BlockCamouflage();
+    //public BlockNoFallDmg NoFallDmg { get; set; } = new BlockNoFallDmg();
+    //public BlockSpeedBoost SpeedBoost { get; set; } = new BlockSpeedBoost();
+    //public BlockTrampoline Trampoline { get; set; } = new BlockTrampoline();
+    //public BlockNoSlowDown NoSlowDown { get; set; } = new BlockNoSlowDown();
+    //public BlockTBarrier TBarrier { get; set; } = new BlockTBarrier();
+    //public BlockCTBarrier CTBarrier { get; set; } = new BlockCTBarrier();
+    //public BlockHoney Honey { get; set; } = new BlockHoney();
 }
 
 

@@ -34,6 +34,7 @@ public partial class Blocks
                         Name = data.Name,
                         Model = data.Model,
                         Size = data.Size,
+                        Color = data.Color,
                         Position = new VectorDTO(prop.AbsOrigin!),
                         Rotation = new QAngleDTO(prop.AbsRotation!)
                     });

@@ -99,7 +99,18 @@ public partial class Plugin
 
     public int GetPlacedBlocksCount()
     {
-        return Utilities.GetAllEntities().Where(e => e.DesignerName.Contains("prop_physics_override")).Count();
+        int blockCount = 0;
+
+        foreach (var block in Utilities.GetAllEntities().Where(b => b.DesignerName == "prop_physics_override"))
+        {
+            if (block == null || !block.IsValid || block.Entity == null)
+                continue;
+
+            if (!String.IsNullOrEmpty(block.Entity.Name) && block.Entity.Name.StartsWith("blockmaker"))
+                blockCount++;
+        }
+
+        return blockCount;
     }
 
     public string GetMapName()
@@ -119,5 +130,29 @@ public partial class Plugin
             return Color.FromArgb(a, r, g, b);
         }
         return Color.FromArgb(255, 255, 255, 255);
+    }
+
+    public static readonly Dictionary<string, Color> ColorMapping = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "default", Color.White },
+        { "red", Color.Red },
+        { "green", Color.Green },
+        { "blue", Color.Blue },
+        { "yellow", Color.Yellow },
+        { "orange", Color.Orange },
+        { "lime", Color.Lime },
+        { "aqua", Color.Aqua },
+        { "lightblue", Color.LightBlue },
+        { "darkblue", Color.DarkBlue },
+        { "purple", Color.Purple },
+        { "pink", Color.LightPink},
+        { "hotpink", Color.HotPink},
+        { "gray", Color.Gray },
+        { "silver", Color.Silver },
+        { "white", Color.White },
+    };
+    public static Color GetColor(string colorName)
+    {
+        return ColorMapping.TryGetValue(colorName.ToLower(), out var color) ? color : ColorMapping["default"];
     }
 }

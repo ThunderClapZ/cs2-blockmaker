@@ -1,13 +1,11 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using static CounterStrikeSharp.API.Core.Listeners;
 
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
-    public static MemoryFunctionVoid<CCSPlayerPawnBase>? CCSPlayerPawnBase_PostThinkFunc;
     public void RegisterEvents()
     {
         RegisterListener<OnTick>(Blocks.OnTick);
@@ -19,14 +17,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         RegisterEventHandler<EventRoundEnd>(EventRoundEnd);
         RegisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
 
-        /*HookEntityOutput("*", "OnStartTouch", OnStartTouch, HookMode.Pre);
-        HookEntityOutput("*", "OnTouching", OnTouching, HookMode.Pre);
-        HookEntityOutput("*", "OnEndTouch", OnEndTouch, HookMode.Pre); */
-
-        RegisterListener<OnEntityDeleted>(OnEntityDeleted);
-        CCSPlayerPawnBase_PostThinkFunc = new(GameData.GetSignature("CCSPlayerPawnBase_PostThink"));
-        CCSPlayerPawnBase_PostThinkFunc.Hook(PawnPostThinkFunc, HookMode.Pre);
-
+        HookEntityOutput("trigger_multiple", "OnStartTouch", OnStartTouch, HookMode.Pre);
     }
 
     public void UnregisterEvents()
@@ -40,30 +31,27 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         DeregisterEventHandler<EventRoundEnd>(EventRoundEnd);
         DeregisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
 
-        /*UnhookEntityOutput("*", "OnStartTouch", OnStartTouch, HookMode.Pre);
-        UnhookEntityOutput("*", "OnTouching", OnTouching, HookMode.Pre);
-        UnhookEntityOutput("*", "OnEndTouch", OnEndTouch, HookMode.Pre);*/
-
-        RemoveListener<OnEntityDeleted>(OnEntityDeleted);
-        CCSPlayerPawnBase_PostThinkFunc?.Unhook(PawnPostThinkFunc, HookMode.Pre);
+        UnhookEntityOutput("trigger_multiple", "OnStartTouch", OnStartTouch, HookMode.Pre);
     }
 
-    /*
     private HookResult OnStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
-        return HookResult.Continue;
-    }
+        if (activator.DesignerName != "player") return HookResult.Continue;
 
-    private HookResult OnTouching(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
-    {
-        return HookResult.Continue;
-    }
+        var pawn = activator.As<CCSPlayerPawn>();
 
-    private HookResult OnEndTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
-    {
+        if (!pawn.IsValid) return HookResult.Continue;
+        if (!pawn.Controller.IsValid || pawn.Controller.Value is null) return HookResult.Continue;
+
+        var player = pawn.Controller.Value.As<CCSPlayerController>();
+
+        if (player.IsBot) return HookResult.Continue;
+
+        if (Blocks.BlockTriggers.TryGetValue(caller, out CEntityInstance? block))
+            Blocks.Actions(player, block.As<CBaseEntity>());
+
         return HookResult.Continue;
     }
-    */
 
     public void OnServerPrecacheResources(ResourceManifest manifest)
     {
@@ -140,9 +128,11 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     HookResult EventRoundStart(EventRoundStart @event, GameEventInfo info)
     {
         Timers.Clear();
+
         Blocks.UsedBlocks.Clear();
         Blocks.PlayerHolds.Clear();
         Blocks.blocksCooldown.Clear();
+        Blocks.Timers.Clear();
 
         Blocks.Spawn();
 
@@ -153,8 +143,6 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     {
         if (buildMode && Config.Settings.Building.AutoSave)
             Blocks.Save();
-
-        ClearAllManagedEntities();
 
         return HookResult.Continue;
     }
@@ -167,7 +155,15 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             return HookResult.Continue;
 
         if (buildMode)
-            AddTimer(1.0f, player!.RespawnClient);
+            AddTimer(1.0f, player!.Respawn);
+
+        if (Blocks.Timers.TryGetValue(player!, out var playerTimers))
+        {
+            foreach (var timer in playerTimers)
+                timer.Kill();
+
+            Blocks.Timers[player!].Clear();
+        }
 
         return HookResult.Continue;
     }

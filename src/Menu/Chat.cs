@@ -50,6 +50,22 @@ public static class MenuChat
                 TypeMenuOptions(player);
             });
 
+            BlockMenu.AddMenuOption($"Color: {Instance.playerData[player.Slot].BlockColor}", (player, menuOption) =>
+            {
+                ColorMenuOptions(player);
+            });
+
+            BlockMenu.AddMenuOption("Convert Block", (player, menuOption) =>
+            {
+                Instance.Command_ConvertBlock(player);
+            });
+
+            BlockMenu.AddMenuOption("Copy Block", (player, menuOption) =>
+            {
+                Instance.Command_CopyBlock(player);
+                MenuManager.OpenChatMenu(player, MainMenu);
+            });
+
             MenuManager.OpenChatMenu(player, BlockMenu);
         });
 
@@ -161,6 +177,23 @@ public static class MenuChat
             });
         }
         MenuManager.OpenChatMenu(player, TypeMenu);
+    }
+
+    private static void ColorMenuOptions(CCSPlayerController player)
+    {
+        ChatMenu ColorMenu = new($"Select Color ({Instance.playerData[player.Slot].BlockColor})");
+
+        foreach (var color in ColorMapping.Keys)
+        {
+            ColorMenu.AddMenuOption(color, (player, menuOption) =>
+            {
+                Instance.Command_SelectBlockColor(player, color);
+
+                TypeMenuOptions(player);
+            });
+        }
+
+        MenuManager.OpenChatMenu(player, ColorMenu);
     }
 
     private static void SettingsOptions(CCSPlayerController player)

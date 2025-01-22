@@ -1,7 +1,6 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Admin;
-using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
@@ -36,18 +35,6 @@ public static class EntityExtends
     public static bool NotValid(this CCSPlayerController? player)
     {
         return (player == null || !player.IsValid || !player.PlayerPawn.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || player.IsBot || player.IsHLTV);
-    }
-
-    public static void RespawnClient(this CCSPlayerController client)
-    {
-        if (!client.IsValid || client.PawnIsAlive)
-            return;
-
-        var clientPawn = client.PlayerPawn.Value;
-
-        MemoryFunctionVoid<CCSPlayerController, CCSPlayerPawn, bool, bool> CBasePlayerController_SetPawnFunc = new(GameData.GetSignature("CBasePlayerController_SetPawn"));
-        CBasePlayerController_SetPawnFunc.Invoke(client, clientPawn!, true, false);
-        VirtualFunction.CreateVoid<CCSPlayerController>(client.Handle, GameData.GetOffset("CCSPlayerController_Respawn"))(client);
     }
 
     internal static bool IsPlayer(this CCSPlayerController? player)
@@ -399,5 +386,20 @@ public static class EntityExtends
 
         if (pawn.Health <= 0)
             pawn.CommitSuicide(true, true);
+    }
+
+    public static void Bounce(this CCSPlayerController player)
+    {
+        if (!player.IsLegal() && !player.IsAlive())
+            return;
+
+        CCSPlayerPawn pawn = player.Pawn()!;
+
+        var vel = new Vector(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
+        var speed = Math.Sqrt(vel.X * vel.X + vel.Y * vel.Y);
+
+        vel *= (-350 / (float)speed);
+        vel.Z = vel.Z <= 0 ? 150 : Math.Min(vel.Z, 150);
+        pawn.Teleport(pawn.AbsOrigin, pawn.EyeAngles, vel);
     }
 }
