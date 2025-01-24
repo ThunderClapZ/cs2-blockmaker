@@ -158,17 +158,11 @@ public partial class Plugin
 
     public static readonly Dictionary<string, int> AlphaMapping = new(StringComparer.OrdinalIgnoreCase)
     {
-        { "100%", 0 },
-        { "90%", 26 },
-        { "80%", 51 },
-        { "70%", 77 },
-        { "60%", 102 },
+        { "100%", 255 },
+        { "75%", 191 },
         { "50%", 128 },
-        { "40%", 153 },
-        { "30%", 179 },
-        { "20%", 204 },
-        { "10%", 230 },
-        { "0%", 255 },
+        { "25%", 50 },
+        { "0%", 0 },
     };
     public static int GetAlpha(string input)
     {

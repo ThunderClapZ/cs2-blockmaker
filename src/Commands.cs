@@ -19,10 +19,10 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             AddCommand($"css_{cmd}", "Open build menu", (player, command) => Command_BuildMenu(player));
 
         foreach (var cmd in Config.Commands.Building.BlockType.Split(','))
-            AddCommand($"css_{cmd}", "Select block type", (player, command) => Command_BlockType(player, command.ArgByIndex(1)));
+            AddCommand($"css_{cmd}", "Block type", (player, command) => Command_BlockType(player, command.ArgByIndex(1)));
 
         foreach (var cmd in Config.Commands.Building.BlockColor.Split(','))
-            AddCommand($"css_{cmd}", "Select block color", (player, command) => Command_BlockColor(player, command.ArgByIndex(1)));
+            AddCommand($"css_{cmd}", "Block color", (player, command) => Command_BlockColor(player, command.ArgByIndex(1)));
 
         foreach (var cmd in Config.Commands.Building.CreateBlock.Split(','))
             AddCommand($"css_{cmd}", "Create block", (player, command) => Command_CreateBlock(player));
@@ -241,6 +241,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
                     Blocks.UsedBlocks[entity].Name = model.Title;
                     Blocks.UsedBlocks[entity].Model = model.Block;
 
+                    block.Entity.Entity!.Name = "blockmaker_" + model.Title;
                     block.Entity.SetModel(model.Block);
 
                     PrintToChat(player, $"Block Type: changed block to {ChatColors.White}{model.Title}");

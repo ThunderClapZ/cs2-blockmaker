@@ -8,7 +8,7 @@ public class PlayerData
     public string BlockSize = "Normal";
     public string BlockTeam = "Both";
     public string BlockColor = "None";
-    public string BlockTransparency = "0%";
+    public string BlockTransparency = "100%";
     public bool Grid = false;
     public float GridValue = 32f;
     public float RotationValue = 30f;
