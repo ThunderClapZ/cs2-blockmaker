@@ -12,42 +12,42 @@ public partial class Blocks
     private static Dictionary<string, Action<CCSPlayerController, CBaseEntity>> blockActions = null!;
     private static Settings.Settings_Blocks settings = instance.Config.Settings.Blocks;
     private static Sounds.Sounds_Blocks sounds = instance.Config.Sounds.Blocks;
+    public static BlockModels blockModels = Plugin.BlockModels;
 
     public static void Load()
     {
-        var block = Plugin.BlockModels;
         blockActions = new Dictionary<string, Action<CCSPlayerController, CBaseEntity>>
         {
-            { block.Random.Title, Action_Random },
-            { block.Bhop.Title, Action_Bhop },
-            { block.Gravity.Title, Action_Gravity },
-            { block.Health.Title, Action_Health },
-            { block.Grenade.Title, Action_Grenade },
-            { block.Frost.Title, Action_Frost },
-            { block.Flash.Title, Action_Flash },
-            { block.Fire.Title, Action_Fire },
-            { block.Delay.Title, Action_Delay },
-            { block.Death.Title, Action_Death },
-            { block.Damage.Title, Action_Damage },
-            { block.Deagle.Title, Action_Deagle },
-            { block.AWP.Title, Action_AWP },
-            { block.Speed.Title, Action_Speed },
-            { block.Slap.Title, Action_Slap },
-            { block.Nuke.Title, Action_Nuke },
-            { block.Stealth.Title, Action_Stealth },
-            { block.Invincibility.Title, Action_Invincibility },
-            { block.Camouflage.Title, Action_Camouflage },
+            { blockModels.Random.Title, Action_Random },
+            { blockModels.Bhop.Title, Action_Bhop },
+            { blockModels.Gravity.Title, Action_Gravity },
+            { blockModels.Health.Title, Action_Health },
+            { blockModels.Grenade.Title, Action_Grenade },
+            { blockModels.Frost.Title, Action_Frost },
+            { blockModels.Flash.Title, Action_Flash },
+            { blockModels.Fire.Title, Action_Fire },
+            { blockModels.Delay.Title, Action_Delay },
+            { blockModels.Death.Title, Action_Death },
+            { blockModels.Damage.Title, Action_Damage },
+            { blockModels.Deagle.Title, Action_Deagle },
+            { blockModels.AWP.Title, Action_AWP },
+            { blockModels.Speed.Title, Action_Speed },
+            { blockModels.SpeedBoost.Title, Action_SpeedBoost },
+            { blockModels.Slap.Title, Action_Slap },
+            { blockModels.Nuke.Title, Action_Nuke },
+            { blockModels.Stealth.Title, Action_Stealth },
+            { blockModels.Invincibility.Title, Action_Invincibility },
+            { blockModels.Camouflage.Title, Action_Camouflage },
+            { blockModels.Trampoline.Title, Action_Trampoline },
             /*
-            { block.Trampoline.Title, Action_Trampoline },
-            { block.NoFallDmg.Title, Action_NoFallDmg },
-            { block.SpeedBoost.Title, Action_SpeedBoost },
-            { block.Platform.Title, Action_Platform },
-            { block.Honey.Title, Action_Honey },
-            { block.Glass.Title, Action_Glass },
-            { block.TBarrier.Title, Action_TBarrier },
-            { block.CTBarrier.Title, Action_CTBarrier },
-            { block.Ice.Title, Action_Ice },
-            { block.NoSlowDown.Title, Action_NoSlowDown }
+            { blockModels.NoFallDmg.Title, Action_NoFallDmg },
+            { blockModels.Platform.Title, Action_Platform },
+            { blockModels.Honey.Title, Action_Honey },
+            { blockModels.Glass.Title, Action_Glass },
+            { blockModels.TBarrier.Title, Action_TBarrier },
+            { blockModels.CTBarrier.Title, Action_CTBarrier },
+            { blockModels.Ice.Title, Action_Ice },
+            { blockModels.NoSlowDown.Title, Action_NoSlowDown }
             */
         };
     }
@@ -119,7 +119,7 @@ public partial class Blocks
 
         randomAction.Value(player, block);
 
-        instance.PrintToChat(player, $"You got {ChatColors.White}{randomAction.Key} {ChatColors.Grey}from the {ChatColors.White}{block.Entity!.Name} {ChatColors.Grey}block");
+        instance.PrintToChat(player, $"You got {ChatColors.White}{randomAction.Key} {ChatColors.Grey}from the {ChatColors.White}{block.Entity!.Name.Replace("blockmaker_", "")} {ChatColors.Grey}block");
 
         blocksCooldown[player.Slot].Random = true;
 
@@ -156,6 +156,7 @@ public partial class Blocks
                 Utilities.SetStateChanged(tempblock, "VPhysicsCollisionAttribute_t", "m_nCollisionGroup");
 
                 tempblock.AcceptInput("DisableMotion", tempblock, tempblock);
+                tempblock.AcceptInput("SetScale", tempblock, tempblock, Plugin.GetSize(size).ToString());
                 tempblock.Teleport(pos, rotation);
 
                 block.Remove();
@@ -182,7 +183,7 @@ public partial class Blocks
         instance.AddTimer(settings.Gravity.Duration, () =>
         {
             player.SetGravity(gravity);
-            instance.PrintToChat(player, $"{block.Entity!.Name} has worn off");
+            instance.PrintToChat(player, $"{blockModels.Gravity.Title} has worn off");
         });
 
         blocksCooldown[player.Slot].Gravity = true;
@@ -303,6 +304,7 @@ public partial class Blocks
                 Utilities.SetStateChanged(tempblock, "VPhysicsCollisionAttribute_t", "m_nCollisionGroup");
 
                 tempblock.AcceptInput("DisableMotion", tempblock, tempblock);
+                tempblock.AcceptInput("SetScale", tempblock, tempblock, Plugin.GetSize(size).ToString());
                 tempblock.Teleport(pos, rotation);
 
                 block.Remove();
@@ -376,19 +378,46 @@ public partial class Blocks
         if (blocksCooldown[player.Slot].Speed)
             return;
 
-        var speed = player.Speed;
+        var velocity = player.PlayerPawn.Value!.VelocityModifier;
 
-        player.Speed = settings.Speed.Value;
+        player.SetVelocity(settings.Speed.Value);
         player.PlaySound(sounds.Speed);
 
         instance.AddTimer(settings.Speed.Duration, () =>
         {
-            player.Speed = speed;
-            instance.PrintToChat(player, $"{block.Entity!.Name} has worn off");
+            player.SetVelocity(velocity);
+            instance.PrintToChat(player, $"{blockModels.Speed.Title} has worn off");
         });
 
         blocksCooldown[player.Slot].Speed = true;
         BlockCooldownTimer(player, "Speed", settings.Speed.Cooldown);
+    }
+
+    private static void Action_SpeedBoost(CCSPlayerController player, CBaseEntity block)
+    {
+        if (blocksCooldown[player.Slot].SpeedBoost)
+            return;
+
+        CCSPlayerPawn pawn = player.Pawn()!;
+
+        var vel = new Vector(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
+
+        float boost = settings.SpeedBoost.Value;
+
+        float horizontalSpeed = (float)Math.Sqrt(vel.X * vel.X + vel.Y * vel.Y);
+        if (horizontalSpeed > 0)
+        {
+            float scaleFactor = boost / horizontalSpeed;
+            vel.X += vel.X * scaleFactor;
+            vel.Y += vel.Y * scaleFactor;
+        }
+
+        vel.Z = 300;
+
+        pawn.Teleport(null, null, vel);
+
+        blocksCooldown[player.Slot].SpeedBoost = true;
+        BlockCooldownTimer(player, "SpeedBoost", 0.25f, false);
     }
 
     private static void Action_Slap(CCSPlayerController player, CBaseEntity block)
@@ -440,7 +469,7 @@ public partial class Blocks
         instance.AddTimer(settings.Stealth.Duration, () =>
         {
             player.SetInvis(false);
-            instance.PrintToChat(player, $"{block.Entity!.Name} has worn off");
+            instance.PrintToChat(player, $"{blockModels.Stealth.Title} has worn off");
         });
 
         blocksCooldown[player.Slot].Stealth = true;
@@ -459,7 +488,7 @@ public partial class Blocks
         instance.AddTimer(settings.Invincibility.Duration, () =>
         {
             player.Pawn()!.TakesDamage = true;
-            instance.PrintToChat(player, $"{block.Entity!.Name} has worn off");
+            instance.PrintToChat(player, $"{blockModels.Invincibility.Title} has worn off");
         });
 
         blocksCooldown[player.Slot].Invincibility = true;
@@ -483,17 +512,32 @@ public partial class Blocks
         instance.AddTimer(settings.Camouflage.Duration, () =>
         {
             player.SetModel(model);
-            instance.PrintToChat(player, $"{block.Entity!.Name} has worn off");
+            instance.PrintToChat(player, $"{blockModels.Camouflage.Title} has worn off");
         });
 
         blocksCooldown[player.Slot].Camouflage = true;
         BlockCooldownTimer(player, "Camouflage", settings.Camouflage.Cooldown);
     }
 
+    private static void Action_Trampoline(CCSPlayerController player, CBaseEntity block)
+    {
+        if (blocksCooldown[player.Slot].Trampoline)
+            return;
+
+        CCSPlayerPawn pawn = player.Pawn()!;
+
+        var vel = new Vector(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
+
+        vel.Z = settings.Trampoline.Value;
+
+        pawn.Teleport(null, null, vel);
+
+        blocksCooldown[player.Slot].Trampoline = true;
+        BlockCooldownTimer(player, "Trampoline", 0.25f, false);
+    }
+
     /*
     private static void Action_NoFallDmg(CCSPlayerController player, CBaseEntity block) { }
-    private static void Action_Trampoline(CCSPlayerController player, CBaseEntity block) { }
-    private static void Action_SpeedBoost(CCSPlayerController player, CBaseEntity block) { }
     private static void Action_Platform(CCSPlayerController player, CBaseEntity block) { }
     private static void Action_Honey(CCSPlayerController player, CBaseEntity block) { }
     private static void Action_Glass(CCSPlayerController player, CBaseEntity block) { }

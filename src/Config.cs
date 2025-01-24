@@ -49,10 +49,12 @@ public class Settings
         public Settings_Block Delay { get; set; } = new Settings_Block { Duration = 1.0f, Cooldown = 1.5f };
         public Settings_Block Damage { get; set; } = new Settings_Block { Value = 5.0f, Cooldown = 0.5f };
         public Settings_Block Stealth { get; set; } = new Settings_Block { Duration = 10.0f, Cooldown = 60.0f };
-        public Settings_Block Speed { get; set; } = new Settings_Block { Duration = 3.0f, Value = 1.5f, Cooldown = 60.0f };
-        public Settings_Block Slap { get; set; } = new Settings_Block { Value = 2.0f, Cooldown = 0.5f };
+        public Settings_Block Speed { get; set; } = new Settings_Block { Duration = 3.0f, Value = 2.0f, Cooldown = 60.0f };
+        public Settings_Block SpeedBoost { get; set; } = new Settings_Block { Value = 650.0f };
+        public Settings_Block Slap { get; set; } = new Settings_Block { Value = 2.0f };
         public Settings_Block Random { get; set; } = new Settings_Block { Cooldown = 60.0f };
         public Settings_Block Invincibility { get; set; } = new Settings_Block { Duration = 5.0f, Cooldown = 60.0f };
+        public Settings_Block Trampoline { get; set; } = new Settings_Block { Value = 500.0f };
 
         //public Settings_Block Death { get; set; } = new Settings_Block();
         //public Settings_Block Deagle { get; set; } = new Settings_Block();
@@ -60,8 +62,6 @@ public class Settings
         //public Settings_Block Nuke { get; set; } = new Settings_Block();
 
         //public Settings_Block NoFallDmg { get; set; } = new Settings_Block();
-        //public Settings_Block SpeedBoost { get; set; } = new Settings_Block();
-        //public Settings_Block Trampoline { get; set; } = new Settings_Block();
         //public Settings_Block Ice { get; set; } = new Settings_Block();
         //public Settings_Block Glass { get; set; } = new Settings_Block();
         //public Settings_Block TBarrier { get; set; } = new Settings_Block();
@@ -122,8 +122,8 @@ public class Commands
         public string CreateBlock { get; set; } = "block,create,createblock,place,placeblock";
         public string DeleteBlock { get; set; } = "delete,deleteblock,remove,removeblock";
         public string RotateBlock { get; set; } = "rotate,rotateblock";
-        public string SelectBlockType { get; set; } = "type, blocktype";
-        public string SelectBlockColor { get; set; } = "color, blockcolor";
+        public string BlockType { get; set; } = "type, blocktype";
+        public string BlockColor { get; set; } = "color, blockcolor";
         public string CopyBlock { get; set; } = "copy, copyblock";
         public string ConvertBlock { get; set; } = "convert,convertblock,replace,replaceblock";
         public string SaveBlocks { get; set; } = "save,saveblocks,saveblock";

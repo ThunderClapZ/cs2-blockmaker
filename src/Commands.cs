@@ -1,4 +1,5 @@
-﻿using CounterStrikeSharp.API;
+﻿using System.Drawing;
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Memory;
@@ -17,11 +18,11 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         foreach (var cmd in Config.Commands.Building.BuildMenu.Split(','))
             AddCommand($"css_{cmd}", "Open build menu", (player, command) => Command_BuildMenu(player));
 
-        foreach (var cmd in Config.Commands.Building.SelectBlockType.Split(','))
-            AddCommand($"css_{cmd}", "Select block type", (player, command) => Command_SelectBlockType(player, command.ArgByIndex(1)));
+        foreach (var cmd in Config.Commands.Building.BlockType.Split(','))
+            AddCommand($"css_{cmd}", "Select block type", (player, command) => Command_BlockType(player, command.ArgByIndex(1)));
 
-        foreach (var cmd in Config.Commands.Building.SelectBlockColor.Split(','))
-            AddCommand($"css_{cmd}", "Select block color", (player, command) => Command_SelectBlockColor(player, command.ArgByIndex(1)));
+        foreach (var cmd in Config.Commands.Building.BlockColor.Split(','))
+            AddCommand($"css_{cmd}", "Select block color", (player, command) => Command_BlockColor(player, command.ArgByIndex(1)));
 
         foreach (var cmd in Config.Commands.Building.CreateBlock.Split(','))
             AddCommand($"css_{cmd}", "Create block", (player, command) => Command_CreateBlock(player));
@@ -68,11 +69,11 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         foreach (var cmd in Config.Commands.Building.BuildMenu.Split(','))
             RemoveCommand($"css_{cmd}", (player, command) => Command_BuildMenu(player));
 
-        foreach (var cmd in Config.Commands.Building.SelectBlockType.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_SelectBlockType(player, command.ArgByIndex(1)));
+        foreach (var cmd in Config.Commands.Building.BlockType.Split(','))
+            RemoveCommand($"css_{cmd}", (player, command) => Command_BlockType(player, command.ArgByIndex(1)));
 
-        foreach (var cmd in Config.Commands.Building.SelectBlockColor.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_SelectBlockColor(player, command.ArgByIndex(1)));
+        foreach (var cmd in Config.Commands.Building.BlockColor.Split(','))
+            RemoveCommand($"css_{cmd}", (player, command) => Command_BlockColor(player, command.ArgByIndex(1)));
 
         foreach (var cmd in Config.Commands.Building.CreateBlock.Split(','))
             RemoveCommand($"css_{cmd}", (player, command) => Command_CreateBlock(player));
@@ -204,7 +205,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Menu.Command_OpenMenus(player);
     }
 
-    public void Command_SelectBlockType(CCSPlayerController? player, string selectType)
+    public void Command_BlockType(CCSPlayerController? player, string selectType)
     {
         if (player == null || player.NotValid())
             return;
@@ -220,14 +221,31 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         foreach (var property in typeof(BlockModels).GetProperties())
         {
-            var block = (BlockSizes)property.GetValue(BlockModels)!;
+            var model = (BlockSizes)property.GetValue(BlockModels)!;
 
-            string blockType = block.Title;
-
-            if (string.Equals(blockType, selectType, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(model.Title, selectType, StringComparison.OrdinalIgnoreCase))
             {
-                playerData[player.Slot].BlockType = blockType;
-                PrintToChat(player, $"Block Type: {ChatColors.Green}selected {blockType} block");
+                playerData[player.Slot].BlockType = model.Title;
+                PrintToChat(player, $"Block Type: selected {ChatColors.White}{model.Title}");
+
+                var entity = player.GetBlockAimTarget();
+
+                if (entity == null)
+                    return;
+
+                if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+                    return;
+
+                if (Blocks.UsedBlocks.TryGetValue(entity, out var block))
+                {
+                    Blocks.UsedBlocks[entity].Name = model.Title;
+                    Blocks.UsedBlocks[entity].Model = model.Block;
+
+                    block.Entity.SetModel(model.Block);
+
+                    PrintToChat(player, $"Block Type: changed block to {ChatColors.White}{model.Title}");
+                }
+
                 return;
             }
         }
@@ -235,7 +253,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         PrintToChat(player, $"Block Type: {ChatColors.Red}could not find a matching block");
     }
 
-    public void Command_SelectBlockColor(CCSPlayerController? player, string selectColor)
+    public void Command_BlockColor(CCSPlayerController? player, string selectColor = "None")
     {
         if (player == null || player.NotValid())
             return;
@@ -253,8 +271,29 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         {
             if (string.Equals(color, selectColor, StringComparison.OrdinalIgnoreCase))
             {
-                playerData[player.Slot].BlockColor = selectColor;
-                PrintToChat(player, $"Block Color: {ChatColors.Green}selected {selectColor}");
+                playerData[player.Slot].BlockColor = color;
+                PrintToChat(player, $"Block Color: selected {ChatColors.White}{color}");
+
+                var entity = player.GetBlockAimTarget();
+
+                if (entity == null)
+                    return;
+
+                if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+                    return;
+
+                if (Blocks.UsedBlocks.TryGetValue(entity, out var block))
+                {
+                    Blocks.UsedBlocks[entity].Color = color;
+
+                    var clr = Plugin.GetColor(color);
+                    int alpha = Plugin.GetAlpha(block.Transparency);
+                    entity.Render = Color.FromArgb(alpha, clr.R, clr.G, clr.B);
+                    Utilities.SetStateChanged(entity, "CBaseModelEntity", "m_clrRender");
+
+                    PrintToChat(player, $"Block Color: changed block to {ChatColors.White}{color}");
+                }
+
                 return;
             }
         }
@@ -389,7 +428,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (block == null)
         {
-            PrintToChat(player, $"{ChatColors.Red}could not find a block to test");
+            PrintToChat(player, $"Block Test: {ChatColors.Red}could not find a block to test");
             return;
         }
 
@@ -406,12 +445,12 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
             if (cooldown)
             {
-                PrintToChat(player, $"{ChatColors.Red}{block.Entity.Name} block is on cooldown");
+                PrintToChat(player, $"Block Test: {ChatColors.Red}{block.Entity.Name} block is on cooldown");
                 return;
             }
         }
 
-        PrintToChat(player, $"{ChatColors.Green}testing {block.Entity!.Name} block");
+        PrintToChat(player, $"Block Test: testing {ChatColors.White}{block.Entity!.Name.Replace("blockmaker_", "")}");
         Blocks.Actions(player, block);
     }
 
@@ -452,7 +491,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (entity == null)
         {
-            PrintToChat(player, $"{ChatColors.Red}could not find a block to copy");
+            PrintToChat(player, $"Copy Block: {ChatColors.Red}could not find a block");
             return;
         }
 
@@ -461,12 +500,42 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (Blocks.UsedBlocks.TryGetValue(entity, out var block))
         {
-            playerData[player.Slot].BlockColor = block.Color;
-            playerData[player.Slot].BlockSize = block.Size;
-            playerData[player.Slot].BlockType = block.Name;
+            var pData = playerData[player.Slot];
+            pData.BlockColor = block.Color;
+            pData.BlockSize = block.Size;
+            pData.BlockType = block.Name;
+            pData.BlockTeam = block.Team;
 
-            PrintToChat(player, $"Copy Block: copied type: {ChatColors.White}{playerData[player.Slot].BlockType}{ChatColors.Grey}, size: {ChatColors.White}{playerData[player.Slot].BlockSize}, color: {ChatColors.White}{playerData[player.Slot].BlockColor}");
+            PrintToChat(player, $"Copy Block: copied type: {ChatColors.White}{pData.BlockType}{ChatColors.Grey}, size: {ChatColors.White}{pData.BlockSize}{ChatColors.Grey}, color: {ChatColors.White}{pData.BlockColor}{ChatColors.Grey}, team: {ChatColors.White}{pData.BlockTeam}{ChatColors.Grey}");
         }
-        else PrintToChat(player, "Copy Block: Could not find the block");
+    }
+
+    public void Command_TransparenyBlock(CCSPlayerController? player, string transparency = "0%")
+    {
+        if (player == null || player.NotValid())
+            return;
+
+        if (!BuildMode(player))
+            return;
+
+        var entity = player.GetBlockAimTarget();
+
+        if (entity == null)
+            return;
+
+        if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+            return;
+
+        if (Blocks.UsedBlocks.TryGetValue(entity, out var block))
+        {
+            Blocks.UsedBlocks[entity].Transparency = transparency;
+
+            var color = Plugin.GetColor(block.Color);
+            int alpha = Plugin.GetAlpha(transparency);
+            entity.Render = Color.FromArgb(alpha, color.R, color.G, color.B);
+            Utilities.SetStateChanged(entity, "CBaseModelEntity", "m_clrRender");
+
+            PrintToChat(player, $"Changed block transparency to {ChatColors.White}{transparency}");
+        }
     }
 }

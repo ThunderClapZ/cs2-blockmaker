@@ -1,5 +1,8 @@
-﻿using CounterStrikeSharp.API;
+﻿using System.Runtime.InteropServices;
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Memory;
+using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using static CounterStrikeSharp.API.Core.Listeners;
@@ -18,6 +21,9 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         RegisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
 
         HookEntityOutput("trigger_multiple", "OnStartTouch", OnStartTouch, HookMode.Pre);
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Hook(OnTakeDamage, HookMode.Pre);
     }
 
     public void UnregisterEvents()
@@ -32,6 +38,9 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         DeregisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
 
         UnhookEntityOutput("trigger_multiple", "OnStartTouch", OnStartTouch, HookMode.Pre);
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Unhook(OnTakeDamage, HookMode.Pre);
     }
 
     private HookResult OnStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
@@ -48,7 +57,16 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         if (player.IsBot) return HookResult.Continue;
 
         if (Blocks.BlockTriggers.TryGetValue(caller, out CEntityInstance? block))
-            Blocks.Actions(player, block.As<CBaseEntity>());
+        {
+            var blockData = Blocks.UsedBlocks[block.As<CBaseProp>()];
+
+            if (blockData.Team == "T" && player.Team == CsTeam.Terrorist ||
+                blockData.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
+                blockData.Team == "Both")
+            {
+                Blocks.Actions(player, block.As<CBaseEntity>());
+            }
+        }
 
         return HookResult.Continue;
     }
@@ -63,14 +81,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
             if (block != null)
             {
-                if (!string.IsNullOrEmpty(block.Small))
-                    manifest.AddResource(block.Small);
-
-                if (!string.IsNullOrEmpty(block.Medium))
-                    manifest.AddResource(block.Medium);
-
-                if (!string.IsNullOrEmpty(block.Large))
-                    manifest.AddResource(block.Large);
+                if (!string.IsNullOrEmpty(block.Block))
+                    manifest.AddResource(block.Block);
 
                 if (!string.IsNullOrEmpty(block.Pole))
                     manifest.AddResource(block.Pole);
@@ -163,6 +175,33 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
                 timer.Kill();
 
             Blocks.Timers[player!].Clear();
+        }
+
+        return HookResult.Continue;
+    }
+
+    HookResult OnTakeDamage(DynamicHook hook)
+    {
+        var entity = hook.GetParam<CEntityInstance>(0);
+        var info = hook.GetParam<CTakeDamageInfo>(1);
+
+        if (!entity.IsValid || !info.Attacker.IsValid)
+            return HookResult.Continue;
+
+        if (entity.DesignerName == "player" && info.Attacker.Value!.DesignerName == "player")
+            return HookResult.Continue;
+
+        foreach(var block in Blocks.UsedBlocks.Where(b => b.Value.Name == BlockModels.Trampoline.Title || b.Value.Name == BlockModels.NoFallDmg.Title))
+        {
+            var entityPos = entity.As<CCSPlayerPawn>().AbsOrigin!;
+            var blockPos = block.Key.AbsOrigin!;
+
+            var blockScale = GetSize(block.Value.Size);
+            var scaledMaxs = VectorUtils.GetBlockSizeMax(block.Key) * blockScale;
+            var scaledMins = -scaledMaxs;
+
+            if (VectorUtils.IsWithinBounds(entityPos, blockPos, scaledMins, scaledMaxs))
+                return HookResult.Handled;
         }
 
         return HookResult.Continue;

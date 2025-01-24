@@ -7,35 +7,65 @@ public static class MenuChat
 {
     public static void OpenMenu(CCSPlayerController player)
     {
-        ChatMenu MainMenu = new("Block Builder");
+        ChatMenu MainMenu = new("Block Maker");
 
-        MainMenu.AddMenuOption("Create Block", (player, menuOption) =>
+        MainMenu.AddMenuOption($"Block Commands", (player, menuOption) =>
         {
-            Instance.Command_CreateBlock(player);
-        });
+            ChatMenu CommandsMenu = new("Block Commands");
 
-        MainMenu.AddMenuOption("Delete Block", (player, menuOption) =>
-        {
-            Instance.Command_DeleteBlock(player);
-        });
+            CommandsMenu.AddMenuOption("Create", (player, menuOption) =>
+            {
+                Instance.Command_CreateBlock(player);
+            });
 
-        MainMenu.AddMenuOption("Rotate Block", (player, menuOption) =>
-        {
-            float[] rotateValues = Instance.Config.Settings.Building.RotationValues;
-            string[] rotateOptions = { "Reset", "X-", "X+", "Y-", "Y+", "Z-", "Z+" };
+            CommandsMenu.AddMenuOption("Delete", (player, menuOption) =>
+            {
+                Instance.Command_DeleteBlock(player);
+            });
 
-            RotateMenuOptions(player, rotateOptions, rotateValues);
+            CommandsMenu.AddMenuOption("Rotate", (player, menuOption) =>
+            {
+                float[] rotateValues = Instance.Config.Settings.Building.RotationValues;
+                string[] rotateOptions = { "Reset", "X-", "X+", "Y-", "Y+", "Z-", "Z+" };
+
+                RotateMenuOptions(player, rotateOptions, rotateValues);
+            });
+
+            CommandsMenu.AddMenuOption("Convert", (player, menuOption) =>
+            {
+                Instance.Command_ConvertBlock(player);
+            });
+
+            CommandsMenu.AddMenuOption("Copy", (player, menuOption) =>
+            {
+                Instance.Command_CopyBlock(player);
+                MenuManager.OpenChatMenu(player, CommandsMenu);
+            });
+
+            MenuManager.OpenChatMenu(player, CommandsMenu);
         });
 
         MainMenu.AddMenuOption($"Block Settings", (player, menuOption) =>
         {
             ChatMenu BlockMenu = new("Block Settings");
 
-            BlockMenu.AddMenuOption($"Size: " + Instance.playerData[player.Slot].BlockSize, (player, menuOption) =>
+            BlockMenu.AddMenuOption($"Type: {Instance.playerData[player.Slot].BlockType}", (player, menuOption) =>
             {
-                string[] sizeValues = { "Small", "Medium", "Large", "Pole" };
+                TypeMenuOptions(player);
+            });
 
-                SizeMenuOptions(player, MainMenu, sizeValues);
+            BlockMenu.AddMenuOption($"Size: {Instance.playerData[player.Slot].BlockSize}", (player, menuOption) =>
+            {
+                string[] sizeValues = { "Pole", "Small", "Normal", "Large", "X-Large" };
+
+                SizeMenuOptions(player, sizeValues);
+            });
+
+            BlockMenu.AddMenuOption($"Team: {Instance.playerData[player.Slot].BlockTeam}", (player, menuOption) =>
+            {
+                string[] teamValues = { "Both", "T", "CT" };
+
+                TeamMenuOptions(player, BlockMenu, teamValues);
             });
 
             BlockMenu.AddMenuOption($"Grid: {Instance.playerData[player.Slot].GridValue} Units", (player, menuOption) =>
@@ -45,25 +75,14 @@ public static class MenuChat
                 GridMenuOptions(player, gridValues);
             });
 
-            BlockMenu.AddMenuOption($"Type: {Instance.playerData[player.Slot].BlockType}", (player, menuOption) =>
+            BlockMenu.AddMenuOption($"Transparency: {Instance.playerData[player.Slot].BlockTransparency}", (player, menuOption) =>
             {
-                TypeMenuOptions(player);
+                TransparencyMenuOptions(player);
             });
 
             BlockMenu.AddMenuOption($"Color: {Instance.playerData[player.Slot].BlockColor}", (player, menuOption) =>
             {
                 ColorMenuOptions(player);
-            });
-
-            BlockMenu.AddMenuOption("Convert Block", (player, menuOption) =>
-            {
-                Instance.Command_ConvertBlock(player);
-            });
-
-            BlockMenu.AddMenuOption("Copy Block", (player, menuOption) =>
-            {
-                Instance.Command_CopyBlock(player);
-                MenuManager.OpenChatMenu(player, MainMenu);
             });
 
             MenuManager.OpenChatMenu(player, BlockMenu);
@@ -81,16 +100,16 @@ public static class MenuChat
     {
         ChatMenu RotateMenu = new($"Rotate Block ({Instance.playerData[player.Slot].RotationValue} Units)");
 
-        RotateMenu.AddMenuOption($"Select Units", (p, option) =>
+        RotateMenu.AddMenuOption($"Select Units", (player, option) =>
         {
             RotateValuesMenuOptions(player, rotateOptions, rotateValues);
         });
 
         foreach (string rotateOption in rotateOptions)
         {
-            RotateMenu.AddMenuOption(rotateOption, (p, option) =>
+            RotateMenu.AddMenuOption(rotateOption, (player, option) =>
             {
-                Instance.Command_RotateBlock(p, rotateOption);
+                Instance.Command_RotateBlock(player, rotateOption);
             });
         }
 
@@ -103,9 +122,9 @@ public static class MenuChat
 
         foreach (float rotateValueOption in rotateValues)
         {
-            RotateValuesMenu.AddMenuOption(rotateValueOption.ToString() + " Units", (p, option) =>
+            RotateValuesMenu.AddMenuOption(rotateValueOption.ToString() + " Units", (player, option) =>
             {
-                Instance.playerData[p.Slot].RotationValue = rotateValueOption;
+                Instance.playerData[player.Slot].RotationValue = rotateValueOption;
 
                 Instance.PrintToChat(player, $"Selected Rotation Value: {ChatColors.White}{rotateValueOption} Units");
 
@@ -116,30 +135,49 @@ public static class MenuChat
         MenuManager.OpenChatMenu(player, RotateValuesMenu);
     }
 
-    private static void SizeMenuOptions(CCSPlayerController player, ChatMenu openMainMenu, string[] sizeValues)
+    private static void SizeMenuOptions(CCSPlayerController player, string[] sizeValues)
     {
         ChatMenu SizeMenu = new($"Select Size ({Instance.playerData[player.Slot].BlockSize})");
 
         foreach (string sizeValue in sizeValues)
         {
-            SizeMenu.AddMenuOption(sizeValue, (p, option) =>
+            SizeMenu.AddMenuOption(sizeValue, (player, option) =>
             {
                 Instance.playerData[player.Slot].BlockSize = sizeValue;
 
-                Instance.PrintToChat(p, $"Selected Size: {ChatColors.White}{sizeValue}");
+                Instance.PrintToChat(player, $"Selected Size: {ChatColors.White}{sizeValue}");
 
-                SizeMenuOptions(player, openMainMenu, sizeValues);
+                SizeMenuOptions(player, sizeValues);
             });
         }
 
         MenuManager.OpenChatMenu(player, SizeMenu);
     }
 
+    private static void TeamMenuOptions(CCSPlayerController player, ChatMenu openMainMenu, string[] teamValues)
+    {
+        ChatMenu TeamMenu = new($"Select Team ({Instance.playerData[player.Slot].BlockTeam})");
+
+        foreach (string teamValue in teamValues)
+        {
+            TeamMenu.AddMenuOption(teamValue, (player, option) =>
+            {
+                Instance.playerData[player.Slot].BlockTeam = teamValue;
+
+                Instance.PrintToChat(player, $"Selected Team: {ChatColors.White}{teamValue}");
+
+                MenuManager.OpenChatMenu(player, openMainMenu);
+            });
+        }
+
+        MenuManager.OpenChatMenu(player, TeamMenu);
+    }
+
     private static void GridMenuOptions(CCSPlayerController player, float[] gridValues)
     {
         ChatMenu GridMenu = new($"Select Grid ({(Instance.playerData[player.Slot].Grid ? "ON" : "OFF")} - {Instance.playerData[player.Slot].GridValue})");
 
-        GridMenu.AddMenuOption($"Toggle Grid", (p, option) =>
+        GridMenu.AddMenuOption($"Toggle Grid", (player, option) =>
         {
             Instance.Command_Grid(player, "");
 
@@ -148,7 +186,7 @@ public static class MenuChat
 
         foreach (float gridValue in gridValues)
         {
-            GridMenu.AddMenuOption(gridValue.ToString() + " Units", (p, option) =>
+            GridMenu.AddMenuOption(gridValue.ToString() + " Units", (player, option) =>
             {
                 Instance.Command_Grid(player, gridValue.ToString());
 
@@ -171,7 +209,7 @@ public static class MenuChat
 
             TypeMenu.AddMenuOption(blockName, (player, menuOption) =>
             {
-                Instance.Command_SelectBlockType(player, blockName);
+                Instance.Command_BlockType(player, blockName);
 
                 TypeMenuOptions(player);
             });
@@ -187,7 +225,7 @@ public static class MenuChat
         {
             ColorMenu.AddMenuOption(color, (player, menuOption) =>
             {
-                Instance.Command_SelectBlockColor(player, color);
+                Instance.Command_BlockColor(player, color);
 
                 TypeMenuOptions(player);
             });
@@ -195,6 +233,28 @@ public static class MenuChat
 
         MenuManager.OpenChatMenu(player, ColorMenu);
     }
+
+    private static void TransparencyMenuOptions(CCSPlayerController player)
+    {
+        ChatMenu TransparencyMenu = new($"Select Transparency ({Instance.playerData[player.Slot].BlockTransparency})");
+
+        foreach (var value in AlphaMapping.Keys)
+        {
+            TransparencyMenu.AddMenuOption(value, (player, menuOption) =>
+            {
+                Instance.playerData[player.Slot].BlockTransparency = value;
+
+                Instance.PrintToChat(player, $"Selected Transparency: {ChatColors.White}{value}");
+
+                Instance.Command_TransparenyBlock(player, value);
+
+                TransparencyMenuOptions(player);
+            });
+        }
+
+        MenuManager.OpenChatMenu(player, TransparencyMenu);
+    }
+
 
     private static void SettingsOptions(CCSPlayerController player)
     {
@@ -227,7 +287,6 @@ public static class MenuChat
 
             SettingsOptions(player);
         });
-
 
         SettingsMenu.AddMenuOption("Clear Blocks", (player, menuOption) =>
         {

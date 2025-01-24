@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
+using System.Drawing;
 using System.Text.Json;
 
 public partial class Blocks
@@ -16,7 +17,9 @@ public partial class Blocks
             return;
         }
 
-        string selectedBlock = instance.playerData[player.Slot].BlockType;
+        var playerData = instance.playerData[player.Slot];
+
+        string selectedBlock = playerData.BlockType;
 
         if (string.IsNullOrEmpty(selectedBlock))
         {
@@ -24,54 +27,60 @@ public partial class Blocks
             return;
         }
 
-        string blockmodel = instance.GetModelFromSelectedBlock(player, instance.playerData[player.Slot].BlockSize);
+        string blockmodel = instance.GetModelFromSelectedBlock(player, playerData.BlockSize);
 
         try
         {
-            CreateBlock(selectedBlock, blockmodel, instance.playerData[player.Slot].BlockSize, RayTrace.Vector3toVector(hitPoint.Value), new QAngle(), instance.playerData[player.Slot].BlockColor);
+            CreateBlock(selectedBlock, blockmodel, playerData.BlockSize, RayTrace.Vector3toVector(hitPoint.Value), new QAngle(), playerData.BlockColor, playerData.BlockTransparency, playerData.BlockTeam);
 
             if (instance.Config.Sounds.Building.Enabled)
                 player.PlaySound(instance.Config.Sounds.Building.Create);
 
-            instance.PrintToChat(player, $"Create Block: Created type: {ChatColors.White}{instance.playerData[player.Slot].BlockType}{ChatColors.Grey}, size: {ChatColors.White}{instance.playerData[player.Slot].BlockSize}");
+            instance.PrintToChat(player, $"{ChatColors.Green}Created block");
         }
         catch
         {
-            instance.PrintToChat(player, $"Create Block: Failed to create block");
+            instance.PrintToChat(player, $"Create Block: {ChatColors.Red}Failed to create block");
             return;
         }
     }
 
     public static Dictionary<CBaseProp, BlockData> UsedBlocks = new Dictionary<CBaseProp, BlockData>();
-    public static void CreateBlock(string blockType, string blockModel, string blockSize, Vector blockPosition, QAngle blockRotation, string blockColor = "default")
+    public static void CreateBlock(string type, string model, string size, Vector position, QAngle rotation, string color = "None", string transparency = "0%", string team = "Both")
     {
         var block = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override");
 
         if (block != null && block.IsValid)
         {
-            block.Entity!.Name = "blockmaker_" + blockType;
+            block.Entity!.Name = "blockmaker_" + type;
             block.EnableUseOutput = true;
             block.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
             block.ShadowStrength = instance.Config.Settings.Blocks.DisableShadows ? 0.0f : 1.0f;
 
-            block.Render = Plugin.GetColor(blockColor);
+            var clr = Plugin.GetColor(color);
+            int alpha = Plugin.GetAlpha(transparency);
+            block.Render = Color.FromArgb(alpha, clr.R, clr.G, clr.B);
             Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
 
-            block.SetModel(blockModel);
+            block.SetModel(model);
             block.DispatchSpawn();
             block.AcceptInput("DisableMotion", block, block);
-            block.Teleport(new Vector(blockPosition.X, blockPosition.Y, blockPosition.Z), new QAngle(blockRotation.X, blockRotation.Y, blockRotation.Z));
+            block.AcceptInput("SetScale", block, block, Plugin.GetSize(size).ToString());
 
-            CreateTrigger(block);
+            var pos = new Vector(position.X, position.Y, position.Z);
+            var rot = new QAngle(rotation.X, rotation.Y, rotation.Z);
+            block.Teleport(pos, rot);
 
-            UsedBlocks[block] = new BlockData(block, blockType, blockModel, blockSize, blockColor);
+            CreateTrigger(block, size);
+
+            UsedBlocks[block] = new BlockData(block, type, model, size, color, transparency, team);
         }
 
         else instance.Logger.LogError("(CreateBlock) failed to create block");
     }
 
     public static Dictionary<CEntityInstance, CEntityInstance> BlockTriggers = new Dictionary<CEntityInstance, CEntityInstance>();
-    public static void CreateTrigger(CBaseEntity block)
+    public static void CreateTrigger(CBaseEntity block, string size)
     {
         var trigger = Utilities.CreateEntityByName<CTriggerMultiple>("trigger_multiple");
 
@@ -82,6 +91,7 @@ public partial class Blocks
             trigger.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
 
             trigger.DispatchSpawn();
+            trigger.AcceptInput("SetScale", trigger, trigger, Plugin.GetSize(size).ToString());
             trigger.Teleport(block.AbsOrigin, block.AbsRotation);
 
             block.AcceptInput("SetParent", trigger, block, "!activator");
@@ -109,7 +119,12 @@ public partial class Blocks
             }
 
             foreach (var blockData in blockDataList)
-                CreateBlock(blockData.Name, blockData.Model, blockData.Size, new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z), new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll), blockData.Color);
+            {
+                var position = new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z);
+                var rotation = new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll);
+
+                CreateBlock(blockData.Name, blockData.Model, blockData.Size, position, rotation, blockData.Color, blockData.Transparency, blockData.Team);
+            }
         }
         else
         {

@@ -85,11 +85,12 @@ public partial class Plugin
             {
                 return size.ToLower() switch
                 {
-                    "small" => block.Small,
-                    "medium" => block.Medium,
-                    "large" => block.Large,
                     "pole" => block.Pole,
-                    _ => block.Medium,
+                    "small" => block.Block,
+                    "normal" => block.Block,
+                    "large" => block.Block,
+                    "x-large" => block.Block,
+                    _ => block.Block,
                 };
             }
         }
@@ -118,9 +119,9 @@ public partial class Plugin
         return Server.MapName.ToString();
     }
 
-    public Color ParseColor(string colorValue)
+    public Color ParseColor(string input)
     {
-        var colorParts = colorValue.Split(',');
+        var colorParts = input.Split(',');
         if (colorParts.Length == 4 &&
             int.TryParse(colorParts[0], out var r) &&
             int.TryParse(colorParts[1], out var g) &&
@@ -134,25 +135,68 @@ public partial class Plugin
 
     public static readonly Dictionary<string, Color> ColorMapping = new(StringComparer.OrdinalIgnoreCase)
     {
-        { "default", Color.White },
-        { "red", Color.Red },
-        { "green", Color.Green },
-        { "blue", Color.Blue },
-        { "yellow", Color.Yellow },
-        { "orange", Color.Orange },
-        { "lime", Color.Lime },
-        { "aqua", Color.Aqua },
-        { "lightblue", Color.LightBlue },
-        { "darkblue", Color.DarkBlue },
-        { "purple", Color.Purple },
-        { "pink", Color.LightPink},
-        { "hotpink", Color.HotPink},
-        { "gray", Color.Gray },
-        { "silver", Color.Silver },
-        { "white", Color.White },
+        { "None", Color.White },
+        { "Red", Color.Red },
+        { "Green", Color.Green },
+        { "Blue", Color.Blue },
+        { "Yellow", Color.Yellow },
+        { "Orange", Color.Orange },
+        { "Lime", Color.Lime },
+        { "Aqua", Color.Aqua },
+        { "Lightblue", Color.LightBlue },
+        { "Darkblue", Color.DarkBlue },
+        { "Purple", Color.Purple },
+        { "Pink", Color.LightPink},
+        { "Hotpink", Color.HotPink},
+        { "Gray", Color.Gray },
+        { "Silver", Color.Silver },
     };
-    public static Color GetColor(string colorName)
+    public static Color GetColor(string input)
     {
-        return ColorMapping.TryGetValue(colorName.ToLower(), out var color) ? color : ColorMapping["default"];
+        return ColorMapping.TryGetValue(input.ToLower(), out var color) ? color : ColorMapping["None"];
+    }
+
+    public static readonly Dictionary<string, int> AlphaMapping = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "100%", 0 },
+        { "90%", 26 },
+        { "80%", 51 },
+        { "70%", 77 },
+        { "60%", 102 },
+        { "50%", 128 },
+        { "40%", 153 },
+        { "30%", 179 },
+        { "20%", 204 },
+        { "10%", 230 },
+        { "0%", 255 },
+    };
+    public static int GetAlpha(string input)
+    {
+        return AlphaMapping.TryGetValue(input.ToLower(), out var alpha) ? alpha : AlphaMapping["0%"];
+    }
+
+    public static readonly Dictionary<string, float> SizeMapping = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "small", 0.5f },
+        { "normal", 1f },
+        { "large", 2f },
+        { "x-large", 3f},
+    };
+    public static float GetSize(string input)
+    {
+        return SizeMapping.TryGetValue(input.ToLower(), out var size) ? size : SizeMapping["normal"];
+    }
+
+    public static CBeam DrawBeam(Vector startPos, Vector endPos, Color color, float width = 1)
+    {
+        var beam = Utilities.CreateEntityByName<CBeam>("beam")!;
+
+        beam.Render = color;
+        beam.Width = width;
+        beam.Teleport(startPos);
+        beam.EndPos.Add(endPos);
+        beam.DispatchSpawn();
+
+        return beam;
     }
 }

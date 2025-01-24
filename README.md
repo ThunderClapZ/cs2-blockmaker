@@ -27,6 +27,7 @@
 - [MultiAddonManager](https://github.com/Source2ZE/MultiAddonManager)
 - [BlockBuilder Assets](https://steamcommunity.com/sharedfiles/filedetails/?id=3299954847)
 - [ipsvn/ChaseMod](https://github.com/ipsvn/ChaseMod) (optional for gameplay)
+- [exkludera/cs2-teleports](https://github.com/exkludera/cs2-teleports) (optional for gameplay)
 
 <br>
 
@@ -61,7 +62,7 @@
       "DisableShadows": true,
       "Bhop": {
         "Duration": 0.25,
-        "Cooldown": 2
+        "Cooldown": 1.5
       },
       "Health": {
         "Cooldown": 0.5,
@@ -88,7 +89,7 @@
       },
       "Delay": {
         "Duration": 1,
-        "Cooldown": 2
+        "Cooldown": 1.5
       },
       "Damage": {
         "Cooldown": 0.5,
@@ -101,7 +102,10 @@
       "Speed": {
         "Duration": 3,
         "Cooldown": 60,
-        "Value": 1.5
+        "Value": 2
+      },
+      "SpeedBoost": {
+        "Value": 650
       },
       "Slap": {
         "Value": 2
@@ -112,6 +116,9 @@
       "Invincibility": {
         "Duration": 5,
         "Cooldown": 60
+      },
+      "Trampoline": {
+        "Value": 500
       },
       "Camouflage": {
         "ModelT": "characters/models/ctm_fbi/ctm_fbi.vmdl",
@@ -129,13 +136,16 @@
     },
     "Building": {
       "BuildMenu": "buildmenu,blockmenu,blocksmenu",
-      "SelectBlockType": "block, blocktype",
-      "CreateBlock": "create,createblock,place,placeblock",
+      "CreateBlock": "block,create,createblock,place,placeblock",
       "DeleteBlock": "delete,deleteblock,remove,removeblock",
       "RotateBlock": "rotate,rotateblock",
+      "BlockType": "type, blocktype",
+      "BlockColor": "color, blockcolor",
+      "CopyBlock": "copy, copyblock",
+      "ConvertBlock": "convert,convertblock,replace,replaceblock",
       "SaveBlocks": "save,saveblocks,saveblock",
       "Snapping": "snap,snapblock,blocksnap",
-      "Grid": "grid",
+      "Grid": "grid,togglegrid",
       "Noclip": "nc,noclip",
       "Godmode": "god,godmode",
       "TestBlock": "testblock"

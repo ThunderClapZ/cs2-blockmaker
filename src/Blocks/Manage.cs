@@ -25,7 +25,7 @@ public partial class Blocks
                 if (instance.Config.Sounds.Building.Enabled)
                     player.PlaySound(instance.Config.Sounds.Building.Delete);
 
-                instance.PrintToChat(player, $"Delete Block: Deleted type: {ChatColors.White}{block.Name}{ChatColors.Grey}, size: {ChatColors.White}{block.Size}");
+                instance.PrintToChat(player, $"{ChatColors.Green}Deleted block");
             }
         }
         else instance.PrintToChat(player, "Delete Block: Could not find a block");
@@ -108,7 +108,9 @@ public partial class Blocks
         if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
 
-        string blockmodel = instance.GetModelFromSelectedBlock(player, instance.playerData[player.Slot].BlockSize);
+        var playerData = instance.playerData[player.Slot];
+
+        string blockmodel = instance.GetModelFromSelectedBlock(player, playerData.BlockSize);
 
         if (UsedBlocks.TryGetValue(entity, out var block))
         {
@@ -125,10 +127,10 @@ public partial class Blocks
                 BlockTriggers.Remove(trigger);
             }
 
-            CreateBlock(instance.playerData[player.Slot].BlockType, blockmodel, instance.playerData[player.Slot].BlockSize, pos, rotation, instance.playerData[player.Slot].BlockColor);
+            CreateBlock(playerData.BlockType, blockmodel, playerData.BlockSize, pos, rotation, playerData.BlockColor, playerData.BlockTransparency, playerData.BlockTeam);
 
-            instance.PrintToChat(player, $"Convert Block: Converted to type: {ChatColors.White}{instance.playerData[player.Slot].BlockType}{ChatColors.Grey}, size: {ChatColors.White}{instance.playerData[player.Slot].BlockSize}");
+            instance.PrintToChat(player, $"{ChatColors.Green}Converted block");
         }
-        else instance.PrintToChat(player, "Convert Block: Could not find the block");
+        else instance.PrintToChat(player, $"Convert Block: {ChatColors.Red}Could not find the block");
     }
 }

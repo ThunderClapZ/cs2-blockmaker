@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Core.Translations;
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Block Maker";
-    public override string ModuleVersion => "0.0.8";
+    public override string ModuleVersion => "0.0.9";
     public override string ModuleAuthor => "exkludera";
 
     public static Plugin Instance { get; set; } = new();

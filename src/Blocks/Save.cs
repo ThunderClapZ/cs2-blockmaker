@@ -1,7 +1,6 @@
 ﻿using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using static VectorUtils;
 
 public partial class Blocks
 {
@@ -34,9 +33,11 @@ public partial class Blocks
                         Name = data.Name,
                         Model = data.Model,
                         Size = data.Size,
+                        Team = data.Team,
                         Color = data.Color,
-                        Position = new VectorDTO(prop.AbsOrigin!),
-                        Rotation = new QAngleDTO(prop.AbsRotation!)
+                        Transparency = data.Transparency,
+                        Position = new VectorUtils.VectorDTO(prop.AbsOrigin!),
+                        Rotation = new VectorUtils.QAngleDTO(prop.AbsRotation!)
                     });
                 }
             }

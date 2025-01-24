@@ -5,8 +5,10 @@ public class PlayerData
 {
     public bool Builder = false;
     public string BlockType = "Platform";
-    public string BlockSize = "Medium";
-    public string BlockColor = "default";
+    public string BlockSize = "Normal";
+    public string BlockTeam = "Both";
+    public string BlockColor = "None";
+    public string BlockTransparency = "0%";
     public bool Grid = false;
     public float GridValue = 32f;
     public float RotationValue = 30f;
@@ -25,6 +27,7 @@ public class BlocksCooldown
     public bool Frost = false;
     public bool Stealth = false;
     public bool Speed = false;
+    public bool SpeedBoost = false;
     public bool Flash = false;
     public bool Random = false;
     public bool Fire = false;
@@ -32,6 +35,7 @@ public class BlocksCooldown
     public bool Damage = false;
     public bool Health = false;
     public bool Slap = false;
+    public bool Trampoline = false;
 }
 
 public class BuildingData

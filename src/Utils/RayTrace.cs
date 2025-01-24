@@ -23,22 +23,6 @@ public static class RayTrace
         GameTrace* pGameTrace
     );
 
-    public static void DrawBeam(CounterStrikeSharp.API.Modules.Utils.Vector startPos, CounterStrikeSharp.API.Modules.Utils.Vector endPos, Color color)
-    {
-        var beam = Utilities.CreateEntityByName<CBeam>("beam");
-        if (beam == null)
-        {
-            Console.WriteLine("Failed to create beam entity.");
-            return;
-        }
-
-        beam.Render = color;
-        beam.Width = 1.5f;
-        beam.Teleport(startPos, new CounterStrikeSharp.API.Modules.Utils.QAngle(), new CounterStrikeSharp.API.Modules.Utils.Vector());
-        beam.EndPos.Add(endPos);
-        beam.DispatchSpawn();
-    }
-
     private static TraceShapeDelegate _traceShape = null!;
 
     private static nint TraceFunc = NativeAPI.FindSignature(Addresses.ServerPath, RuntimeInformation.IsOSPlatform(OSPlatform.Linux)

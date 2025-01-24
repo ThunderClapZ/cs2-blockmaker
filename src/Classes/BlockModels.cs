@@ -1,9 +1,7 @@
 ﻿public class BlockSizes
 {
     public string Title { get; set; } = "";
-    public string Small { get; set; } = "";
-    public string Medium { get; set; } = "";
-    public string Large { get; set; } = "";
+    public string Block { get; set; } = "";
     public string Pole { get; set; } = "";
 }
 
@@ -25,15 +23,15 @@ public class BlockModels
     public BlockAWP AWP { get; set; } = new BlockAWP();
     public BlockStealth Stealth { get; set; } = new BlockStealth();
     public BlockSpeed Speed { get; set; } = new BlockSpeed();
+    public BlockSpeedBoost SpeedBoost { get; set; } = new BlockSpeedBoost();
     public BlockSlap Slap { get; set; } = new BlockSlap();
     public BlockRandom Random { get; set; } = new BlockRandom();
     public BlockNuke Nuke { get; set; } = new BlockNuke();
     public BlockInvincibility Invincibility { get; set; } = new BlockInvincibility();
     public BlockIce Ice { get; set; } = new BlockIce();
     public BlockCamouflage Camouflage { get; set; } = new BlockCamouflage();
-    //public BlockNoFallDmg NoFallDmg { get; set; } = new BlockNoFallDmg();
-    //public BlockSpeedBoost SpeedBoost { get; set; } = new BlockSpeedBoost();
-    //public BlockTrampoline Trampoline { get; set; } = new BlockTrampoline();
+    public BlockTrampoline Trampoline { get; set; } = new BlockTrampoline();
+    public BlockNoFallDmg NoFallDmg { get; set; } = new BlockNoFallDmg();
     //public BlockNoSlowDown NoSlowDown { get; set; } = new BlockNoSlowDown();
     //public BlockTBarrier TBarrier { get; set; } = new BlockTBarrier();
     //public BlockCTBarrier CTBarrier { get; set; } = new BlockCTBarrier();
@@ -46,9 +44,7 @@ public class BlockPlatform : BlockSizes
     public BlockPlatform()
     {
         Title = "Platform";
-        Small = "models/blockbuilder/small_platform.vmdl";
-        Medium = "models/blockbuilder/platform.vmdl";
-        Large = "models/blockbuilder/large_platform.vmdl";
+        Block = "models/blockbuilder/platform.vmdl";
         Pole = "models/blockbuilder/pole_platform.vmdl";
     }
 }
@@ -58,9 +54,7 @@ public class BlockBhop : BlockSizes
     public BlockBhop()
     {
         Title = "Bhop";
-        Small = "models/blockbuilder/small_bhop.vmdl";
-        Medium = "models/blockbuilder/bhop.vmdl";
-        Large = "models/blockbuilder/large_bhop.vmdl";
+        Block = "models/blockbuilder/bhop.vmdl";
         Pole = "models/blockbuilder/pole_bhop.vmdl";
     }
 }
@@ -70,9 +64,7 @@ public class BlockNoFallDmg : BlockSizes
     public BlockNoFallDmg()
     {
         Title = "NoFallDmg";
-        Small = "models/blockbuilder/small_nofalldmg.vmdl";
-        Medium = "models/blockbuilder/nofalldmg.vmdl";
-        Large = "models/blockbuilder/large_nofalldmg.vmdl";
+        Block = "models/blockbuilder/nofalldmg.vmdl";
         Pole = "models/blockbuilder/pole_nofalldmg.vmdl";
     }
 }
@@ -82,9 +74,7 @@ public class BlockHoney : BlockSizes
     public BlockHoney()
     {
         Title = "Honey";
-        Small = "models/blockbuilder/small_honey.vmdl";
-        Medium = "models/blockbuilder/honey.vmdl";
-        Large = "models/blockbuilder/large_honey.vmdl";
+        Block = "models/blockbuilder/honey.vmdl";
         Pole = "models/blockbuilder/pole_honey.vmdl";
     }
 }
@@ -94,9 +84,7 @@ public class BlockHealth : BlockSizes
     public BlockHealth()
     {
         Title = "Health";
-        Small = "models/blockbuilder/small_health.vmdl";
-        Medium = "models/blockbuilder/health.vmdl";
-        Large = "models/blockbuilder/large_health.vmdl";
+        Block = "models/blockbuilder/health.vmdl";
         Pole = "models/blockbuilder/pole_health.vmdl";
     }
 }
@@ -106,9 +94,7 @@ public class BlockGrenade : BlockSizes
     public BlockGrenade()
     {
         Title = "Grenade";
-        Small = "models/blockbuilder/small_he.vmdl";
-        Medium = "models/blockbuilder/he.vmdl";
-        Large = "models/blockbuilder/large_he.vmdl";
+        Block = "models/blockbuilder/he.vmdl";
         Pole = "models/blockbuilder/pole_he.vmdl";
     }
 }
@@ -118,9 +104,7 @@ public class BlockGravity : BlockSizes
     public BlockGravity()
     {
         Title = "Gravity";
-        Small = "models/blockbuilder/small_gravity.vmdl";
-        Medium = "models/blockbuilder/gravity.vmdl";
-        Large = "models/blockbuilder/large_gravity.vmdl";
+        Block = "models/blockbuilder/gravity.vmdl";
         Pole = "models/blockbuilder/pole_gravity.vmdl";
     }
 }
@@ -130,9 +114,7 @@ public class BlockGlass : BlockSizes
     public BlockGlass()
     {
         Title = "Glass";
-        Small = "models/blockbuilder/small_glass.vmdl";
-        Medium = "models/blockbuilder/glass.vmdl";
-        Large = "models/blockbuilder/large_glass.vmdl";
+        Block = "models/blockbuilder/glass.vmdl";
         Pole = "models/blockbuilder/pole_glass.vmdl";
     }
 }
@@ -142,9 +124,7 @@ public class BlockFrost : BlockSizes
     public BlockFrost()
     {
         Title = "Frost";
-        Small = "models/blockbuilder/small_frost.vmdl";
-        Medium = "models/blockbuilder/frost.vmdl";
-        Large = "models/blockbuilder/large_frost.vmdl";
+        Block = "models/blockbuilder/frost.vmdl";
         Pole = "models/blockbuilder/pole_frost.vmdl";
     }
 }
@@ -154,9 +134,7 @@ public class BlockFlash : BlockSizes
     public BlockFlash()
     {
         Title = "Flash";
-        Small = "models/blockbuilder/small_flash.vmdl";
-        Medium = "models/blockbuilder/flash.vmdl";
-        Large = "models/blockbuilder/large_flash.vmdl";
+        Block = "models/blockbuilder/flash.vmdl";
         Pole = "models/blockbuilder/pole_flash.vmdl";
     }
 }
@@ -166,9 +144,7 @@ public class BlockFire : BlockSizes
     public BlockFire()
     {
         Title = "Fire";
-        Small = "models/blockbuilder/small_fire.vmdl";
-        Medium = "models/blockbuilder/fire.vmdl";
-        Large = "models/blockbuilder/large_fire.vmdl";
+        Block = "models/blockbuilder/fire.vmdl";
         Pole = "models/blockbuilder/pole_fire.vmdl";
     }
 }
@@ -178,9 +154,7 @@ public class BlockDelay : BlockSizes
     public BlockDelay()
     {
         Title = "Delay";
-        Small = "models/blockbuilder/small_delay.vmdl";
-        Medium = "models/blockbuilder/delay.vmdl";
-        Large = "models/blockbuilder/large_delay.vmdl";
+        Block = "models/blockbuilder/delay.vmdl";
         Pole = "models/blockbuilder/pole_delay.vmdl";
     }
 }
@@ -190,9 +164,7 @@ public class BlockDeath : BlockSizes
     public BlockDeath()
     {
         Title = "Death";
-        Small = "models/blockbuilder/small_death.vmdl";
-        Medium = "models/blockbuilder/death.vmdl";
-        Large = "models/blockbuilder/large_death.vmdl";
+        Block = "models/blockbuilder/death.vmdl";
         Pole = "models/blockbuilder/pole_death.vmdl";
     }
 }
@@ -202,9 +174,7 @@ public class BlockDamage : BlockSizes
     public BlockDamage()
     {
         Title = "Damage";
-        Small = "models/blockbuilder/small_damage.vmdl";
-        Medium = "models/blockbuilder/damage.vmdl";
-        Large = "models/blockbuilder/large_damage.vmdl";
+        Block = "models/blockbuilder/damage.vmdl";
         Pole = "models/blockbuilder/pole_damage.vmdl";
     }
 }
@@ -214,9 +184,7 @@ public class BlockDeagle : BlockSizes
     public BlockDeagle()
     {
         Title = "Deagle";
-        Small = "models/blockbuilder/small_deagle.vmdl";
-        Medium = "models/blockbuilder/deagle.vmdl";
-        Large = "models/blockbuilder/large_deagle.vmdl";
+        Block = "models/blockbuilder/deagle.vmdl";
         Pole = "models/blockbuilder/pole_deagle.vmdl";
     }
 }
@@ -226,9 +194,7 @@ public class BlockAWP : BlockSizes
     public BlockAWP()
     {
         Title = "AWP";
-        Small = "models/blockbuilder/small_awp.vmdl";
-        Medium = "models/blockbuilder/awp.vmdl";
-        Large = "models/blockbuilder/large_awp.vmdl";
+        Block = "models/blockbuilder/awp.vmdl";
         Pole = "models/blockbuilder/pole_awp.vmdl";
     }
 }
@@ -238,9 +204,7 @@ public class BlockTrampoline : BlockSizes
     public BlockTrampoline()
     {
         Title = "Trampoline";
-        Small = "models/blockbuilder/small_tramp.vmdl";
-        Medium = "models/blockbuilder/tramp.vmdl";
-        Large = "models/blockbuilder/large_tramp.vmdl";
+        Block = "models/blockbuilder/tramp.vmdl";
         Pole = "models/blockbuilder/pole_tramp.vmdl";
     }
 }
@@ -250,9 +214,7 @@ public class BlockStealth : BlockSizes
     public BlockStealth()
     {
         Title = "Stealth";
-        Small = "models/blockbuilder/small_stealth.vmdl";
-        Medium = "models/blockbuilder/stealth.vmdl";
-        Large = "models/blockbuilder/large_stealth.vmdl";
+        Block = "models/blockbuilder/stealth.vmdl";
         Pole = "models/blockbuilder/pole_stealth.vmdl";
     }
 }
@@ -262,9 +224,7 @@ public class BlockSpeedBoost : BlockSizes
     public BlockSpeedBoost()
     {
         Title = "SpeedBoost";
-        Small = "models/blockbuilder/small_speedboost.vmdl";
-        Medium = "models/blockbuilder/speedboost.vmdl";
-        Large = "models/blockbuilder/large_speedboost.vmdl";
+        Block = "models/blockbuilder/speedboost.vmdl";
         Pole = "models/blockbuilder/pole_speedboost.vmdl";
     }
 }
@@ -274,9 +234,7 @@ public class BlockSpeed : BlockSizes
     public BlockSpeed()
     {
         Title = "Speed";
-        Small = "models/blockbuilder/small_speed.vmdl";
-        Medium = "models/blockbuilder/speed.vmdl";
-        Large = "models/blockbuilder/large_speed.vmdl";
+        Block = "models/blockbuilder/speed.vmdl";
         Pole = "models/blockbuilder/pole_speed.vmdl";
     }
 }
@@ -286,9 +244,7 @@ public class BlockTBarrier : BlockSizes
     public BlockTBarrier()
     {
         Title = "T-Barrier";
-        Small = "models/blockbuilder/small_tbarrier.vmdl";
-        Medium = "models/blockbuilder/tbarrier.vmdl";
-        Large = "models/blockbuilder/large_tbarrier.vmdl";
+        Block = "models/blockbuilder/tbarrier.vmdl";
         Pole = "models/blockbuilder/pole_tbarrier.vmdl";
     }
 }
@@ -298,9 +254,7 @@ public class BlockCTBarrier : BlockSizes
     public BlockCTBarrier()
     {
         Title = "CT-Barrier";
-        Small = "models/blockbuilder/small_ctbarrier.vmdl";
-        Medium = "models/blockbuilder/ctbarrier.vmdl";
-        Large = "models/blockbuilder/large_ctbarrier.vmdl";
+        Block = "models/blockbuilder/ctbarrier.vmdl";
         Pole = "models/blockbuilder/pole_ctbarrier.vmdl";
     }
 }
@@ -310,9 +264,7 @@ public class BlockSlap : BlockSizes
     public BlockSlap()
     {
         Title = "Slap";
-        Small = "models/blockbuilder/small_slap.vmdl";
-        Medium = "models/blockbuilder/slap.vmdl";
-        Large = "models/blockbuilder/large_slap.vmdl";
+        Block = "models/blockbuilder/slap.vmdl";
         Pole = "models/blockbuilder/pole_slap.vmdl";
     }
 }
@@ -322,9 +274,7 @@ public class BlockRandom : BlockSizes
     public BlockRandom()
     {
         Title = "Random";
-        Small = "models/blockbuilder/small_random.vmdl";
-        Medium = "models/blockbuilder/random.vmdl";
-        Large = "models/blockbuilder/large_random.vmdl";
+        Block = "models/blockbuilder/random.vmdl";
         Pole = "models/blockbuilder/pole_random.vmdl";
     }
 }
@@ -334,9 +284,7 @@ public class BlockNuke : BlockSizes
     public BlockNuke()
     {
         Title = "Nuke";
-        Small = "models/blockbuilder/small_nuke.vmdl";
-        Medium = "models/blockbuilder/nuke.vmdl";
-        Large = "models/blockbuilder/large_nuke.vmdl";
+        Block = "models/blockbuilder/nuke.vmdl";
         Pole = "models/blockbuilder/pole_nuke.vmdl";
     }
 }
@@ -346,9 +294,7 @@ public class BlockNoSlowDown : BlockSizes
     public BlockNoSlowDown()
     {
         Title = "NoSlowDown";
-        Small = "models/blockbuilder/small_noslowdown.vmdl";
-        Medium = "models/blockbuilder/noslowdown.vmdl";
-        Large = "models/blockbuilder/large_noslowdown.vmdl";
+        Block = "models/blockbuilder/noslowdown.vmdl";
         Pole = "models/blockbuilder/pole_noslowdown.vmdl";
     }
 }
@@ -358,9 +304,7 @@ public class BlockInvincibility : BlockSizes
     public BlockInvincibility()
     {
         Title = "Invincibility";
-        Small = "models/blockbuilder/small_invincibility.vmdl";
-        Medium = "models/blockbuilder/invincibility.vmdl";
-        Large = "models/blockbuilder/large_invincibility.vmdl";
+        Block = "models/blockbuilder/invincibility.vmdl";
         Pole = "models/blockbuilder/pole_invincibility.vmdl";
     }
 }
@@ -370,9 +314,7 @@ public class BlockIce : BlockSizes
     public BlockIce()
     {
         Title = "Ice";
-        Small = "models/blockbuilder/small_ice.vmdl";
-        Medium = "models/blockbuilder/ice.vmdl";
-        Large = "models/blockbuilder/large_ice.vmdl";
+        Block = "models/blockbuilder/ice.vmdl";
         Pole = "models/blockbuilder/pole_ice.vmdl";
     }
 }
@@ -382,9 +324,7 @@ public class BlockCamouflage : BlockSizes
     public BlockCamouflage()
     {
         Title = "Camouflage";
-        Small = "models/blockbuilder/small_camouflage.vmdl";
-        Medium = "models/blockbuilder/camouflage.vmdl";
-        Large = "models/blockbuilder/large_camouflage.vmdl";
+        Block = "models/blockbuilder/camouflage.vmdl";
         Pole = "models/blockbuilder/pole_camouflage.vmdl";
     }
 }
