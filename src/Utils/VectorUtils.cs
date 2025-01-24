@@ -151,54 +151,49 @@ public static class VectorUtils
         return (endPos, endRotation);
     }
 
-    public static (Vector Position, QAngle Rotation) SnapToClosestBlock(Vector position, QAngle rotation, CBaseProp closestBlock, float scale = 1)
+    public static (Vector Position, QAngle Rotation) SnapToClosestBlock(Vector position, QAngle rotation, CBaseProp block, float scale = 1)
     {
         Vector newBlockPosition = position;
-        QAngle newBlockRotation = closestBlock.AbsRotation!;
+        QAngle newBlockRotation = rotation;
 
-        Vector blockSizeMax = GetBlockSizeMax(closestBlock) * scale;
-        Vector blockOrigin = closestBlock.AbsOrigin!;
-        QAngle blockRotation = closestBlock.AbsRotation!;
+        Vector BlockSizeMax = GetBlockSizeMax(block) * scale;
+
+        Vector BlockPosition = block.AbsOrigin!;
+        QAngle BlockRotation = block.AbsRotation!;
 
         Vector[] faceOffsets = new Vector[]
         {
-            new Vector(-blockSizeMax.X, 0, 0), // -X face
-            new Vector(blockSizeMax.X, 0, 0),  // +X face
-            new Vector(0, -blockSizeMax.Y, 0), // -Y face
-            new Vector(0, blockSizeMax.Y, 0),  // +Y face
-            new Vector(0, 0, -blockSizeMax.Z), // -Z face
-            new Vector(0, 0, blockSizeMax.Z)   // +Z face
+            new Vector(-BlockSizeMax.X, 0, 0), // -X face
+            new Vector(BlockSizeMax.X, 0, 0),  // +X face
+            new Vector(0, -BlockSizeMax.Y, 0), // -Y face
+            new Vector(0, BlockSizeMax.Y, 0),  // +Y face
+            new Vector(0, 0, -BlockSizeMax.Z), // -Z face
+            new Vector(0, 0, BlockSizeMax.Z)   // +Z face
         };
 
         float closestDistance = float.MaxValue;
 
         for (int i = 0; i < faceOffsets.Length; ++i)
         {
-            Vector testPos = blockOrigin + faceOffsets[i];
+            Vector testPos = BlockPosition + faceOffsets[i];
 
             float distance = CalculateDistance(position, testPos);
 
             if (distance < closestDistance)
             {
                 closestDistance = distance;
+
                 newBlockPosition = testPos;
 
-                switch (i)
+                newBlockRotation = BlockRotation;
+
+                if (BlockRotation.Z != 0)
                 {
-                    case 0: // -X face
-                        break;
-                    case 1: // +X facee
-                        break;
-                    case 2: // -Y face
-                        break;
-                    case 3: // +Y face
-                        break;
-                    case 4: // -Z face
-                        newBlockPosition.Z = testPos.Z - blockSizeMax.X;
-                        break;
-                    case 5: // +Z face
-                        newBlockPosition.Z = testPos.Z + blockSizeMax.X;
-                        break;
+                    if (i == 4)
+                        newBlockPosition.Z = testPos.Z + BlockSizeMax.X;
+
+                    if (i == 5)
+                        newBlockPosition.Z = testPos.Z - BlockSizeMax.X;
                 }
             }
         }
