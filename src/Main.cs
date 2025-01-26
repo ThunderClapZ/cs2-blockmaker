@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Core.Translations;
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Block Maker";
-    public override string ModuleVersion => "0.0.9";
+    public override string ModuleVersion => "0.1.0";
     public override string ModuleAuthor => "exkludera";
 
     public static Plugin Instance { get; set; } = new();
@@ -28,13 +28,13 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (hotReload)
         {
-            Blocks.savedPath = Path.Combine(blocksFolder, $"{GetMapName()}.json");
+            Blocks.savedPath = Path.Combine(blocksFolder, $"{Utils.GetMapName()}.json");
 
             foreach (var player in Utilities.GetPlayers().Where(p => !p.IsBot && !playerData.ContainsKey(p.Slot)))
             {
                 playerData[player.Slot] = new();
 
-                if (HasPermission(player))
+                if (Utils.HasPermission(player))
                     playerData[player.Slot].Builder = true;
             }
 
@@ -46,9 +46,13 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
     public override void Unload(bool hotReload)
     {
-        Blocks.Clear();
         UnregisterEvents();
+
         RemoveCommands();
+
+        Blocks.Clear();
+
+        Menu.Unload();
     }
 
     public Config Config { get; set; } = new Config();

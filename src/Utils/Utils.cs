@@ -6,13 +6,16 @@ using Microsoft.Extensions.Logging;
 using System.Drawing;
 using System.Text.Json;
 
-public partial class Plugin
+public static class Utils
 {
-    public bool BuildMode(CCSPlayerController player)
+    private static Plugin instance = Plugin.Instance;
+    private static Config config = instance.Config;
+
+    public static bool BuildMode(CCSPlayerController player)
     {
-        if (buildMode && playerData[player.Slot].Builder)
+        if (instance.buildMode && instance.playerData[player.Slot].Builder)
             return true;
-        else if (!buildMode && playerData[player.Slot].Builder)
+        else if (!instance.buildMode && instance.playerData[player.Slot].Builder || HasPermission(player))
         {
             PrintToChat(player, $"{ChatColors.Red}Build Mode is disabled");
             return false;
@@ -24,32 +27,37 @@ public partial class Plugin
         }
     }
 
-    public bool HasPermission(CCSPlayerController player)
+    public static bool HasPermission(CCSPlayerController player)
     {
-        return string.IsNullOrEmpty(Config.Commands.Admin.Permission) || AdminManager.PlayerHasPermissions(player, Config.Commands.Admin.Permission);
+        return string.IsNullOrEmpty(config.Commands.Admin.Permission) || AdminManager.PlayerHasPermissions(player, config.Commands.Admin.Permission);
     }
 
-    public void PrintToChat(CCSPlayerController player, string message)
+    public static void Log(string message)
     {
-        player.PrintToChat($"{Config.Settings.Main.Prefix} {ChatColors.Grey}{message}");
+        instance.Logger.LogInformation($"[BlockMaker] {message}");
     }
 
-    public void PrintToChatAll(string message)
+    public static void PrintToChat(CCSPlayerController player, string message)
     {
-        Server.PrintToChatAll($"{Config.Settings.Main.Prefix} {ChatColors.Grey}{message}");
+        player.PrintToChat($"{config.Settings.Main.Prefix} {ChatColors.Grey}{message}");
     }
 
-    public void PlaySoundAll(string sound)
+    public static void PrintToChatAll(string message)
+    {
+        Server.PrintToChatAll($"{config.Settings.Main.Prefix} {ChatColors.Grey}{message}");
+    }
+
+    public static void PlaySoundAll(string sound)
     {
         foreach (var player in Utilities.GetPlayers().Where(p => !p.IsBot))
             player.PlaySound(sound);
     }
 
-    public bool IsValidJson(string filePath)
+    public static bool IsValidJson(string filePath)
     {
         if (!File.Exists(filePath))
         {
-            Logger.LogInformation($"JSON Check: file does not exist ({filePath})");
+            Log($"JSON Check: file does not exist ({filePath})");
             return false;
         }
 
@@ -57,7 +65,7 @@ public partial class Plugin
 
         if (string.IsNullOrWhiteSpace(fileContent))
         {
-            Logger.LogError($"JSON Check: file is empty ({filePath})");
+            Log($"JSON Check: file is empty ({filePath})");
             return false;
         }
 
@@ -68,18 +76,22 @@ public partial class Plugin
         }
         catch (JsonException)
         {
-            Logger.LogError($"JSON Check: invalid content ({filePath})");
+            Log($"JSON Check: invalid content ({filePath})");
             return false;
         }
     }
 
-    public string GetModelFromSelectedBlock(CCSPlayerController player, string size)
+    public static string GetModelFromSelectedBlock(CCSPlayerController player, string size)
     {
-        var blockType = playerData[player.Slot].BlockType;
+        var blockType = instance.playerData[player.Slot].BlockType;
+
+        int hyphenIndex = blockType.IndexOf('.');
+        if (hyphenIndex >= 0)
+            blockType = blockType.Substring(0, hyphenIndex);
 
         foreach (var property in typeof(BlockModels).GetProperties())
         {
-            var block = (BlockSizes)property.GetValue(BlockModels)!;
+            var block = (BlockSizes)property.GetValue(Plugin.BlockModels)!;
 
             if (block.Title.Equals(blockType, StringComparison.OrdinalIgnoreCase))
             {
@@ -98,7 +110,7 @@ public partial class Plugin
         return string.Empty;
     }
 
-    public int GetPlacedBlocksCount()
+    public static int GetPlacedBlocksCount()
     {
         int blockCount = 0;
 
@@ -114,12 +126,12 @@ public partial class Plugin
         return blockCount;
     }
 
-    public string GetMapName()
+    public static string GetMapName()
     {
         return Server.MapName.ToString();
     }
 
-    public Color ParseColor(string input)
+    public static Color ParseColor(string input)
     {
         var colorParts = input.Split(',');
         if (colorParts.Length == 4 &&

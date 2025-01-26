@@ -1,7 +1,5 @@
 ﻿using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Modules.Memory;
-using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
 

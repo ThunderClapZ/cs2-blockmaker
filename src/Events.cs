@@ -1,19 +1,18 @@
-﻿using System.Runtime.InteropServices;
-using CounterStrikeSharp.API;
+﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
-using static CounterStrikeSharp.API.Core.Listeners;
+using System.Runtime.InteropServices;
 
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
-    public void RegisterEvents()
+    void RegisterEvents()
     {
-        RegisterListener<OnTick>(Blocks.OnTick);
-        RegisterListener<OnMapStart>(OnMapStart);
-        RegisterListener<OnServerPrecacheResources>(OnServerPrecacheResources);
+        RegisterListener<Listeners.OnTick>(Blocks.OnTick);
+        RegisterListener<Listeners.OnMapStart>(OnMapStart);
+        RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
 
         RegisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull);
         RegisterEventHandler<EventRoundStart>(EventRoundStart);
@@ -26,11 +25,11 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Hook(OnTakeDamage, HookMode.Pre);
     }
 
-    public void UnregisterEvents()
+    void UnregisterEvents()
     {
-        RemoveListener<OnTick>(Blocks.OnTick);
-        RemoveListener<OnMapStart>(OnMapStart);
-        RemoveListener<OnServerPrecacheResources>(OnServerPrecacheResources);
+        RemoveListener<Listeners.OnTick>(Blocks.OnTick);
+        RemoveListener<Listeners.OnMapStart>(OnMapStart);
+        RemoveListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
 
         DeregisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull);
         DeregisterEventHandler<EventRoundStart>(EventRoundStart);
@@ -43,7 +42,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Unhook(OnTakeDamage, HookMode.Pre);
     }
 
-    private HookResult OnStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
+    HookResult OnStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
         if (activator.DesignerName != "player") return HookResult.Continue;
 
@@ -56,36 +55,36 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (player.IsBot) return HookResult.Continue;
 
-        if (Blocks.BlockTriggers.TryGetValue(caller, out CEntityInstance? block))
+        if (Blocks.BlockTriggers.TryGetValue(caller, out CEntityInstance? blockEntity))
         {
-            var blockData = Blocks.UsedBlocks[block.As<CBaseProp>()];
+            var block = Blocks.BlocksEntities[blockEntity.As<CBaseEntity>()];
 
-            if (blockData.Team == "T" && player.Team == CsTeam.Terrorist ||
-                blockData.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
-                blockData.Team == "Both")
+            if (block.Team == "T" && player.Team == CsTeam.Terrorist ||
+                block.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
+                block.Team == "Both")
             {
-                Blocks.Actions(player, block.As<CBaseEntity>());
+                Blocks.Actions(player, block.Entity);
             }
         }
 
         return HookResult.Continue;
     }
 
-    public void OnServerPrecacheResources(ResourceManifest manifest)
+    void OnServerPrecacheResources(ResourceManifest manifest)
     {
         var blockProperties = typeof(BlockModels).GetProperties();
 
         foreach (var property in blockProperties)
         {
-            var block = (BlockSizes)property.GetValue(BlockModels)!;
+            var models = (BlockSizes)property.GetValue(BlockModels)!;
 
-            if (block != null)
+            if (models != null)
             {
-                if (!string.IsNullOrEmpty(block.Block))
-                    manifest.AddResource(block.Block);
+                if (!string.IsNullOrEmpty(models.Block))
+                    manifest.AddResource(models.Block);
 
-                if (!string.IsNullOrEmpty(block.Pole))
-                    manifest.AddResource(block.Pole);
+                if (!string.IsNullOrEmpty(models.Pole))
+                    manifest.AddResource(models.Pole);
             }
         }
 
@@ -94,14 +93,14 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         manifest.AddResource("particles/burning_fx/env_fire_medium.vpcf");
     }
 
-    public void OnMapStart(string mapname)
+    void OnMapStart(string mapname)
     {
-        Blocks.savedPath = Path.Combine(blocksFolder, $"{GetMapName()}.json");
+        Blocks.savedPath = Path.Combine(blocksFolder, $"{Utils.GetMapName()}.json");
 
         if (Config.Settings.Building.AutoSave)
         {
             AddTimer(Config.Settings.Building.SaveTime, () => {
-                PrintToChatAll("Auto-Saving Blocks");
+                Utils.PrintToChatAll("Auto-Saving Blocks");
                 Blocks.Save();
             }, TimerFlags.STOP_ON_MAPCHANGE);
         }
@@ -130,7 +129,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (buildMode)
         {
-            if (HasPermission(player))
+            if (Utils.HasPermission(player))
                 playerData[player.Slot].Builder = true;
         }
 
@@ -141,12 +140,14 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     {
         Timers.Clear();
 
-        Blocks.UsedBlocks.Clear();
         Blocks.PlayerHolds.Clear();
-        Blocks.blocksCooldown.Clear();
-        Blocks.Timers.Clear();
+        Blocks.PlayerCooldowns.Clear();
+        Blocks.CooldownsTimers.Clear();
+        Blocks.BlocksEntities.Clear();
 
         Blocks.Spawn();
+
+        Blocks.nuked = false;
 
         return HookResult.Continue;
     }
@@ -169,12 +170,12 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         if (buildMode)
             AddTimer(1.0f, player!.Respawn);
 
-        if (Blocks.Timers.TryGetValue(player!, out var playerTimers))
+        if (Blocks.CooldownsTimers.TryGetValue(player!, out var playerTimers))
         {
             foreach (var timer in playerTimers)
                 timer.Kill();
 
-            Blocks.Timers[player!].Clear();
+            Blocks.CooldownsTimers[player!].Clear();
         }
 
         return HookResult.Continue;
@@ -191,16 +192,20 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         if (entity.DesignerName == "player" && info.Attacker.Value!.DesignerName == "player")
             return HookResult.Continue;
 
-        foreach(var block in Blocks.UsedBlocks.Where(b => b.Value.Name == BlockModels.Trampoline.Title || b.Value.Name == BlockModels.NoFallDmg.Title))
+        foreach(var block in Blocks.BlocksEntities.Where(b =>
+            b.Value.Name == BlockModels.NoFallDmg.Title ||
+            b.Value.Name == BlockModels.Trampoline.Title)
+        )
         {
-            var entityPos = entity.As<CCSPlayerPawn>().AbsOrigin!;
-            var blockPos = block.Key.AbsOrigin!;
+            var player = entity.As<CCSPlayerPawn>();
 
-            var blockScale = GetSize(block.Value.Size);
-            var scaledMaxs = VectorUtils.GetBlockSizeMax(block.Key) * blockScale;
-            var scaledMins = -scaledMaxs;
+            var playerPos = new Vector(player.AbsOrigin!.X, player.AbsOrigin.Y, player.AbsOrigin.Z);
+            var blockPos = new Vector(block.Key.AbsOrigin!.X, block.Key.AbsOrigin.Y, block.Key.AbsOrigin.Z);
 
-            if (VectorUtils.IsWithinBounds(entityPos, blockPos, scaledMins, scaledMaxs))
+            var playerMaxs = VectorUtils.GetBlockSizeMax(player);
+            var blockMaxs = VectorUtils.GetBlockSizeMax(block.Key) * Utils.GetSize(block.Value.Size);
+
+            if (VectorUtils.IsWithinBounds(blockPos, playerPos, blockMaxs, playerMaxs))
                 return HookResult.Handled;
         }
 

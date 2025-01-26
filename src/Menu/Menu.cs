@@ -94,7 +94,7 @@ public static class Menu
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_ONLY)]
     public static void Command_OpenMenus(CCSPlayerController player)
     {
-        if (!Instance.BuildMode(player))
+        if (!Utils.BuildMode(player))
             return;
 
         switch (Instance.Config.Settings.Main.MenuType.ToLower())

@@ -9,13 +9,11 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
     public static BlockModels BlockModels { get; set; } = new BlockModels();
 
-    public void Files()
+    private void Files()
     {
-        // saved map blocks folder
         blocksFolder = Path.Combine(ModuleDirectory, "blocks");
         Directory.CreateDirectory(blocksFolder);
 
-        // block models file
         modelsPath = Path.Combine(ModuleDirectory, "models.json");
 
         if (!string.IsNullOrEmpty(modelsPath))
@@ -39,7 +37,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         LoadBlocksModels();
     }
 
-    public void LoadBlocksModels()
+    private void LoadBlocksModels()
     {
         if (!string.IsNullOrEmpty(modelsPath) && File.Exists(modelsPath))
         {

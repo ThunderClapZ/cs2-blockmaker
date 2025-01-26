@@ -13,7 +13,12 @@ public partial class Blocks
         if (!instance.buildMode)
             return;
 
-        foreach (var player in Utilities.GetPlayers().Where(p => p.IsLegal() && p.IsAlive() && instance.playerData.ContainsKey(p.Slot) && instance.playerData[p.Slot].Builder))
+        foreach (var player in Utilities.GetPlayers().Where(p =>
+            p.IsLegal() &&
+            p.IsAlive() &&
+            instance.playerData.ContainsKey(p.Slot) &&
+            instance.playerData[p.Slot].Builder)
+        )
         {
             if (!PlayerHolds.ContainsKey(player))
             {
@@ -38,30 +43,30 @@ public partial class Blocks
 
                 else
                 {
-                    var color = Plugin.GetColor(UsedBlocks[playerHolds.block].Color);
-                    int alpha = Plugin.GetAlpha(UsedBlocks[playerHolds.block].Transparency);
+                    var color = Utils.GetColor(BlocksEntities[playerHolds.block].Color);
+                    int alpha = Utils.GetAlpha(BlocksEntities[playerHolds.block].Transparency);
 
                     playerHolds.block.Render = Color.FromArgb(alpha, color.R, color.G, color.B);
                     Utilities.SetStateChanged(playerHolds.block, "CBaseModelEntity", "m_clrRender");
 
                     PlayerHolds.Remove(player);
 
-                    if (instance.Config.Sounds.Building.Enabled)
-                        player.PlaySound(instance.Config.Sounds.Building.Place);
+                    if (config.Sounds.Building.Enabled)
+                        player.PlaySound(config.Sounds.Building.Place);
                 }
             }
         }
     }
 
-    public static void GrabBlock(CCSPlayerController player)
+    private static void GrabBlock(CCSPlayerController player)
     {
         var block = player.GetBlockAimTarget();
 
         if (block != null)
         {
-            if (!UsedBlocks.ContainsKey(block))
+            if (!BlocksEntities.ContainsKey(block))
             {
-                instance.PrintToChat(player, $"{ChatColors.Red}Block not found in UsedBlocks");
+                Utils.PrintToChat(player, $"{ChatColors.Red}Block not found in UsedBlocks");
                 return;
             }
 
@@ -69,35 +74,37 @@ public partial class Blocks
         }
     }
 
-    public static void GrabBlockAdd(CCSPlayerController player, CBaseProp block)
+    private static void GrabBlockAdd(CCSPlayerController player, CBaseProp block)
     {
-        var pawn = player.Pawn();
+        var pawn = player.Pawn()!;
 
-        var hitPoint = RayTrace.TraceShape(new Vector(pawn!.AbsOrigin!.X, pawn.AbsOrigin!.Y, pawn.AbsOrigin!.Z + pawn.CameraServices!.OldPlayerViewOffsetZ), pawn.EyeAngles!, false, true);
+        Vector position = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
+
+        var hitPoint = RayTrace.TraceShape(position, pawn.EyeAngles!, false, true);
 
         if (block != null && block.IsValid && hitPoint != null && hitPoint.HasValue)
         {
             if (VectorUtils.CalculateDistance(block.AbsOrigin!, RayTrace.Vector3toVector(hitPoint.Value)) > 150)
             {
-                instance.PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
+                Utils.PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
                 return;
             }
 
-            int distance = (int)VectorUtils.CalculateDistance(block.AbsOrigin!, player.PlayerPawn.Value!.AbsOrigin!);
+            int distance = (int)VectorUtils.CalculateDistance(block.AbsOrigin!, pawn.AbsOrigin);
 
-            block.Render = instance.ParseColor(instance.Config.Settings.Building.BlockGrabColor);
+            block.Render = Utils.ParseColor(config.Settings.Building.BlockGrabColor);
             Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
 
             PlayerHolds.Add(player, new BuildingData() { block = block, distance = distance });
         }
     }
 
-    public static void DistanceRepeat(CCSPlayerController player, CBaseProp block)
+    private static void DistanceRepeat(CCSPlayerController player, CBaseProp block)
     {
         var playerHolds = PlayerHolds[player];
         var playerData = instance.playerData[player.Slot];
 
-        var (position, rotation) = VectorUtils.GetEndXYZ(player, block, playerHolds.distance, playerData.Grid, playerData.GridValue, playerData.Snapping, Plugin.GetSize(UsedBlocks[block].Size));
+        var (position, rotation) = VectorUtils.GetEndXYZ(player, block, playerHolds.distance, playerData.Grid, playerData.GridValue, playerData.Snapping, Utils.GetSize(BlocksEntities[block].Size));
         
         block.Teleport(position, rotation);
 
@@ -114,19 +121,29 @@ public partial class Blocks
         }
     }
 
-    public static void RotateRepeat(CCSPlayerController player, CBaseProp block)
+    private static void RotateRepeat(CCSPlayerController player, CBaseProp block)
     {
         var playerHolds = PlayerHolds[player];
         var playerData = instance.playerData[player.Slot];
 
-        var (position, rotation) = VectorUtils.GetEndXYZ(player, block, playerHolds.distance, playerData.Grid, playerData.GridValue, playerData.Snapping, Plugin.GetSize(UsedBlocks[block].Size));
+        var (position, rotation) = VectorUtils.GetEndXYZ(player, block, playerHolds.distance, playerData.Grid, playerData.GridValue, playerData.Snapping, Utils.GetSize(BlocksEntities[block].Size));
 
         block.Teleport(position, rotation);
 
         if (player.Buttons.HasFlag(PlayerButtons.Attack))
-            playerHolds.block.Teleport(null, new QAngle(playerHolds.block.AbsRotation!.X, playerHolds.block.AbsRotation!.Y + 3, playerHolds.block.AbsRotation!.Z));
+        {
+            var AbsRotation = playerHolds.block.AbsRotation!;
+            QAngle angle = new QAngle(AbsRotation.X, AbsRotation.Y + 3, AbsRotation.Z);
+
+            playerHolds.block.Teleport(null, angle);
+        }
 
         else if (player.Buttons.HasFlag(PlayerButtons.Attack2))
-            playerHolds.block.Teleport(null, new QAngle(playerHolds.block.AbsRotation!.X, playerHolds.block.AbsRotation!.Y, playerHolds.block.AbsRotation!.Z + 3));
+        {
+            var AbsRotation = playerHolds.block.AbsRotation!;
+            QAngle angle = new QAngle(AbsRotation.X, AbsRotation.Y, AbsRotation.Z + 3);
+
+            playerHolds.block.Teleport(null, angle);
+        }
     }
 }

@@ -19,8 +19,11 @@ public class BlockModels
     public BlockDelay Delay { get; set; } = new BlockDelay();
     public BlockDeath Death { get; set; } = new BlockDeath();
     public BlockDamage Damage { get; set; } = new BlockDamage();
-    public BlockDeagle Deagle { get; set; } = new BlockDeagle();
-    public BlockAWP AWP { get; set; } = new BlockAWP();
+    public BlockPistol Pistol { get; set; } = new BlockPistol();
+    public BlockRifle Rifle { get; set; } = new BlockRifle();
+    public BlockSniper Sniper { get; set; } = new BlockSniper();
+    public BlockSMG SMG { get; set; } = new BlockSMG();
+    public BlockShotgunHeavy ShotgunHeavy { get; set; } = new BlockShotgunHeavy();
     public BlockStealth Stealth { get; set; } = new BlockStealth();
     public BlockSpeed Speed { get; set; } = new BlockSpeed();
     public BlockSpeedBoost SpeedBoost { get; set; } = new BlockSpeedBoost();
@@ -32,10 +35,8 @@ public class BlockModels
     public BlockCamouflage Camouflage { get; set; } = new BlockCamouflage();
     public BlockTrampoline Trampoline { get; set; } = new BlockTrampoline();
     public BlockNoFallDmg NoFallDmg { get; set; } = new BlockNoFallDmg();
-    //public BlockNoSlowDown NoSlowDown { get; set; } = new BlockNoSlowDown();
     //public BlockTBarrier TBarrier { get; set; } = new BlockTBarrier();
     //public BlockCTBarrier CTBarrier { get; set; } = new BlockCTBarrier();
-    //public BlockHoney Honey { get; set; } = new BlockHoney();
 }
 
 
@@ -66,16 +67,6 @@ public class BlockNoFallDmg : BlockSizes
         Title = "NoFallDmg";
         Block = "models/blockbuilder/nofalldmg.vmdl";
         Pole = "models/blockbuilder/pole_nofalldmg.vmdl";
-    }
-}
-
-public class BlockHoney : BlockSizes
-{
-    public BlockHoney()
-    {
-        Title = "Honey";
-        Block = "models/blockbuilder/honey.vmdl";
-        Pole = "models/blockbuilder/pole_honey.vmdl";
     }
 }
 
@@ -179,21 +170,51 @@ public class BlockDamage : BlockSizes
     }
 }
 
-public class BlockDeagle : BlockSizes
+public class BlockPistol : BlockSizes
 {
-    public BlockDeagle()
+    public BlockPistol()
     {
-        Title = "Deagle";
+        Title = "Pistol";
         Block = "models/blockbuilder/deagle.vmdl";
         Pole = "models/blockbuilder/pole_deagle.vmdl";
     }
 }
 
-public class BlockAWP : BlockSizes
+public class BlockRifle : BlockSizes
 {
-    public BlockAWP()
+    public BlockRifle()
     {
-        Title = "AWP";
+        Title = "Rifle";
+        Block = "models/blockbuilder/awp.vmdl";
+        Pole = "models/blockbuilder/pole_awp.vmdl";
+    }
+}
+
+public class BlockSniper : BlockSizes
+{
+    public BlockSniper()
+    {
+        Title = "Sniper";
+        Block = "models/blockbuilder/awp.vmdl";
+        Pole = "models/blockbuilder/pole_awp.vmdl";
+    }
+}
+
+public class BlockSMG : BlockSizes
+{
+    public BlockSMG()
+    {
+        Title = "SMG";
+        Block = "models/blockbuilder/awp.vmdl";
+        Pole = "models/blockbuilder/pole_awp.vmdl";
+    }
+}
+
+public class BlockShotgunHeavy : BlockSizes
+{
+    public BlockShotgunHeavy()
+    {
+        Title = "Shotgun/Heavy";
         Block = "models/blockbuilder/awp.vmdl";
         Pole = "models/blockbuilder/pole_awp.vmdl";
     }
@@ -286,16 +307,6 @@ public class BlockNuke : BlockSizes
         Title = "Nuke";
         Block = "models/blockbuilder/nuke.vmdl";
         Pole = "models/blockbuilder/pole_nuke.vmdl";
-    }
-}
-
-public class BlockNoSlowDown : BlockSizes
-{
-    public BlockNoSlowDown()
-    {
-        Title = "NoSlowDown";
-        Block = "models/blockbuilder/noslowdown.vmdl";
-        Pole = "models/blockbuilder/pole_noslowdown.vmdl";
     }
 }
 

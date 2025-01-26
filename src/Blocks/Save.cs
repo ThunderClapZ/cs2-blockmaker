@@ -1,5 +1,4 @@
 ﻿using CounterStrikeSharp.API.Modules.Utils;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 public partial class Blocks
@@ -12,7 +11,7 @@ public partial class Blocks
         {
             using (FileStream fs = File.Create(savedPath))
             {
-                instance.Logger.LogInformation($"File does not exist, creating one ({savedPath})");
+                Utils.Log($"File does not exist, creating one ({savedPath})");
                 fs.Close();
             }
         }
@@ -21,12 +20,12 @@ public partial class Blocks
         {
             var blockDataList = new List<SaveBlockData>();
 
-            foreach (var entry in UsedBlocks)
+            foreach (var entry in BlocksEntities)
             {
-                var prop = entry.Key;
+                var block = entry.Key;
                 var data = entry.Value;
 
-                if (prop != null && prop.IsValid)
+                if (block != null && block.IsValid)
                 {
                     blockDataList.Add(new SaveBlockData
                     {
@@ -36,32 +35,34 @@ public partial class Blocks
                         Team = data.Team,
                         Color = data.Color,
                         Transparency = data.Transparency,
-                        Position = new VectorUtils.VectorDTO(prop.AbsOrigin!),
-                        Rotation = new VectorUtils.QAngleDTO(prop.AbsRotation!)
+                        Position = new VectorUtils.VectorDTO(block.AbsOrigin!),
+                        Rotation = new VectorUtils.QAngleDTO(block.AbsRotation!)
                     });
                 }
             }
 
-            if (blockDataList.Count() == 0 || instance.GetPlacedBlocksCount() == 0)
+            int blocks = Utils.GetPlacedBlocksCount();
+
+            if (blockDataList.Count() == 0 || blocks == 0)
             {
-                instance.PrintToChatAll($"{ChatColors.Red}No blocks to save");
+                Utils.PrintToChatAll($"{ChatColors.Red}No blocks to save");
                 return;
             }
 
-            var jsonString = JsonSerializer.Serialize(blockDataList, new JsonSerializerOptions { WriteIndented = true });
+            string jsonString = JsonSerializer.Serialize(blockDataList, new JsonSerializerOptions { WriteIndented = true });
 
             File.WriteAllText(savedPath, jsonString);
 
-            if (instance.Config.Sounds.Building.Enabled)
-                instance.PlaySoundAll(instance.Config.Sounds.Building.Save);
+            if (config.Sounds.Building.Enabled)
+                Utils.PlaySoundAll(config.Sounds.Building.Save);
 
-            instance.PrintToChatAll($"Saved {ChatColors.White}{instance.GetPlacedBlocksCount()} {ChatColors.Grey}Block{(instance.GetPlacedBlocksCount() == 1 ? "" : "s")} on {ChatColors.White}{instance.GetMapName()}");
+            Utils.PrintToChatAll($"Saved {ChatColors.White}{blocks} {ChatColors.Grey}Block{(blocks == 1 ? "" : "s")} on {ChatColors.White}{Utils.GetMapName()}");
 
-            instance.Logger.LogInformation($"Saved {instance.GetPlacedBlocksCount()} Block{(instance.GetPlacedBlocksCount() == 1 ? "" : "s")} on {instance.GetMapName()}");
+            Utils.Log($"Saved {blocks} Block{(blocks == 1 ? "" : "s")} on {Utils.GetMapName()}");
         }
         catch
         {
-            instance.Logger.LogError("Failed to save blocks :(");
+            Utils.Log("Failed to save blocks :(");
             return;
         }
     }

@@ -17,27 +17,6 @@ public class PlayerData
     public bool Godmode = false;
 }
 
-public class BlocksCooldown
-{
-    public bool Invincibility = false;
-    public bool Deagle = false;
-    public bool AWP = false;
-    public bool Camouflage = false;
-    public bool Grenade = false;
-    public bool Frost = false;
-    public bool Stealth = false;
-    public bool Speed = false;
-    public bool SpeedBoost = false;
-    public bool Flash = false;
-    public bool Random = false;
-    public bool Fire = false;
-    public bool Gravity = false;
-    public bool Damage = false;
-    public bool Health = false;
-    public bool Slap = false;
-    public bool Trampoline = false;
-}
-
 public class BuildingData
 {
     public CBaseProp block = null!;

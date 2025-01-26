@@ -3,7 +3,16 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 public class BlockData
 {
-    public BlockData(CBaseProp block, string title, string model, string size, string color = "None", string transparency = "0%", string team = "Both")
+    public BlockData
+    (
+        CBaseProp block,
+        string title,
+        string model,
+        string size = "Normal",
+        string color = "None",
+        string transparency = "0%",
+        string team = "Both"
+    )
     {
         Entity = block;
         Name = title;

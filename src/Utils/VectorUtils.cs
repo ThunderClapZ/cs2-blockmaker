@@ -6,38 +6,30 @@ using System.Runtime.InteropServices;
 
 public static class VectorUtils
 {
-    private static bool IsPointOnLine(Vector start, Vector end, Vector point, double threshold)
+    public static bool IsPointOnLine(Vector start, Vector end, Vector point, double threshold)
     {
-        // Calculate the direction vector of the line
         double lineDirectionX = end.X - start.X;
         double lineDirectionY = end.Y - start.Y;
         double lineDirectionZ = end.Z - start.Z;
 
-        // Calculate the vector from start to the point
         double pointVectorX = point.X - start.X;
         double pointVectorY = point.Y - start.Y;
         double pointVectorZ = point.Z - start.Z;
 
-        // Calculate the scalar projection of pointVector onto the lineDirection
         double scalarProjection = (pointVectorX * lineDirectionX + pointVectorY * lineDirectionY + pointVectorZ * lineDirectionZ) /
                                  (lineDirectionX * lineDirectionX + lineDirectionY * lineDirectionY + lineDirectionZ * lineDirectionZ);
 
-        // Check if the scalar projection is within [0, 1], meaning the point is between start and end
         if (scalarProjection >= 0 && scalarProjection <= 1)
         {
-            // Calculate the closest point on the line to the given point
             double closestPointX = start.X + scalarProjection * lineDirectionX;
             double closestPointY = start.Y + scalarProjection * lineDirectionY;
             double closestPointZ = start.Z + scalarProjection * lineDirectionZ;
 
-            // Calculate the distance between the given point and the closest point on the line
             double distance = Math.Sqrt(Math.Pow(point.X - closestPointX, 2) + Math.Pow(point.Y - closestPointY, 2) + Math.Pow(point.Z - closestPointZ, 2));
 
-            // Check if the distance is within the specified threshold
             return distance <= threshold;
         }
 
-        // Point is not between start and end
         return false;
     }
 
@@ -201,16 +193,17 @@ public static class VectorUtils
         return (newBlockPosition, newBlockRotation);
     }
 
-    public static bool IsWithinBounds(Vector entityPos, Vector blockPos, Vector mins, Vector maxs)
+    public static bool IsWithinBounds(Vector entityPosition, Vector playerPosition, Vector entitySize, Vector playerSize)
     {
-        return entityPos.X >= blockPos.X + mins.X && entityPos.X <= blockPos.X + maxs.X &&
-              entityPos.Y >= blockPos.Y + mins.Y && entityPos.Y <= blockPos.Y + maxs.Y &&
-              entityPos.Z >= blockPos.Z + mins.Z && entityPos.Z <= blockPos.Z + maxs.Z;
+        bool overlapX = Math.Abs(entityPosition.X - playerPosition.X) <= (entitySize.X + playerSize.X) / 2;
+        bool overlapY = Math.Abs(entityPosition.Y - playerPosition.Y) <= (entitySize.Y + playerSize.Y) / 2;
+
+        return overlapX && overlapY;
     }
 
-    public static Vector GetBlockSizeMax(CBaseProp block)
+    public static Vector GetBlockSizeMax(CBaseEntity entity)
     {
-        return new Vector(block.Collision.Maxs.X, block.Collision.Maxs.Y, block.Collision.Maxs.Z) * 2;
+        return new Vector(entity.Collision!.Maxs.X, entity.Collision.Maxs.Y, entity.Collision.Maxs.Z) * 2;
     }
 
     public class VectorDTO
