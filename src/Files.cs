@@ -11,7 +11,7 @@ public class Files
 
     public static void Load()
     {
-        mapsFolder = Path.Combine(Plugin.Instance.ModuleDirectory, "maps", Utils.GetMapName());
+        mapsFolder = Path.Combine(Plugin.Instance.ModuleDirectory, "maps");
         Directory.CreateDirectory(mapsFolder);
 
         blocksPath = Path.Combine(mapsFolder, "blocks.json");
