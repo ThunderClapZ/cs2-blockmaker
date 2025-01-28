@@ -1,8 +1,20 @@
-﻿public class BlockSizes
+﻿public class BlockModel
 {
     public string Title { get; set; } = "";
     public string Block { get; set; } = "";
     public string Pole { get; set; } = "";
+}
+
+public class BlockSize
+{
+    public string Title { get; set; }
+    public float Size { get; set; }
+
+    public BlockSize(string title, float size)
+    {
+        Title = title;
+        Size = size;
+    }
 }
 
 public class BlockModels
@@ -40,7 +52,7 @@ public class BlockModels
 }
 
 
-public class BlockPlatform : BlockSizes
+public class BlockPlatform : BlockModel
 {
     public BlockPlatform()
     {
@@ -50,7 +62,7 @@ public class BlockPlatform : BlockSizes
     }
 }
 
-public class BlockBhop : BlockSizes
+public class BlockBhop : BlockModel
 {
     public BlockBhop()
     {
@@ -60,7 +72,7 @@ public class BlockBhop : BlockSizes
     }
 }
 
-public class BlockNoFallDmg : BlockSizes
+public class BlockNoFallDmg : BlockModel
 {
     public BlockNoFallDmg()
     {
@@ -70,7 +82,7 @@ public class BlockNoFallDmg : BlockSizes
     }
 }
 
-public class BlockHealth : BlockSizes
+public class BlockHealth : BlockModel
 {
     public BlockHealth()
     {
@@ -80,7 +92,7 @@ public class BlockHealth : BlockSizes
     }
 }
 
-public class BlockGrenade : BlockSizes
+public class BlockGrenade : BlockModel
 {
     public BlockGrenade()
     {
@@ -90,7 +102,7 @@ public class BlockGrenade : BlockSizes
     }
 }
 
-public class BlockGravity : BlockSizes
+public class BlockGravity : BlockModel
 {
     public BlockGravity()
     {
@@ -100,7 +112,7 @@ public class BlockGravity : BlockSizes
     }
 }
 
-public class BlockGlass : BlockSizes
+public class BlockGlass : BlockModel
 {
     public BlockGlass()
     {
@@ -110,7 +122,7 @@ public class BlockGlass : BlockSizes
     }
 }
 
-public class BlockFrost : BlockSizes
+public class BlockFrost : BlockModel
 {
     public BlockFrost()
     {
@@ -120,7 +132,7 @@ public class BlockFrost : BlockSizes
     }
 }
 
-public class BlockFlash : BlockSizes
+public class BlockFlash : BlockModel
 {
     public BlockFlash()
     {
@@ -130,7 +142,7 @@ public class BlockFlash : BlockSizes
     }
 }
 
-public class BlockFire : BlockSizes
+public class BlockFire : BlockModel
 {
     public BlockFire()
     {
@@ -140,7 +152,7 @@ public class BlockFire : BlockSizes
     }
 }
 
-public class BlockDelay : BlockSizes
+public class BlockDelay : BlockModel
 {
     public BlockDelay()
     {
@@ -150,7 +162,7 @@ public class BlockDelay : BlockSizes
     }
 }
 
-public class BlockDeath : BlockSizes
+public class BlockDeath : BlockModel
 {
     public BlockDeath()
     {
@@ -160,7 +172,7 @@ public class BlockDeath : BlockSizes
     }
 }
 
-public class BlockDamage : BlockSizes
+public class BlockDamage : BlockModel
 {
     public BlockDamage()
     {
@@ -170,7 +182,7 @@ public class BlockDamage : BlockSizes
     }
 }
 
-public class BlockPistol : BlockSizes
+public class BlockPistol : BlockModel
 {
     public BlockPistol()
     {
@@ -180,7 +192,7 @@ public class BlockPistol : BlockSizes
     }
 }
 
-public class BlockRifle : BlockSizes
+public class BlockRifle : BlockModel
 {
     public BlockRifle()
     {
@@ -190,7 +202,7 @@ public class BlockRifle : BlockSizes
     }
 }
 
-public class BlockSniper : BlockSizes
+public class BlockSniper : BlockModel
 {
     public BlockSniper()
     {
@@ -200,7 +212,7 @@ public class BlockSniper : BlockSizes
     }
 }
 
-public class BlockSMG : BlockSizes
+public class BlockSMG : BlockModel
 {
     public BlockSMG()
     {
@@ -210,7 +222,7 @@ public class BlockSMG : BlockSizes
     }
 }
 
-public class BlockShotgunHeavy : BlockSizes
+public class BlockShotgunHeavy : BlockModel
 {
     public BlockShotgunHeavy()
     {
@@ -220,7 +232,7 @@ public class BlockShotgunHeavy : BlockSizes
     }
 }
 
-public class BlockTrampoline : BlockSizes
+public class BlockTrampoline : BlockModel
 {
     public BlockTrampoline()
     {
@@ -230,7 +242,7 @@ public class BlockTrampoline : BlockSizes
     }
 }
 
-public class BlockStealth : BlockSizes
+public class BlockStealth : BlockModel
 {
     public BlockStealth()
     {
@@ -240,7 +252,7 @@ public class BlockStealth : BlockSizes
     }
 }
 
-public class BlockSpeedBoost : BlockSizes
+public class BlockSpeedBoost : BlockModel
 {
     public BlockSpeedBoost()
     {
@@ -250,7 +262,7 @@ public class BlockSpeedBoost : BlockSizes
     }
 }
 
-public class BlockSpeed : BlockSizes
+public class BlockSpeed : BlockModel
 {
     public BlockSpeed()
     {
@@ -260,7 +272,7 @@ public class BlockSpeed : BlockSizes
     }
 }
 
-public class BlockTBarrier : BlockSizes
+public class BlockTBarrier : BlockModel
 {
     public BlockTBarrier()
     {
@@ -270,7 +282,7 @@ public class BlockTBarrier : BlockSizes
     }
 }
 
-public class BlockCTBarrier : BlockSizes
+public class BlockCTBarrier : BlockModel
 {
     public BlockCTBarrier()
     {
@@ -280,7 +292,7 @@ public class BlockCTBarrier : BlockSizes
     }
 }
 
-public class BlockSlap : BlockSizes
+public class BlockSlap : BlockModel
 {
     public BlockSlap()
     {
@@ -290,7 +302,7 @@ public class BlockSlap : BlockSizes
     }
 }
 
-public class BlockRandom : BlockSizes
+public class BlockRandom : BlockModel
 {
     public BlockRandom()
     {
@@ -300,7 +312,7 @@ public class BlockRandom : BlockSizes
     }
 }
 
-public class BlockNuke : BlockSizes
+public class BlockNuke : BlockModel
 {
     public BlockNuke()
     {
@@ -310,7 +322,7 @@ public class BlockNuke : BlockSizes
     }
 }
 
-public class BlockInvincibility : BlockSizes
+public class BlockInvincibility : BlockModel
 {
     public BlockInvincibility()
     {
@@ -320,7 +332,7 @@ public class BlockInvincibility : BlockSizes
     }
 }
 
-public class BlockIce : BlockSizes
+public class BlockIce : BlockModel
 {
     public BlockIce()
     {
@@ -330,7 +342,7 @@ public class BlockIce : BlockSizes
     }
 }
 
-public class BlockCamouflage : BlockSizes
+public class BlockCamouflage : BlockModel
 {
     public BlockCamouflage()
     {

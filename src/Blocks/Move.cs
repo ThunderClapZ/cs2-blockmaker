@@ -35,6 +35,8 @@ public partial class Blocks
                     continue;
                 }
 
+                //Utils.DrawBeamsAroundBlock(player, playerHolds.block, Color.Aqua);
+
                 if (player.Buttons.HasFlag(PlayerButtons.Reload))
                     RotateRepeat(player, playerHolds.block);
 
@@ -48,6 +50,12 @@ public partial class Blocks
 
                     playerHolds.block.Render = Color.FromArgb(alpha, color.R, color.G, color.B);
                     Utilities.SetStateChanged(playerHolds.block, "CBaseModelEntity", "m_clrRender");
+
+                    foreach (var beam in playerHolds.beams)
+                    {
+                        if (beam != null && beam.IsValid)
+                            beam.Remove();
+                    }
 
                     PlayerHolds.Remove(player);
 
@@ -70,32 +78,27 @@ public partial class Blocks
                 return;
             }
 
-            GrabBlockAdd(player, block);
-        }
-    }
+            var pawn = player.Pawn()!;
 
-    private static void GrabBlockAdd(CCSPlayerController player, CBaseProp block)
-    {
-        var pawn = player.Pawn()!;
+            Vector position = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
 
-        Vector position = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
+            var hitPoint = RayTrace.TraceShape(position, pawn.EyeAngles!, false, true);
 
-        var hitPoint = RayTrace.TraceShape(position, pawn.EyeAngles!, false, true);
-
-        if (block != null && block.IsValid && hitPoint != null && hitPoint.HasValue)
-        {
-            if (VectorUtils.CalculateDistance(block.AbsOrigin!, RayTrace.Vector3toVector(hitPoint.Value)) > 150)
+            if (block != null && block.IsValid && hitPoint != null && hitPoint.HasValue)
             {
-                Utils.PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
-                return;
+                if (VectorUtils.CalculateDistance(block.AbsOrigin!, RayTrace.Vector3toVector(hitPoint.Value)) > 150)
+                {
+                    Utils.PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
+                    return;
+                }
+
+                int distance = (int)VectorUtils.CalculateDistance(block.AbsOrigin!, pawn.AbsOrigin);
+
+                block.Render = Utils.ParseColor(config.Settings.Building.BlockGrabColor);
+                Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
+
+                PlayerHolds.Add(player, new BuildingData() { block = block, distance = distance });
             }
-
-            int distance = (int)VectorUtils.CalculateDistance(block.AbsOrigin!, pawn.AbsOrigin);
-
-            block.Render = Utils.ParseColor(config.Settings.Building.BlockGrabColor);
-            Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
-
-            PlayerHolds.Add(player, new BuildingData() { block = block, distance = distance });
         }
     }
 
@@ -105,20 +108,14 @@ public partial class Blocks
         var playerData = instance.playerData[player.Slot];
 
         var (position, rotation) = VectorUtils.GetEndXYZ(player, block, playerHolds.distance, playerData.Grid, playerData.GridValue, playerData.Snapping, Utils.GetSize(BlocksEntities[block].Size));
-        
+
         block.Teleport(position, rotation);
 
         if (player.Buttons.HasFlag(PlayerButtons.Attack))
-        {
-            if (playerHolds.distance > 350) playerHolds.distance += 7;
-                playerHolds.distance += 3;
-        }
+            playerHolds.distance += 3;
 
-        else if (player.Buttons.HasFlag(PlayerButtons.Attack2) && playerHolds.distance > 3)
-        {
-            if (playerHolds.distance > 350) playerHolds.distance -= 7;
-                playerHolds.distance -= 3;
-        }
+        else if (player.Buttons.HasFlag(PlayerButtons.Attack2))
+            playerHolds.distance -= 3;
     }
 
     private static void RotateRepeat(CCSPlayerController player, CBaseProp block)
@@ -130,20 +127,14 @@ public partial class Blocks
 
         block.Teleport(position, rotation);
 
-        if (player.Buttons.HasFlag(PlayerButtons.Attack))
-        {
-            var AbsRotation = playerHolds.block.AbsRotation!;
-            QAngle angle = new QAngle(AbsRotation.X, AbsRotation.Y + 3, AbsRotation.Z);
+        QAngle angle = new QAngle(rotation.X, rotation.Y, rotation.Z);
 
-            playerHolds.block.Teleport(null, angle);
-        }
+        if (player.Buttons.HasFlag(PlayerButtons.Attack))
+            angle.Y += 3;
 
         else if (player.Buttons.HasFlag(PlayerButtons.Attack2))
-        {
-            var AbsRotation = playerHolds.block.AbsRotation!;
-            QAngle angle = new QAngle(AbsRotation.X, AbsRotation.Y, AbsRotation.Z + 3);
+            angle.Z += 3;
 
-            playerHolds.block.Teleport(null, angle);
-        }
+        block.Teleport(null, angle);
     }
 }

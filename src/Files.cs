@@ -1,20 +1,22 @@
-﻿using CounterStrikeSharp.API.Core;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using System.Text.Json;
 
-public partial class Plugin : BasePlugin, IPluginConfig<Config>
+public class Files
 {
-    private string blocksFolder = "";
-    private string modelsPath = "";
-
     public static BlockModels BlockModels { get; set; } = new BlockModels();
 
-    private void Files()
-    {
-        blocksFolder = Path.Combine(ModuleDirectory, "blocks");
-        Directory.CreateDirectory(blocksFolder);
+    public static string mapsFolder = "";
+    public static string modelsPath = "";
+    public static string blocksPath = "";
 
-        modelsPath = Path.Combine(ModuleDirectory, "models.json");
+    public static void Load()
+    {
+        mapsFolder = Path.Combine(Plugin.Instance.ModuleDirectory, "maps", Utils.GetMapName());
+        Directory.CreateDirectory(mapsFolder);
+
+        blocksPath = Path.Combine(mapsFolder, "blocks.json");
+
+        modelsPath = Path.Combine(Plugin.Instance.ModuleDirectory, "models.json");
 
         if (!string.IsNullOrEmpty(modelsPath))
         {
@@ -34,11 +36,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
                 File.WriteAllText(modelsPath, jsonContent);
             }
         }
-        LoadBlocksModels();
-    }
 
-    private void LoadBlocksModels()
-    {
         if (!string.IsNullOrEmpty(modelsPath) && File.Exists(modelsPath))
         {
             string jsonContent = File.ReadAllText(modelsPath);

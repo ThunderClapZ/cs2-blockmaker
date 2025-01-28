@@ -13,9 +13,9 @@ public static class Utils
 
     public static bool BuildMode(CCSPlayerController player)
     {
-        if (instance.buildMode && instance.playerData[player.Slot].Builder)
+        if (instance.buildMode && (instance.playerData[player.Slot].Builder || HasPermission(player)))
             return true;
-        else if (!instance.buildMode && instance.playerData[player.Slot].Builder || HasPermission(player))
+        else if (!instance.buildMode && (instance.playerData[player.Slot].Builder || HasPermission(player)))
         {
             PrintToChat(player, $"{ChatColors.Red}Build Mode is disabled");
             return false;
@@ -39,12 +39,12 @@ public static class Utils
 
     public static void PrintToChat(CCSPlayerController player, string message)
     {
-        player.PrintToChat($"{config.Settings.Main.Prefix} {ChatColors.Grey}{message}");
+        player.PrintToChat($"{config.Settings.Prefix} {ChatColors.Grey}{message}");
     }
 
     public static void PrintToChatAll(string message)
     {
-        Server.PrintToChatAll($"{config.Settings.Main.Prefix} {ChatColors.Grey}{message}");
+        Server.PrintToChatAll($"{config.Settings.Prefix} {ChatColors.Grey}{message}");
     }
 
     public static void PlaySoundAll(string sound)
@@ -81,7 +81,7 @@ public static class Utils
         }
     }
 
-    public static string GetModelFromSelectedBlock(CCSPlayerController player, string size)
+    public static string GetModelFromSelectedBlock(CCSPlayerController player, bool pole)
     {
         var blockType = instance.playerData[player.Slot].BlockType;
 
@@ -91,20 +91,10 @@ public static class Utils
 
         foreach (var property in typeof(BlockModels).GetProperties())
         {
-            var block = (BlockSizes)property.GetValue(Plugin.BlockModels)!;
+            var block = (BlockModel)property.GetValue(Files.BlockModels)!;
 
             if (block.Title.Equals(blockType, StringComparison.OrdinalIgnoreCase))
-            {
-                return size.ToLower() switch
-                {
-                    "pole" => block.Pole,
-                    "small" => block.Block,
-                    "normal" => block.Block,
-                    "large" => block.Block,
-                    "x-large" => block.Block,
-                    _ => block.Block,
-                };
-            }
+                return pole ? block.Pole : block.Block;
         }
 
         return string.Empty;
@@ -181,28 +171,76 @@ public static class Utils
         return AlphaMapping.TryGetValue(input.ToLower(), out var alpha) ? alpha : AlphaMapping["0%"];
     }
 
-    public static readonly Dictionary<string, float> SizeMapping = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "small", 0.5f },
-        { "normal", 1f },
-        { "large", 2f },
-        { "x-large", 3f},
-    };
     public static float GetSize(string input)
     {
-        return SizeMapping.TryGetValue(input.ToLower(), out var size) ? size : SizeMapping["normal"];
+        var blockSize = config.Settings.Building.BlockSizes
+            .FirstOrDefault(bs => bs.Title.Equals(input, StringComparison.OrdinalIgnoreCase));
+
+        return blockSize?.Size ?? config.Settings.Building.BlockSizes.First(bs => bs.Size == 1.0f).Size;
     }
 
-    public static CBeam DrawBeam(Vector startPos, Vector endPos, Color color, float width = 1)
+    public static CBeam DrawBeam(Vector startPos, Vector endPos, Color color, float width = 0.5f)
     {
         var beam = Utilities.CreateEntityByName<CBeam>("beam")!;
 
+        beam.Entity!.Name = "blockmaker_beam";
         beam.Render = color;
         beam.Width = width;
-        beam.Teleport(startPos);
         beam.EndPos.Add(endPos);
+
         beam.DispatchSpawn();
+        beam.Teleport(startPos);
 
         return beam;
+    }
+
+    public static void DrawBeamsAroundBlock(CCSPlayerController player, CBaseEntity block, Color color)
+    {
+        var pos = block.AbsOrigin!;
+
+        var max = VectorUtils.GetMaxs(block) * GetSize(Blocks.BlocksEntities[block].Size);
+
+        var corners = new Vector[]
+        {
+            pos + new Vector(-max.X, -max.Y, -max.Z),
+            pos + new Vector(max.X, -max.Y, -max.Z),
+            pos + new Vector(max.X, max.Y, -max.Z),
+            pos + new Vector(-max.X, max.Y, -max.Z),
+            pos + new Vector(-max.X, -max.Y, max.Z),
+            pos + new Vector(max.X, -max.Y, max.Z),
+            pos + new Vector(max.X, max.Y, max.Z),
+            pos + new Vector(-max.X, max.Y, max.Z)
+        };
+
+        var beams = new List<Vector[]>
+        {
+            new[] {corners[0], corners[1]}, new[] {corners[1], corners[2]}, new[] {corners[2], corners[3]}, new[] {corners[3], corners[0]},
+            new[] {corners[4], corners[5]}, new[] {corners[5], corners[6]}, new[] {corners[6], corners[7]}, new[] {corners[7], corners[4]},
+            new[] {corners[0], corners[4]}, new[] {corners[1], corners[5]}, new[] {corners[2], corners[6]}, new[] {corners[3], corners[7]}
+        };
+
+        if (Blocks.PlayerHolds[player].beams.Count > 0)
+        {
+            int beamcount = 0;
+            foreach (var oldbeam in Blocks.PlayerHolds[player].beams)
+            {                
+                oldbeam.EndPos.X = beams[beamcount][1].X;
+                oldbeam.EndPos.Y = beams[beamcount][1].Y;
+                oldbeam.EndPos.Z = beams[beamcount][1].Z;
+
+                oldbeam.DispatchSpawn();
+
+                oldbeam.Teleport(beams[beamcount][0], block.AbsRotation);
+
+                beamcount++;
+            }
+            return;
+        }
+
+        foreach (var beam in beams)
+        {
+            var newbeam = DrawBeam(beam[0], beam[1], color);
+            Blocks.PlayerHolds[player].beams.Add(newbeam);
+        }
     }
 }

@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Core.Translations;
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Block Maker";
-    public override string ModuleVersion => "0.1.0";
+    public override string ModuleVersion => "0.1.1";
     public override string ModuleAuthor => "exkludera";
 
     public static Plugin Instance { get; set; } = new();
@@ -16,11 +16,11 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     {
         Instance = this;
 
-        Files();
-
         RegisterEvents();
 
-        AddCommands();
+        Files.Load();
+
+        Commands.Load();
 
         Blocks.Load();
 
@@ -28,7 +28,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (hotReload)
         {
-            Blocks.savedPath = Path.Combine(blocksFolder, $"{Utils.GetMapName()}.json");
+            Files.blocksPath = Path.Combine(Files.mapsFolder, "blocks.json");
 
             foreach (var player in Utilities.GetPlayers().Where(p => !p.IsBot && !playerData.ContainsKey(p.Slot)))
             {
@@ -38,7 +38,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
                     playerData[player.Slot].Builder = true;
             }
 
-            Blocks.Clear();
+            Blocks.Unload();
 
             Blocks.Spawn();
         }
@@ -48,9 +48,9 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     {
         UnregisterEvents();
 
-        RemoveCommands();
+        Commands.Unload();
 
-        Blocks.Clear();
+        Blocks.Unload();
 
         Menu.Unload();
     }
@@ -59,7 +59,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     public void OnConfigParsed(Config config)
     {
         Config = config;
-        Config.Settings.Main.Prefix = StringExtensions.ReplaceColorTags(config.Settings.Main.Prefix);
+        Config.Settings.Prefix = StringExtensions.ReplaceColorTags(config.Settings.Prefix);
 
         buildMode = config.Settings.Building.BuildMode;
     }

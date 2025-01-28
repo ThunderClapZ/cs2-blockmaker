@@ -5,7 +5,7 @@ using System.Drawing;
 
 public partial class Blocks
 {
-    public static void Clear()
+    public static void Unload()
     {
         foreach (var rest in Utilities.GetAllEntities().Where(r => r.DesignerName == "prop_physics_override" || r.DesignerName == "trigger_multiple"))
         {
@@ -128,7 +128,7 @@ public partial class Blocks
 
         var playerData = instance.playerData[player.Slot];
 
-        string blockmodel = Utils.GetModelFromSelectedBlock(player, playerData.BlockSize);
+        string blockmodel = Utils.GetModelFromSelectedBlock(player, playerData.Pole);
 
         if (BlocksEntities.TryGetValue(entity, out var block))
         {

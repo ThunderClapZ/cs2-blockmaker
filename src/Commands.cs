@@ -1,116 +1,75 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Memory;
+using CounterStrikeSharp.API.Modules.Menu;
 using CounterStrikeSharp.API.Modules.Utils;
 using System.Drawing;
 
-public partial class Plugin : BasePlugin, IPluginConfig<Config>
+public static class Commands
 {
-    void AddCommands()
+    private static Plugin Instance = Plugin.Instance;
+    private static Config config = Instance.Config;
+    private static Config_Commands commands = Instance.Config.Commands;
+    private static Dictionary<int, PlayerData> playerData = Instance.playerData;
+
+    public static void Load()
     {
-        var commands = Config.Commands;
-
-        foreach (var cmd in commands.Admin.BuildMode.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_BuildMode(player));
-
-        foreach (var cmd in commands.Admin.ManageBuilder.Split(','))
-            AddCommand($"css_{cmd}", "", Command_ManageBuilder);
-
-        foreach (var cmd in commands.Building.BuildMenu.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_BuildMenu(player));
-
-        foreach (var cmd in commands.Building.BlockType.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_BlockType(player, command.ArgByIndex(1)));
-
-        foreach (var cmd in commands.Building.BlockColor.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_BlockColor(player, command.ArgByIndex(1)));
-
-        foreach (var cmd in commands.Building.CreateBlock.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_CreateBlock(player));
-
-        foreach (var cmd in commands.Building.DeleteBlock.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_DeleteBlock(player));
-
-        foreach (var cmd in commands.Building.RotateBlock.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_RotateBlock(player, command.ArgByIndex(1)));
-
-        foreach (var cmd in commands.Building.SaveBlocks.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_SaveBlocks(player));
-
-        foreach (var cmd in commands.Building.Snapping.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_Snapping(player));
-
-        foreach (var cmd in commands.Building.Grid.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_Grid(player, command.ArgByIndex(1)));
-
-        foreach (var cmd in commands.Building.Noclip.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_Noclip(player));
-
-        foreach (var cmd in commands.Building.Godmode.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_Godmode(player));
-
-        foreach (var cmd in commands.Building.TestBlock.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_Testblock(player));
-
-        foreach (var cmd in commands.Building.ConvertBlock.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_ConvertBlock(player));
-
-        foreach (var cmd in commands.Building.CopyBlock.Split(','))
-            AddCommand($"css_{cmd}", "", (player, command) => Command_CopyBlock(player));
+        AddCommands(commands.Admin.BuildMode, BuildMode);
+        AddCommands(commands.Admin.ManageBuilder, ManageBuilder);
+        AddCommands(commands.Building.BuildMenu, BuildMenu);
+        AddCommands(commands.Building.BlockType, BlockType);
+        AddCommands(commands.Building.BlockColor, BlockColor);
+        AddCommands(commands.Building.CreateBlock, CreateBlock);
+        AddCommands(commands.Building.DeleteBlock, DeleteBlock);
+        AddCommands(commands.Building.RotateBlock, RotateBlock);
+        AddCommands(commands.Building.SaveBlocks, SaveBlocks);
+        AddCommands(commands.Building.Snapping, Snapping);
+        AddCommands(commands.Building.Grid, Grid);
+        AddCommands(commands.Building.Noclip, Noclip);
+        AddCommands(commands.Building.Godmode, Godmode);
+        AddCommands(commands.Building.TestBlock, TestBlock);
+        AddCommands(commands.Building.ConvertBlock, ConvertBlock);
+        AddCommands(commands.Building.CopyBlock, CopyBlock);
+    }
+    private static void AddCommands(string commands, Action<CCSPlayerController?> action)
+    {
+        foreach (var cmd in commands.Split(','))
+            Instance.AddCommand($"css_{cmd}", "", (player, command) => action(player));
+    }
+    private static void AddCommands(string commands, Action<CCSPlayerController?, string> action)
+    {
+        foreach (var cmd in commands.Split(','))
+            Instance.AddCommand($"css_{cmd}", "", (player, command) => action(player, command.ArgByIndex(1)));
     }
 
-    void RemoveCommands()
+    public static void Unload()
     {
-        var commands = Config.Commands;
-
-        foreach (var cmd in commands.Admin.BuildMode.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_BuildMode(player));
-
-        foreach (var cmd in commands.Admin.ManageBuilder.Split(','))
-            RemoveCommand($"css_{cmd}", Command_ManageBuilder);
-
-        foreach (var cmd in commands.Building.BuildMenu.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_BuildMenu(player));
-
-        foreach (var cmd in commands.Building.BlockType.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_BlockType(player, command.ArgByIndex(1)));
-
-        foreach (var cmd in commands.Building.BlockColor.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_BlockColor(player, command.ArgByIndex(1)));
-
-        foreach (var cmd in commands.Building.CreateBlock.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_CreateBlock(player));
-
-        foreach (var cmd in commands.Building.DeleteBlock.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_DeleteBlock(player));
-
-        foreach (var cmd in commands.Building.RotateBlock.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_RotateBlock(player, command.ArgByIndex(1)));
-
-        foreach (var cmd in commands.Building.SaveBlocks.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_SaveBlocks(player));
-
-        foreach (var cmd in commands.Building.Snapping.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_Snapping(player));
-
-        foreach (var cmd in commands.Building.Grid.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_Grid(player, command.ArgByIndex(1)));
-
-        foreach (var cmd in commands.Building.Noclip.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_Noclip(player));
-
-        foreach (var cmd in commands.Building.Godmode.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_Godmode(player));
-
-        foreach (var cmd in commands.Building.TestBlock.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_Testblock(player));
-
-        foreach (var cmd in commands.Building.ConvertBlock.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_ConvertBlock(player));
-
-        foreach (var cmd in commands.Building.CopyBlock.Split(','))
-            RemoveCommand($"css_{cmd}", (player, command) => Command_CopyBlock(player));
+        RemoveCommands(commands.Admin.BuildMode, BuildMode);
+        RemoveCommands(commands.Admin.ManageBuilder, ManageBuilder);
+        RemoveCommands(commands.Building.BuildMenu, BuildMenu);
+        RemoveCommands(commands.Building.BlockType, BlockType);
+        RemoveCommands(commands.Building.BlockColor, BlockColor);
+        RemoveCommands(commands.Building.CreateBlock, CreateBlock);
+        RemoveCommands(commands.Building.DeleteBlock, DeleteBlock);
+        RemoveCommands(commands.Building.RotateBlock, RotateBlock);
+        RemoveCommands(commands.Building.SaveBlocks, SaveBlocks);
+        RemoveCommands(commands.Building.Snapping, Snapping);
+        RemoveCommands(commands.Building.Grid, Grid);
+        RemoveCommands(commands.Building.Noclip, Noclip);
+        RemoveCommands(commands.Building.Godmode, Godmode);
+        RemoveCommands(commands.Building.TestBlock, TestBlock);
+        RemoveCommands(commands.Building.ConvertBlock, ConvertBlock);
+        RemoveCommands(commands.Building.CopyBlock, CopyBlock);
+    }
+    private static void RemoveCommands(string commands, Action<CCSPlayerController?> action)
+    {
+        foreach (var cmd in commands.Split(','))
+            Instance.RemoveCommand($"css_{cmd}", (player, command) => action(player));
+    }
+    private static void RemoveCommands(string commands, Action<CCSPlayerController?, string> action)
+    {
+        foreach (var cmd in commands.Split(','))
+            Instance.RemoveCommand($"css_{cmd}", (player, command) => action(player, command.ArgByIndex(1)));
     }
 
     private static bool AllowedCommand(CCSPlayerController? player)
@@ -134,7 +93,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Utils.PrintToChat(player, $"{commandName}: {color}{status}");
     }
 
-    public void Command_BuildMode(CCSPlayerController? player)
+    public static void BuildMode(CCSPlayerController? player)
     {
         if (player == null || player.NotValid())
             return;
@@ -145,9 +104,9 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             return;
         }
 
-        if (!buildMode)
+        if (!Instance.buildMode)
         {
-            buildMode = true;
+            Instance.buildMode = true;
             foreach (var target in Utilities.GetPlayers().Where(p => !p.IsBot))
             {
                 playerData[target.Slot] = new PlayerData();
@@ -158,17 +117,17 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         }
         else
         {
-            buildMode = false;
+            Instance.buildMode = false;
             Blocks.PlayerHolds.Clear();
         }
 
-        string status = buildMode ? "Enabled" : "Disabled";
-        char color = buildMode ? ChatColors.Green : ChatColors.Red;
+        string status = Instance.buildMode ? "Enabled" : "Disabled";
+        char color = Instance.buildMode ? ChatColors.Green : ChatColors.Red;
 
         Utils.PrintToChatAll($"Build Mode: {color}{status} {ChatColors.Grey}by {ChatColors.LightPurple}{player.PlayerName}");
     }
 
-    public void Command_ManageBuilder(CCSPlayerController? player, CommandInfo command)
+    public static void ManageBuilder(CCSPlayerController? player, string input)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -179,16 +138,25 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             return;
         }
 
-        string input = command.ArgString;
-
-        if (string.IsNullOrEmpty(input))
+        if (string.IsNullOrEmpty(input.ToString()))
         {
-            Utils.PrintToChat(player, $"{ChatColors.Red}No player specified");
+            ChatMenu BuildersMenu = new("Manage Builders");
+
+            foreach (var target in Utilities.GetPlayers())
+            {
+                BuildersMenu.AddMenuOption(target.PlayerName, (player, menuOption) =>
+                {
+                    ManageBuilder(player, target.SteamID.ToString());
+                });
+            }
+
+            MenuManager.OpenChatMenu(player, BuildersMenu);
+
             return;
         }
 
         var targetPlayer = Utilities.GetPlayers()
-            .FirstOrDefault(target => target.PlayerName.Contains(input, StringComparison.OrdinalIgnoreCase) || target.SteamID.ToString() == input);
+            .FirstOrDefault(target => target.SteamID.ToString() == input);
 
         if (targetPlayer == null)
         {
@@ -206,7 +174,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Utils.PrintToChat(player, $"{color}You {action} {ChatColors.LightPurple}{targetPlayer.PlayerName} {color}access to Build");
     }
 
-    public void Command_BuildMenu(CCSPlayerController? player)
+    public static void BuildMenu(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -214,7 +182,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Menu.Command_OpenMenus(player);
     }
 
-    public void Command_BlockType(CCSPlayerController? player, string selectType)
+    public static void BlockType(CCSPlayerController? player, string selectType)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -227,7 +195,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         foreach (var property in typeof(BlockModels).GetProperties())
         {
-            var model = (BlockSizes)property.GetValue(BlockModels)!;
+            var model = (BlockModel)property.GetValue(Files.BlockModels)!;
 
             if (string.Equals(model.Title, selectType, StringComparison.OrdinalIgnoreCase))
             {
@@ -240,7 +208,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a matching block type");
     }
 
-    public void Command_BlockColor(CCSPlayerController? player, string selectColor = "None")
+    public static void BlockColor(CCSPlayerController? player, string selectColor = "None")
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -267,7 +235,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a matching color");
     }
 
-    public void Command_CreateBlock(CCSPlayerController? player)
+    public static void CreateBlock(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -275,7 +243,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Blocks.Create(player);
     }
 
-    public void Command_DeleteBlock(CCSPlayerController? player)
+    public static void DeleteBlock(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -283,7 +251,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Blocks.Delete(player);
     }
 
-    public void Command_RotateBlock(CCSPlayerController? player, string rotation)
+    public static void RotateBlock(CCSPlayerController? player, string rotation)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -291,7 +259,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Blocks.Rotate(player, rotation);
     }
 
-    public void Command_SaveBlocks(CCSPlayerController? player)
+    public static void SaveBlocks(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -299,7 +267,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Blocks.Save();
     }
 
-    public void Command_Snapping(CCSPlayerController? player)
+    public static void Snapping(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -307,7 +275,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         ToggleCommand(player, ref playerData[player.Slot].Snapping, "Block Snapping");
     }
 
-    public void Command_Grid(CCSPlayerController? player, string grid)
+    public static void Grid(CCSPlayerController? player, string grid)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -323,7 +291,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Utils.PrintToChat(player, $"Selected Grid: {ChatColors.White}{grid} Units");
     }
 
-    public void Command_Noclip(CCSPlayerController? player)
+    public static void Noclip(CCSPlayerController? player)
     {
         if (player == null || player.NotValid())
             return;
@@ -348,7 +316,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         }
     }
 
-    public void Command_Godmode(CCSPlayerController? player)
+    public static void Godmode(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -362,7 +330,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             player.Pawn()!.TakesDamage = true;
     }
 
-    public void Command_Testblock(CCSPlayerController? player)
+    public static void TestBlock(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -370,18 +338,18 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Blocks.Test(player);
     }
 
-    public void Command_ClearBlocks(CCSPlayerController? player)
+    public static void ClearBlocks(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
 
-        Blocks.Clear();
+        Blocks.Unload();
 
-        Utils.PlaySoundAll(Config.Sounds.Building.Delete);
+        Utils.PlaySoundAll(config.Sounds.Building.Delete);
         Utils.PrintToChatAll($"{ChatColors.Red}Blocks cleared by {ChatColors.LightPurple}{player.PlayerName}");
     }
 
-    public void Command_ConvertBlock(CCSPlayerController? player)
+    public static void ConvertBlock(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -389,7 +357,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Blocks.Convert(player);
     }
 
-    public void Command_CopyBlock(CCSPlayerController? player)
+    public static void CopyBlock(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -397,7 +365,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Blocks.Copy(player);
     }
 
-    public void Command_TransparenyBlock(CCSPlayerController? player, string transparency = "0%")
+    public static void TransparenyBlock(CCSPlayerController? player, string transparency = "0%")
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -421,5 +389,13 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
             Utils.PrintToChat(player, $"Changed block transparency to {ChatColors.White}{transparency}");
         }
+    }
+
+    public static void Pole(CCSPlayerController? player)
+    {
+        if (player == null || !AllowedCommand(player))
+            return;
+
+        ToggleCommand(player, ref playerData[player.Slot].Pole, "Pole");
     }
 }

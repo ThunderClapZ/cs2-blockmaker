@@ -130,7 +130,7 @@ public static class VectorUtils
 
         if (snapping)
         {
-            var closestBlock = GetClosestBlock(playerPos, endPos, GetBlockSizeMax(block).X * scale, block);
+            var closestBlock = GetClosestBlock(playerPos, endPos, GetMaxs(block).X * scale * 2, block);
             if (closestBlock != null)
             {
                 var snap = SnapToClosestBlock(endPos, endRotation, closestBlock, scale);
@@ -148,7 +148,7 @@ public static class VectorUtils
         Vector newBlockPosition = position;
         QAngle newBlockRotation = rotation;
 
-        Vector BlockSizeMax = GetBlockSizeMax(block) * scale;
+        Vector BlockSizeMax = GetMaxs(block) * scale * 2;
 
         Vector BlockPosition = block.AbsOrigin!;
         QAngle BlockRotation = block.AbsRotation!;
@@ -197,13 +197,18 @@ public static class VectorUtils
     {
         bool overlapX = Math.Abs(entityPosition.X - playerPosition.X) <= (entitySize.X + playerSize.X) / 2;
         bool overlapY = Math.Abs(entityPosition.Y - playerPosition.Y) <= (entitySize.Y + playerSize.Y) / 2;
+        bool overlapZ = Math.Abs(entityPosition.Z - playerPosition.Z) <= (entitySize.Z + playerSize.Z) / 2;
 
-        return overlapX && overlapY;
+        return overlapX && overlapY && overlapZ;
     }
 
-    public static Vector GetBlockSizeMax(CBaseEntity entity)
+    public static Vector GetMaxs(CBaseEntity entity)
     {
-        return new Vector(entity.Collision!.Maxs.X, entity.Collision.Maxs.Y, entity.Collision.Maxs.Z) * 2;
+        return new Vector(entity.Collision!.Maxs.X, entity.Collision.Maxs.Y, entity.Collision.Maxs.Z);
+    }
+    public static Vector GetMins(CBaseEntity entity)
+    {
+        return new Vector(entity.Collision!.Mins.X, entity.Collision.Mins.Y, entity.Collision.Mins.Z);
     }
 
     public class VectorDTO

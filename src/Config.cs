@@ -2,29 +2,38 @@
 
 public class Config : BasePluginConfig
 {
-    public Settings Settings { get; set; } = new Settings();
-    public Commands Commands { get; set; } = new Commands();
-    public Sounds Sounds { get; set; } = new Sounds();
+    public Config_Settings Settings { get; set; } = new Config_Settings();
+    public Config_Commands Commands { get; set; } = new Config_Commands();
+    public Config_Sounds Sounds { get; set; } = new Config_Sounds();
 }
 
-public class Settings
+public class Config_Settings
 {
-    public class Settings_Main
-    {
-        public string Prefix { get; set; } = "{purple}[BlockMaker]{default}";
-        public string MenuType { get; set; } = "html";
-    }
-    public Settings_Main Main { get; set; } = new Settings_Main();
+    public string Prefix { get; set; } = "{purple}[BlockMaker]{default}";
+    public string Menu { get; set; } = "html";
+    public bool RemoveWeapons { get; set; } = true;
 
     public class Settings_Building
     {
         public bool BuildMode { get; set; } = false;
         public bool BuildModeConfig { get; set; } = false;
+        public bool AutoSave { get; set; } = false;
+        public int SaveTime { get; set; } = 300;
         public string BlockGrabColor { get; set; } = "255,255,255,128";
         public float[] GridValues { get; set; } = { 16f, 32f, 64f, 128f, 256f };
         public float[] RotationValues { get; set; } = { 15f, 30f, 45f, 60f, 90f, 120f };
-        public bool AutoSave { get; set; } = false;
-        public int SaveTime { get; set; } = 300;
+
+        public List<BlockSize> BlockSizes { get; set; }
+        public Settings_Building()
+        {
+            BlockSizes = new List<BlockSize>
+            {
+                new BlockSize("Small", 0.5f),
+                new BlockSize("Normal", 1.0f),
+                new BlockSize("Large", 2.0f),
+                new BlockSize("X-Large", 3.0f)
+            };
+        }
     }
     public Settings_Building Building { get; set; } = new Settings_Building();
 
@@ -79,7 +88,7 @@ public class Settings
     public Settings_Blocks Blocks { get; set; } = new Settings_Blocks();
 }
 
-public class Sounds
+public class Config_Sounds
 {
     public class Sounds_Blocks
     {
@@ -106,32 +115,32 @@ public class Sounds
     public Sounds_Building Building { get; set; } = new Sounds_Building();
 }
 
-public class Commands
+public class Config_Commands
 {
     public class Commands_Admin
     {
         public string Permission { get; set; } = "@css/root";
-        public string BuildMode { get; set; } = "buildmode,togglebuild";
-        public string ManageBuilder { get; set; } = "builder,togglebuilder,allowbuilder";
+        public string BuildMode { get; set; } = "buildmode";
+        public string ManageBuilder { get; set; } = "builder,builders";
     }
     public Commands_Admin Admin { get; set; } = new Commands_Admin();
 
     public class Commands_Building
     {
-        public string BuildMenu { get; set; } = "buildmenu,blockmenu,blocksmenu";
-        public string CreateBlock { get; set; } = "block,create,createblock,place,placeblock";
-        public string DeleteBlock { get; set; } = "delete,deleteblock,remove,removeblock";
-        public string RotateBlock { get; set; } = "rotate,rotateblock";
-        public string BlockType { get; set; } = "type, blocktype";
-        public string BlockColor { get; set; } = "color, blockcolor";
-        public string CopyBlock { get; set; } = "copy, copyblock";
-        public string ConvertBlock { get; set; } = "convert,convertblock,replace,replaceblock";
-        public string SaveBlocks { get; set; } = "save,saveblocks,saveblock";
-        public string Snapping { get; set; } = "snap,snapblock,blocksnap";
-        public string Grid { get; set; } = "grid,togglegrid";
-        public string Noclip { get; set; } = "nc,noclip";
-        public string Godmode { get; set; } = "god,godmode";
-        public string TestBlock { get; set; } = "testblock";
+        public string BuildMenu { get; set; } = "bm,buildmenu";
+        public string CreateBlock { get; set; } = "create";
+        public string DeleteBlock { get; set; } = "delete";
+        public string RotateBlock { get; set; } = "rotate";
+        public string BlockType { get; set; } = "type";
+        public string BlockColor { get; set; } = "color";
+        public string CopyBlock { get; set; } = "copy";
+        public string ConvertBlock { get; set; } = "convert";
+        public string SaveBlocks { get; set; } = "save";
+        public string Snapping { get; set; } = "snap";
+        public string Grid { get; set; } = "grid";
+        public string Noclip { get; set; } = "nc";
+        public string Godmode { get; set; } = "godmode";
+        public string TestBlock { get; set; } = "test";
     }
     public Commands_Building Building { get; set; } = new Commands_Building();
 }

@@ -22,7 +22,7 @@ public partial class Blocks
 
         var playerData = instance.playerData[player.Slot];
 
-        string blockmodel = Utils.GetModelFromSelectedBlock(player, playerData.BlockSize);
+        string blockmodel = Utils.GetModelFromSelectedBlock(player, playerData.Pole);
 
         try
         {
@@ -101,11 +101,11 @@ public partial class Blocks
 
     public static void Spawn()
     {
-        bool isValidJson = Utils.IsValidJson(savedPath);
+        bool isValidJson = Utils.IsValidJson(Files.blocksPath);
 
         if (isValidJson)
         {
-            var jsonString = File.ReadAllText(savedPath);
+            var jsonString = File.ReadAllText(Files.blocksPath);
 
             var blockDataList = JsonSerializer.Deserialize<List<SaveBlockData>>(jsonString);
 

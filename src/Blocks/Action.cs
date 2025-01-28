@@ -10,10 +10,11 @@ public partial class Blocks
 {
     private static Plugin instance = Plugin.Instance;
     private static Config config = instance.Config;
+    private static Config_Settings.Settings_Blocks settings = instance.Config.Settings.Blocks;
+    private static Config_Sounds.Sounds_Blocks sounds = instance.Config.Sounds.Blocks;
+    private static BlockModels blockModels = Files.BlockModels;
+
     private static Dictionary<string, Action<CCSPlayerController, CBaseEntity>> blockActions = null!;
-    private static Settings.Settings_Blocks settings = instance.Config.Settings.Blocks;
-    private static Sounds.Sounds_Blocks sounds = instance.Config.Sounds.Blocks;
-    private static BlockModels blockModels = Plugin.BlockModels;
 
     public static void Load()
     {
@@ -168,7 +169,6 @@ public partial class Blocks
             return;
 
         player.Health(+2);
-        player.PlaySound(sounds.Health);
 
         BlockCooldownTimer(player, block, settings.Health.Cooldown, false);
     }
@@ -212,7 +212,7 @@ public partial class Blocks
                 return;
 
             player.Health((int)- settings.Fire.Value);
-            player.PlaySound(sounds.Damage);
+
         }, TimerFlags.REPEAT);
 
         instance.AddTimer(settings.Fire.Duration, () =>
@@ -294,8 +294,7 @@ public partial class Blocks
             return;
 
         player.Health((int)- settings.Damage.Value);
-        player.PlaySound(sounds.Damage);
-
+  
         BlockCooldownTimer(player, block, settings.Damage.Cooldown);
     }
 
@@ -305,22 +304,31 @@ public partial class Blocks
 
         if (gun != null)
         {
+            var weaponCategory = WeaponList.Categories.FirstOrDefault(category =>
+                category.Value.Contains(gun.Designer)).Key;
+
+            if (!string.IsNullOrEmpty(weaponCategory))
+            {
+                int weaponGroup = weaponCategory == Files.BlockModels.Pistol.Title ? 2 : 1;
+
+                var hasGroupWeapon = player.PlayerPawn.Value?.WeaponServices?.MyWeapons
+                    .Any(w => WeaponList.Categories
+                    .Where(cat => (cat.Key == Files.BlockModels.Pistol.Title ? 2 : 1) == weaponGroup)
+                    .SelectMany(cat => cat.Value)
+                    .Contains(w.Value?.DesignerName)) ?? false;
+
+                if (hasGroupWeapon)
+                    return;
+            }
+
             player.GiveWeapon(gun.Designer);
 
-            if (WeaponList.SpecialWeapons.ContainsKey(gun.Designer))
-            {
-                var myWeapons = player.PlayerPawn.Value!.WeaponServices!.MyWeapons;
+            var designer = gun.Designer;
 
-                foreach (var item in myWeapons)
-                {
-                    if (item.Value!.DesignerName == WeaponList.SpecialWeapons[gun.Designer])
-                    {
-                        player.FindWeapon(item.Value.DesignerName).SetAmmo(1, 0);
-                        break;
-                    }
-                }
-            }
-            else player.FindWeapon(gun.Designer).SetAmmo(1, 0);
+            if (WeaponList.SpecialWeapons.TryGetValue(designer, out var special))
+                designer = special;
+
+            player.FindWeapon(designer).SetAmmo(1, 0);
 
             Utils.PrintToChatAll($"{ChatColors.LightPurple}{player.PlayerName} {ChatColors.Grey}equipped a {weapon}");
 
@@ -369,15 +377,14 @@ public partial class Blocks
 
         pawn.Teleport(null, null, vel);
 
-        BlockCooldownTimer(player, block, 0.5f);
+        BlockCooldownTimer(player, block, 0.25f);
     }
 
     private static void Action_Slap(CCSPlayerController player, CBaseEntity block)
     {
         player.Slap((int)settings.Slap.Value);
-        player.PlaySound(sounds.Damage);
 
-        BlockCooldownTimer(player, block, 0.5f);
+        BlockCooldownTimer(player, block, 0.25f);
     }
 
     public static bool nuked;
@@ -482,7 +489,7 @@ public partial class Blocks
 
         pawn.Teleport(null, null, vel);
 
-        BlockCooldownTimer(player, block, 0.5f);
+        BlockCooldownTimer(player, block, 0.25f);
     }
 
     public static void Test(CCSPlayerController player)

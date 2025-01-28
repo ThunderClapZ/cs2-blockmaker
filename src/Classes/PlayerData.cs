@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 public class PlayerData
 {
     public bool Builder = false;
+    public bool Pole = false;
     public string BlockType = "Platform";
     public string BlockSize = "Normal";
     public string BlockTeam = "Both";
@@ -22,4 +23,5 @@ public class BuildingData
     public CBaseProp block = null!;
     public Vector offset = new();
     public int distance;
+    public List<CBeam> beams = new();
 }

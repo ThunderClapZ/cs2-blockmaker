@@ -2,16 +2,17 @@
 using CounterStrikeSharp.API.Modules.Utils;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
-public class BlocksCooldown
-{
-    public Dictionary<CBaseEntity, bool> Block = new Dictionary<CBaseEntity, bool>();
-}
-
 public partial class Blocks
 {
+    public class BlocksCooldown
+    {
+        public Dictionary<CBaseEntity, bool> Block = new Dictionary<CBaseEntity, bool>();
+    }
+
     public static Dictionary<int, BlocksCooldown> PlayerCooldowns = new Dictionary<int, BlocksCooldown>();
     public static Dictionary<CCSPlayerController, List<Timer>> CooldownsTimers = new();
-    private static void BlockCooldownTimer(CCSPlayerController player, CBaseEntity block, float timer, bool message = false)
+
+    private static void BlockCooldownTimer(CCSPlayerController player, CBaseEntity block, float timer = 0, bool message = false)
     {
         if (timer <= 0 || block == null || block.Entity == null)
             return;

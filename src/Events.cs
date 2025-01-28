@@ -42,6 +42,126 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Unhook(OnTakeDamage, HookMode.Pre);
     }
 
+    void OnMapStart(string mapname)
+    {
+        Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Utils.GetMapName());
+        Directory.CreateDirectory(Files.mapsFolder);
+
+        Files.blocksPath = Path.Combine(Files.mapsFolder, "blocks.json");
+
+        if (Config.Settings.Building.AutoSave)
+        {
+            AddTimer(Config.Settings.Building.SaveTime, () => {
+                Utils.PrintToChatAll("Auto-Saving Blocks");
+                Blocks.Save();
+            }, TimerFlags.STOP_ON_MAPCHANGE);
+        }
+
+        if (Config.Settings.Building.BuildModeConfig)
+        {
+            string[] commands =
+                {
+                    "sv_cheats 1", "mp_join_grace_time 3600", "mp_timelimit 60",
+                    "mp_roundtime 60", "mp_freezetime 0", "mp_warmuptime 0", "mp_maxrounds 99"
+                };
+
+            foreach (string command in commands)
+                Server.ExecuteCommand(command);
+        }
+    }
+
+    void OnServerPrecacheResources(ResourceManifest manifest)
+    {
+        var blockProperties = typeof(BlockModels).GetProperties();
+
+        foreach (var property in blockProperties)
+        {
+            var models = (BlockModel)property.GetValue(Files.BlockModels)!;
+
+            if (models != null)
+            {
+                if (!string.IsNullOrEmpty(models.Block))
+                    manifest.AddResource(models.Block);
+
+                if (!string.IsNullOrEmpty(models.Pole))
+                    manifest.AddResource(models.Pole);
+            }
+        }
+
+        manifest.AddResource(Config.Settings.Blocks.Camouflage.ModelT);
+        manifest.AddResource(Config.Settings.Blocks.Camouflage.ModelCT);
+        manifest.AddResource("particles/burning_fx/env_fire_medium.vpcf");
+    }
+
+    HookResult EventPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+
+        if (player == null || player.NotValid())
+            return HookResult.Continue;
+
+        playerData[player.Slot] = new PlayerData();
+
+        if (buildMode)
+        {
+            if (Utils.HasPermission(player))
+                playerData[player.Slot].Builder = true;
+        }
+
+        return HookResult.Continue;
+    }
+
+    HookResult EventRoundStart(EventRoundStart @event, GameEventInfo info)
+    {
+        Timers.Clear();
+
+        foreach (var kvp in Blocks.CooldownsTimers)
+        {
+            foreach (var timer in kvp.Value)
+                timer.Kill();
+        }
+
+        Blocks.PlayerHolds.Clear();
+        Blocks.PlayerCooldowns.Clear();
+        Blocks.CooldownsTimers.Clear();
+        Blocks.BlocksEntities.Clear();
+
+        Blocks.Spawn();
+
+        Blocks.nuked = false;
+
+        return HookResult.Continue;
+    }
+
+    HookResult EventRoundEnd(EventRoundEnd @event, GameEventInfo info)
+    {
+        if (buildMode && Config.Settings.Building.AutoSave)
+            Blocks.Save();
+
+        return HookResult.Continue;
+    }
+
+    HookResult EventPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+
+        if (player == null || player.NotValid())
+            return HookResult.Continue;
+
+        if (buildMode)
+            AddTimer(1.0f, player!.Respawn);
+
+        if (Blocks.CooldownsTimers.TryGetValue(player!, out var playerTimers))
+        {
+            foreach (var timer in playerTimers)
+                timer.Kill();
+
+            Blocks.CooldownsTimers[player!].Clear();
+        }
+
+        return HookResult.Continue;
+    }
+
     HookResult OnStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
         if (activator.DesignerName != "player") return HookResult.Continue;
@@ -70,117 +190,6 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         return HookResult.Continue;
     }
 
-    void OnServerPrecacheResources(ResourceManifest manifest)
-    {
-        var blockProperties = typeof(BlockModels).GetProperties();
-
-        foreach (var property in blockProperties)
-        {
-            var models = (BlockSizes)property.GetValue(BlockModels)!;
-
-            if (models != null)
-            {
-                if (!string.IsNullOrEmpty(models.Block))
-                    manifest.AddResource(models.Block);
-
-                if (!string.IsNullOrEmpty(models.Pole))
-                    manifest.AddResource(models.Pole);
-            }
-        }
-
-        manifest.AddResource(Config.Settings.Blocks.Camouflage.ModelT);
-        manifest.AddResource(Config.Settings.Blocks.Camouflage.ModelCT);
-        manifest.AddResource("particles/burning_fx/env_fire_medium.vpcf");
-    }
-
-    void OnMapStart(string mapname)
-    {
-        Blocks.savedPath = Path.Combine(blocksFolder, $"{Utils.GetMapName()}.json");
-
-        if (Config.Settings.Building.AutoSave)
-        {
-            AddTimer(Config.Settings.Building.SaveTime, () => {
-                Utils.PrintToChatAll("Auto-Saving Blocks");
-                Blocks.Save();
-            }, TimerFlags.STOP_ON_MAPCHANGE);
-        }
-
-        if (Config.Settings.Building.BuildModeConfig)
-        {
-            string[] commands =
-                {
-                    "sv_cheats 1", "mp_join_grace_time 3600", "mp_timelimit 60",
-                    "mp_roundtime 60", "mp_freezetime 0", "mp_warmuptime 0", "mp_maxrounds 99"
-                };
-
-            foreach (string command in commands)
-                Server.ExecuteCommand(command);
-        }
-    }
-
-    HookResult EventPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
-    {
-        var player = @event.Userid;
-
-        if (player == null || player.NotValid())
-            return HookResult.Continue;
-
-        playerData[player.Slot] = new PlayerData();
-
-        if (buildMode)
-        {
-            if (Utils.HasPermission(player))
-                playerData[player.Slot].Builder = true;
-        }
-
-        return HookResult.Continue;
-    }
-
-    HookResult EventRoundStart(EventRoundStart @event, GameEventInfo info)
-    {
-        Timers.Clear();
-
-        Blocks.PlayerHolds.Clear();
-        Blocks.PlayerCooldowns.Clear();
-        Blocks.CooldownsTimers.Clear();
-        Blocks.BlocksEntities.Clear();
-
-        Blocks.Spawn();
-
-        Blocks.nuked = false;
-
-        return HookResult.Continue;
-    }
-
-    HookResult EventRoundEnd(EventRoundEnd @event, GameEventInfo info)
-    {
-        if (buildMode && Config.Settings.Building.AutoSave)
-            Blocks.Save();
-
-        return HookResult.Continue;
-    }
-
-    HookResult EventPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
-    {
-        var player = @event.Userid;
-
-        if (@event == null || player.NotValid())
-            return HookResult.Continue;
-
-        if (buildMode)
-            AddTimer(1.0f, player!.Respawn);
-
-        if (Blocks.CooldownsTimers.TryGetValue(player!, out var playerTimers))
-        {
-            foreach (var timer in playerTimers)
-                timer.Kill();
-
-            Blocks.CooldownsTimers[player!].Clear();
-        }
-
-        return HookResult.Continue;
-    }
-
     HookResult OnTakeDamage(DynamicHook hook)
     {
         var entity = hook.GetParam<CEntityInstance>(0);
@@ -193,8 +202,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             return HookResult.Continue;
 
         foreach(var block in Blocks.BlocksEntities.Where(b =>
-            b.Value.Name == BlockModels.NoFallDmg.Title ||
-            b.Value.Name == BlockModels.Trampoline.Title)
+            b.Value.Name == Files.BlockModels.NoFallDmg.Title ||
+            b.Value.Name == Files.BlockModels.Trampoline.Title)
         )
         {
             var player = entity.As<CCSPlayerPawn>();
@@ -202,8 +211,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             var playerPos = new Vector(player.AbsOrigin!.X, player.AbsOrigin.Y, player.AbsOrigin.Z);
             var blockPos = new Vector(block.Key.AbsOrigin!.X, block.Key.AbsOrigin.Y, block.Key.AbsOrigin.Z);
 
-            var playerMaxs = VectorUtils.GetBlockSizeMax(player);
-            var blockMaxs = VectorUtils.GetBlockSizeMax(block.Key) * Utils.GetSize(block.Value.Size);
+            var playerMaxs = VectorUtils.GetMaxs(player) * 2;
+            var blockMaxs = VectorUtils.GetMaxs(block.Key) * Utils.GetSize(block.Value.Size) * 2;
 
             if (VectorUtils.IsWithinBounds(blockPos, playerPos, blockMaxs, playerMaxs))
                 return HookResult.Handled;

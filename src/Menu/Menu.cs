@@ -97,7 +97,7 @@ public static class Menu
         if (!Utils.BuildMode(player))
             return;
 
-        switch (Instance.Config.Settings.Main.MenuType.ToLower())
+        switch (Instance.Config.Settings.Menu.ToLower())
         {
             case "chat":
             case "text":

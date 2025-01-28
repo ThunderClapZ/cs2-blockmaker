@@ -1,9 +1,12 @@
-﻿using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
-using static Plugin;
 
 public static class MenuWASD
 {
+    private static Plugin Instance = Plugin.Instance;
+    private static Dictionary<int, PlayerData> playerData = Instance.playerData;
+
     public static void OpenMenu(CCSPlayerController player)
     {
         IWasdMenu MainMenu = WasdManager.CreateMenu("Block Maker");
@@ -34,12 +37,12 @@ public static class MenuWASD
 
         CommandsMenu.Add("Create", (player, menuOption) =>
         {
-            Instance.Command_CreateBlock(player);
+            Commands.CreateBlock(player);
         });
 
         CommandsMenu.Add("Delete", (player, menuOption) =>
         {
-            Instance.Command_DeleteBlock(player);
+            Commands.DeleteBlock(player);
         });
 
         CommandsMenu.Add("Rotate", (player, menuOption) =>
@@ -52,12 +55,12 @@ public static class MenuWASD
 
         CommandsMenu.Add("Convert", (player, menuOption) =>
         {
-            Instance.Command_ConvertBlock(player);
+            Commands.ConvertBlock(player);
         });
 
         CommandsMenu.Add("Copy", (player, menuOption) =>
         {
-            Instance.Command_CopyBlock(player);
+            Commands.CopyBlock(player);
         });
 
         WasdManager.OpenMainMenu(player, CommandsMenu);
@@ -65,7 +68,7 @@ public static class MenuWASD
 
     private static void RotateMenuOptions(CCSPlayerController player, string[] rotateOptions, float[] rotateValues)
     {
-        IWasdMenu RotateMenu = WasdManager.CreateMenu($"Rotate Block ({Instance.playerData[player.Slot].RotationValue} Units)");
+        IWasdMenu RotateMenu = WasdManager.CreateMenu($"Rotate Block ({playerData[player.Slot].RotationValue} Units)");
 
         RotateMenu.Add($"Select Units", (player, option) =>
         {
@@ -76,7 +79,7 @@ public static class MenuWASD
         {
             RotateMenu.Add(rotateOption, (player, option) =>
             {
-                Instance.Command_RotateBlock(player, rotateOption);
+                Commands.RotateBlock(player, rotateOption);
             });
         }
 
@@ -91,7 +94,7 @@ public static class MenuWASD
         {
             RotateValuesMenu.Add(rotateValueOption.ToString() + " Units", (player, option) =>
             {
-                Instance.playerData[player.Slot].RotationValue = rotateValueOption;
+                playerData[player.Slot].RotationValue = rotateValueOption;
 
                 Utils.PrintToChat(player, $"Selected Rotation Value: {ChatColors.White}{rotateValueOption} Units");
 
@@ -110,38 +113,38 @@ public static class MenuWASD
     {
         IWasdMenu BlockMenu = WasdManager.CreateMenu("Block Settings");
 
-        BlockMenu.Add($"Type: {Instance.playerData[player.Slot].BlockType}", (player, menuOption) =>
+        BlockMenu.Add($"Type: {playerData[player.Slot].BlockType}", (player, menuOption) =>
         {
             TypeMenuOptions(player);
         });
 
-        BlockMenu.Add($"Size: {Instance.playerData[player.Slot].BlockSize}", (player, menuOption) =>
+        BlockMenu.Add($"Size: {playerData[player.Slot].BlockSize}", (player, menuOption) =>
         {
-            string[] sizeValues = { "Pole", "Small", "Normal", "Large", "X-Large" };
+            string[] sizeValues = Instance.Config.Settings.Building.BlockSizes.Select(b => b.Title).ToArray();
 
             SizeMenuOptions(player, sizeValues);
         });
 
-        BlockMenu.Add($"Team: {Instance.playerData[player.Slot].BlockTeam}", (player, menuOption) =>
+        BlockMenu.Add($"Team: {playerData[player.Slot].BlockTeam}", (player, menuOption) =>
         {
             string[] teamValues = { "Both", "T", "CT" };
 
             TeamMenuOptions(player, teamValues);
         });
 
-        BlockMenu.Add($"Grid: {Instance.playerData[player.Slot].GridValue} Units", (player, menuOption) =>
+        BlockMenu.Add($"Grid: {playerData[player.Slot].GridValue} Units", (player, menuOption) =>
         {
             float[] gridValues = Instance.Config.Settings.Building.GridValues;
 
             GridMenuOptions(player, gridValues);
         });
 
-        BlockMenu.Add($"Transparency: {Instance.playerData[player.Slot].BlockTransparency}", (player, menuOption) =>
+        BlockMenu.Add($"Transparency: {playerData[player.Slot].BlockTransparency}", (player, menuOption) =>
         {
             TransparencyMenuOptions(player);
         });
 
-        BlockMenu.Add($"Color: {Instance.playerData[player.Slot].BlockColor}", (player, menuOption) =>
+        BlockMenu.Add($"Color: {playerData[player.Slot].BlockColor}", (player, menuOption) =>
         {
             ColorMenuOptions(player);
         });
@@ -151,28 +154,30 @@ public static class MenuWASD
 
     private static void TypeMenuOptions(CCSPlayerController player)
     {
-        IWasdMenu TypeMenu = WasdManager.CreateMenu($"Select Type ({Instance.playerData[player.Slot].BlockType})");
+        IWasdMenu TypeMenu = WasdManager.CreateMenu($"Select Type ({playerData[player.Slot].BlockType})");
+
+        var blockmodels = Files.BlockModels;
 
         foreach (var property in typeof(BlockModels).GetProperties())
         {
-            var block = (BlockSizes)property.GetValue(Plugin.BlockModels)!;
+            var block = (BlockModel)property.GetValue(blockmodels)!;
 
             string blockName = block.Title;
 
             TypeMenu.Add(blockName, (player, menuOption) =>
             {
-                if (block.Title == "Pistol" ||
-                    block.Title == "Sniper" ||
-                    block.Title == "Rifle" ||
-                    block.Title == "SMG" ||
-                    block.Title == "Shotgun/Heavy"
+                if (block.Title == blockmodels.Pistol.Title ||
+                    block.Title == blockmodels.Sniper.Title ||
+                    block.Title == blockmodels.Rifle.Title ||
+                    block.Title == blockmodels.SMG.Title ||
+                    block.Title == blockmodels.ShotgunHeavy.Title
                 )
                 {
                     GunTypeMenu(player, block.Title);
                     return;
                 }
 
-                Instance.Command_BlockType(player, blockName);
+                Commands.BlockType(player, blockName);
 
                 Menu_BlockSettings(player);
             });
@@ -198,11 +203,11 @@ public static class MenuWASD
                     {
                         foreach (var property in typeof(BlockModels).GetProperties())
                         {
-                            var model = (BlockSizes)property.GetValue(Plugin.BlockModels)!;
+                            var model = (BlockModel)property.GetValue(Files.BlockModels)!;
 
                             if (string.Equals(model.Title, gunType, StringComparison.OrdinalIgnoreCase))
                             {
-                                Instance.playerData[player.Slot].BlockType = $"{model.Title}.{weapon.Name}";
+                                playerData[player.Slot].BlockType = $"{model.Title}.{weapon.Name}";
                                 Utils.PrintToChat(player, $"Selected Type: {ChatColors.White}{model.Title}.{weapon.Name}");
 
                                 Menu_BlockSettings(player);
@@ -219,13 +224,20 @@ public static class MenuWASD
 
     private static void SizeMenuOptions(CCSPlayerController player, string[] sizeValues)
     {
-        IWasdMenu SizeMenu = WasdManager.CreateMenu($"Select Size ({Instance.playerData[player.Slot].BlockSize})");
+        IWasdMenu SizeMenu = WasdManager.CreateMenu($"Select Size ({playerData[player.Slot].BlockSize})");
+
+        SizeMenu.Add($"Pole: {(playerData[player.Slot].Pole ? "ON" : "OFF")}", (player, option) =>
+        {
+            Commands.Pole(player);
+
+            SizeMenuOptions(player, sizeValues);
+        });
 
         foreach (string sizeValue in sizeValues)
         {
             SizeMenu.Add(sizeValue, (player, option) =>
             {
-                Instance.playerData[player.Slot].BlockSize = sizeValue;
+                playerData[player.Slot].BlockSize = sizeValue;
 
                 Utils.PrintToChat(player, $"Selected Size: {ChatColors.White}{sizeValue}");
 
@@ -238,13 +250,13 @@ public static class MenuWASD
 
     private static void TeamMenuOptions(CCSPlayerController player, string[] teamValues)
     {
-        IWasdMenu TeamMenu = WasdManager.CreateMenu($"Select Team ({Instance.playerData[player.Slot].BlockTeam})");
+        IWasdMenu TeamMenu = WasdManager.CreateMenu($"Select Team ({playerData[player.Slot].BlockTeam})");
 
         foreach (string teamValue in teamValues)
         {
             TeamMenu.Add(teamValue, (player, option) =>
             {
-                Instance.playerData[player.Slot].BlockTeam = teamValue;
+                playerData[player.Slot].BlockTeam = teamValue;
 
                 Utils.PrintToChat(player, $"Selected Team: {ChatColors.White}{teamValue}");
 
@@ -257,11 +269,11 @@ public static class MenuWASD
 
     private static void GridMenuOptions(CCSPlayerController player, float[] gridValues)
     {
-        IWasdMenu GridMenu = WasdManager.CreateMenu($"Select Grid ({(Instance.playerData[player.Slot].Grid ? "ON" : "OFF")} - {Instance.playerData[player.Slot].GridValue})");
+        IWasdMenu GridMenu = WasdManager.CreateMenu($"Select Grid ({(playerData[player.Slot].Grid ? "ON" : "OFF")} - {playerData[player.Slot].GridValue})");
 
         GridMenu.Add($"Toggle Grid", (player, option) =>
         {
-            Instance.Command_Grid(player, "");
+            Commands.Grid(player, "");
 
             GridMenuOptions(player, gridValues);
         });
@@ -270,7 +282,7 @@ public static class MenuWASD
         {
             GridMenu.Add(gridValue.ToString() + " Units", (player, option) =>
             {
-                Instance.Command_Grid(player, gridValue.ToString());
+                Commands.Grid(player, gridValue.ToString());
 
                 Menu_BlockSettings(player);
             });
@@ -281,17 +293,17 @@ public static class MenuWASD
 
     private static void TransparencyMenuOptions(CCSPlayerController player)
     {
-        IWasdMenu TransparencyMenu = WasdManager.CreateMenu($"Select Transparency ({Instance.playerData[player.Slot].BlockTransparency})");
+        IWasdMenu TransparencyMenu = WasdManager.CreateMenu($"Select Transparency ({playerData[player.Slot].BlockTransparency})");
 
         foreach (var value in Utils.AlphaMapping.Keys)
         {
             TransparencyMenu.Add(value, (player, menuOption) =>
             {
-                Instance.playerData[player.Slot].BlockTransparency = value;
+                playerData[player.Slot].BlockTransparency = value;
 
                 Utils.PrintToChat(player, $"Selected Transparency: {ChatColors.White}{value}");
 
-                Instance.Command_TransparenyBlock(player, value);
+                Commands.TransparenyBlock(player, value);
 
                 Menu_BlockSettings(player);
             });
@@ -302,13 +314,13 @@ public static class MenuWASD
 
     private static void ColorMenuOptions(CCSPlayerController player)
     {
-        IWasdMenu ColorMenu = WasdManager.CreateMenu($"Select Color ({Instance.playerData[player.Slot].BlockColor})");
+        IWasdMenu ColorMenu = WasdManager.CreateMenu($"Select Color ({playerData[player.Slot].BlockColor})");
 
         foreach (var color in Utils.ColorMapping.Keys)
         {
             ColorMenu.Add(color, (player, menuOption) =>
             {
-                Instance.Command_BlockColor(player, color);
+                Commands.BlockColor(player, color);
 
                 Menu_BlockSettings(player);
             });
@@ -327,28 +339,28 @@ public static class MenuWASD
 
         SettingsMenu.Add("Build Mode: " + (Instance.buildMode ? "ON" : "OFF"), (player, menuOption) =>
         {
-            Instance.Command_BuildMode(player);
+            Commands.BuildMode(player);
 
             Menu_Settings(player);
         });
 
-        SettingsMenu.Add("Godmode: " + (Instance.playerData[player.Slot].Godmode ? "ON" : "OFF"), (player, menuOption) =>
+        SettingsMenu.Add("Godmode: " + (playerData[player.Slot].Godmode ? "ON" : "OFF"), (player, menuOption) =>
         {
-            Instance.Command_Godmode(player);
+            Commands.Godmode(player);
 
             Menu_Settings(player);
         });
 
-        SettingsMenu.Add("Noclip: " + (Instance.playerData[player.Slot].Noclip ? "ON" : "OFF"), (player, menuOption) =>
+        SettingsMenu.Add("Noclip: " + (playerData[player.Slot].Noclip ? "ON" : "OFF"), (player, menuOption) =>
         {
-            Instance.Command_Noclip(player);
+            Commands.Noclip(player);
 
             Menu_Settings(player);
         });
 
         SettingsMenu.Add("Save Blocks", (player, menuOption) =>
         {
-            Instance.Command_SaveBlocks(player);
+            Commands.SaveBlocks(player);
 
             Menu_Settings(player);
         });
@@ -364,12 +376,27 @@ public static class MenuWASD
 
             ConfirmMenu.Add("YES - remove blocks", (player, menuOption) =>
             {
-                Instance.Command_ClearBlocks(player);
+                Commands.ClearBlocks(player);
 
                 Menu_Settings(player);
             });
 
             WasdManager.OpenMainMenu(player, ConfirmMenu);
+        });
+
+        SettingsMenu.Add("Manage Builders", (player, menuOption) =>
+        {
+            IWasdMenu BuildersMenu = WasdManager.CreateMenu("Manage Builders");
+
+            foreach (var target in Utilities.GetPlayers().Where(t => t.SteamID != player.SteamID && t.SteamID > 0))
+            {
+                BuildersMenu.Add(target.PlayerName, (player, menuOption) =>
+                {
+                    Commands.ManageBuilder(player, target.SteamID.ToString());
+                });
+            }
+
+            WasdManager.OpenMainMenu(player, BuildersMenu);
         });
 
         WasdManager.OpenMainMenu(player, SettingsMenu);

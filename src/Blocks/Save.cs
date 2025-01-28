@@ -3,15 +3,15 @@ using System.Text.Json;
 
 public partial class Blocks
 {
-    public static string savedPath = "";
-
     public static void Save()
     {
-        if (!File.Exists(savedPath))
+        var path = Files.blocksPath;
+
+        if (!File.Exists(path))
         {
-            using (FileStream fs = File.Create(savedPath))
+            using (FileStream fs = File.Create(path))
             {
-                Utils.Log($"File does not exist, creating one ({savedPath})");
+                Utils.Log($"Creating and saving file ({path})");
                 fs.Close();
             }
         }
@@ -51,7 +51,7 @@ public partial class Blocks
 
             string jsonString = JsonSerializer.Serialize(blockDataList, new JsonSerializerOptions { WriteIndented = true });
 
-            File.WriteAllText(savedPath, jsonString);
+            File.WriteAllText(path, jsonString);
 
             if (config.Sounds.Building.Enabled)
                 Utils.PlaySoundAll(config.Sounds.Building.Save);

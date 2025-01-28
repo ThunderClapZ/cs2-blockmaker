@@ -354,35 +354,31 @@ public static class EntityExtends
         pawn.AbsVelocity.Y = vel.Y;
         pawn.AbsVelocity.Z = vel.Z;
 
-        if (damage <= 0)
-            return;
-
-        pawn.Health -= damage;
-        Utilities.SetStateChanged(pawn, "CBaseEntity", "m_iHealth");
-
-        if (pawn.Health <= 0)
-            pawn.CommitSuicide(true, true);
+        player.Health(-damage);
     }
 
-    public static void Health(this CCSPlayerController player, int health)
+    public static void Health(this CCSPlayerController player, int hp)
     {
         if (!player.IsLegal() && !player.IsAlive())
             return;
 
         CCSPlayerPawn pawn = player.Pawn()!;
 
-        if (health >= 1)
-        {
-            if (pawn.Health >= pawn.MaxHealth)
-                return;
-        }
+        if ((!pawn.TakesDamage && hp <= 0) || hp == 0)
+            return;
 
-        int newHealth = Math.Min(pawn.Health + health, pawn.MaxHealth);
+        int newHealth = Math.Min(pawn.Health + hp, pawn.MaxHealth);
 
         pawn.Health = newHealth;
         Utilities.SetStateChanged(pawn, "CBaseEntity", "m_iHealth");
 
         player.ColorScreen(Color.FromArgb(100, 255, 0, 0), 0.25f, 0.5f, FadeFlags.FADE_OUT);
+
+        if (hp >= 1)
+            player.PlaySound(Plugin.Instance.Config.Sounds.Blocks.Health);
+
+        if (hp <= -1)
+            player.PlaySound(Plugin.Instance.Config.Sounds.Blocks.Damage);
 
         if (pawn.Health <= 0)
             pawn.CommitSuicide(true, true);
