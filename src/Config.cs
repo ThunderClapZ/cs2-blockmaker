@@ -11,7 +11,6 @@ public class Config_Settings
 {
     public string Prefix { get; set; } = "{purple}[BlockMaker]{default}";
     public string Menu { get; set; } = "html";
-    public bool RemoveWeapons { get; set; } = true;
 
     public class Settings_Building
     {

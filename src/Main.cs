@@ -28,6 +28,9 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (hotReload)
         {
+            Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Utils.GetMapName());
+            Directory.CreateDirectory(Files.mapsFolder);
+
             Files.blocksPath = Path.Combine(Files.mapsFolder, "blocks.json");
 
             foreach (var player in Utilities.GetPlayers().Where(p => !p.IsBot && !playerData.ContainsKey(p.Slot)))

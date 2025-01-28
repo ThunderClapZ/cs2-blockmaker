@@ -45,18 +45,22 @@
 ```json
 {
   "Settings": {
-    "Main": {
-      "Prefix": "{purple}[BlockMaker]{default}",
-      "MenuType": "html"
-    },
+    "Prefix": "{purple}[BlockMaker]{default}",
+    "Menu": "html",
     "Building": {
       "BuildMode": false,
       "BuildModeConfig": false,
+      "AutoSave": false,
+      "SaveTime": 300,
       "BlockGrabColor": "255,255,255,128",
       "GridValues": [ 16, 32, 64, 128, 256 ],
       "RotationValues": [ 15, 30, 45, 60, 90, 120 ],
-      "AutoSave": false,
-      "SaveTime": 300
+      "BlockSizes": [
+        { "Title": "Small", "Size": 0.5 },
+        { "Title": "Normal", "Size": 1 },
+        { "Title": "Large", "Size": 2 },
+        { "Title": "X-Large", "Size": 3 }
+      ]
     },
     "Blocks": {
       "DisableShadows": true,
@@ -131,24 +135,24 @@
   "Commands": {
     "Admin": {
       "Permission": "@css/root",
-      "BuildMode": "buildmode,togglebuild",
-      "ManageBuilder": "builder,togglebuilder,allowbuilder"
+      "BuildMode": "buildmode",
+      "ManageBuilder": "builder,builders"
     },
     "Building": {
-      "BuildMenu": "buildmenu,blockmenu,blocksmenu",
-      "CreateBlock": "block,create,createblock,place,placeblock",
-      "DeleteBlock": "delete,deleteblock,remove,removeblock",
-      "RotateBlock": "rotate,rotateblock",
-      "BlockType": "type, blocktype",
-      "BlockColor": "color, blockcolor",
-      "CopyBlock": "copy, copyblock",
-      "ConvertBlock": "convert,convertblock,replace,replaceblock",
-      "SaveBlocks": "save,saveblocks,saveblock",
-      "Snapping": "snap,snapblock,blocksnap",
-      "Grid": "grid,togglegrid",
-      "Noclip": "nc,noclip",
-      "Godmode": "god,godmode",
-      "TestBlock": "testblock"
+      "BuildMenu": "bm,buildmenu",
+      "CreateBlock": "create",
+      "DeleteBlock": "delete",
+      "RotateBlock": "rotate",
+      "BlockType": "type",
+      "BlockColor": "color",
+      "CopyBlock": "copy",
+      "ConvertBlock": "convert",
+      "SaveBlocks": "save",
+      "Snapping": "snap",
+      "Grid": "grid",
+      "Noclip": "nc",
+      "Godmode": "godmode",
+      "TestBlock": "test"
     }
   },
   "Sounds": {
