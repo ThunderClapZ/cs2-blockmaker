@@ -16,12 +16,15 @@ public class PlayerData
     public bool Snapping = false;
     public bool Noclip = false;
     public bool Godmode = false;
+    public string PropertyType = "";
+    public Dictionary<string, CBaseEntity> PropertyEntity = new();
 }
 
 public class BuildingData
 {
     public CBaseProp block = null!;
     public Vector offset = new();
+    public QAngle EyeAngles = new();
     public int distance;
     public List<CBeam> beams = new();
 }

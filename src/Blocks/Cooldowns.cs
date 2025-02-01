@@ -10,7 +10,7 @@ public partial class Blocks
     }
 
     public static Dictionary<int, BlocksCooldown> PlayerCooldowns = new Dictionary<int, BlocksCooldown>();
-    public static Dictionary<CCSPlayerController, List<Timer>> CooldownsTimers = new();
+    public static Dictionary<int, List<Timer>> CooldownsTimers = new();
 
     private static void BlockCooldownTimer(CCSPlayerController player, CBaseEntity block, float timer = 0, bool message = false)
     {
@@ -37,7 +37,7 @@ public partial class Blocks
             else Utils.PrintToChat(player, $"{ChatColors.Red}Error: could not reset cooldown for {block} block");
         });
 
-        CooldownsTimers[player].Add(cdtimer);
+        CooldownsTimers[player.Slot].Add(cdtimer);
     }
 
     private static bool BlockCooldown(CCSPlayerController player, CBaseEntity block)

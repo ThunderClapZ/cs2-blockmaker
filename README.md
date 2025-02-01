@@ -27,7 +27,6 @@
 - [MultiAddonManager](https://github.com/Source2ZE/MultiAddonManager)
 - [BlockBuilder Assets](https://steamcommunity.com/sharedfiles/filedetails/?id=3299954847)
 - [ipsvn/ChaseMod](https://github.com/ipsvn/ChaseMod) (optional for gameplay)
-- [exkludera/cs2-teleports](https://github.com/exkludera/cs2-teleports) (optional for gameplay)
 
 <br>
 
@@ -48,7 +47,7 @@
     "Prefix": "{purple}[BlockMaker]{default}",
     "Menu": "html",
     "Building": {
-      "BuildMode": false,
+      "BuildMode": true,
       "BuildModeConfig": false,
       "AutoSave": false,
       "SaveTime": 300,
@@ -64,72 +63,16 @@
     },
     "Blocks": {
       "DisableShadows": true,
-      "Bhop": {
-        "Duration": 0.25,
-        "Cooldown": 1.5
-      },
-      "Health": {
-        "Cooldown": 0.5,
-        "Value": 2
-      },
-      "Grenade": {
-        "Cooldown": 60
-      },
-      "Gravity": {
-        "Duration": 4,
-        "Cooldown": 5,
-        "Value": 0.4
-      },
-      "Frost": {
-        "Cooldown": 60
-      },
-      "Flash": {
-        "Cooldown": 60
-      },
-      "Fire": {
-        "Duration": 5,
-        "Cooldown": 5,
-        "Value": 8
-      },
-      "Delay": {
-        "Duration": 1,
-        "Cooldown": 1.5
-      },
-      "Damage": {
-        "Cooldown": 0.5,
-        "Value": 5
-      },
-      "Stealth": {
-        "Duration": 10,
-        "Cooldown": 60
-      },
-      "Speed": {
-        "Duration": 3,
-        "Cooldown": 60,
-        "Value": 2
-      },
-      "SpeedBoost": {
-        "Value": 650
-      },
-      "Slap": {
-        "Value": 2
-      },
-      "Random": {
-        "Cooldown": 60
-      },
-      "Invincibility": {
-        "Duration": 5,
-        "Cooldown": 60
-      },
-      "Trampoline": {
-        "Value": 500
-      },
-      "Camouflage": {
-        "ModelT": "characters/models/ctm_fbi/ctm_fbi.vmdl",
-        "ModelCT": "characters/models/tm_leet/tm_leet_variantb.vmdl",
-        "Duration": 10,
-        "Cooldown": 60
-      }
+      "CamouflageT": "characters/models/ctm_fbi/ctm_fbi.vmdl",
+      "CamouflageCT": "characters/models/tm_leet/tm_leet_variantb.vmdl",
+      "FireParticle": "particles/burning_fx/env_fire_medium.vpcf"
+    },
+    "Teleports": {
+      "EntryModel": "models/props/de_dust/hr_dust/dust_soccerball/dust_soccer_ball001.vmdl",
+      "EntryColor": "0,255,0,200",
+      "ExitModel": "models/props/de_dust/hr_dust/dust_soccerball/dust_soccer_ball001.vmdl",
+      "ExitColor": "255,0,0,200",
+      "ForceAngles": false
     }
   },
   "Commands": {

@@ -1,22 +1,18 @@
 ﻿using System.Text.Json.Serialization;
 using System.Text.Json;
 
-public class Files
+public static class Files
 {
     public static BlockModels BlockModels { get; set; } = new BlockModels();
 
     public static string mapsFolder = "";
-    public static string modelsPath = "";
-    public static string blocksPath = "";
 
     public static void Load()
     {
         mapsFolder = Path.Combine(Plugin.Instance.ModuleDirectory, "maps");
         Directory.CreateDirectory(mapsFolder);
 
-        blocksPath = Path.Combine(mapsFolder, "blocks.json");
-
-        modelsPath = Path.Combine(Plugin.Instance.ModuleDirectory, "models.json");
+        var modelsPath = Path.Combine(Plugin.Instance.ModuleDirectory, "models.json");
 
         if (!string.IsNullOrEmpty(modelsPath))
         {
@@ -41,6 +37,8 @@ public class Files
         {
             string jsonContent = File.ReadAllText(modelsPath);
             BlockModels = JsonSerializer.Deserialize<BlockModels>(jsonContent) ?? new BlockModels();
+
+            Blocks.LoadTitles();
         }
     }
 }

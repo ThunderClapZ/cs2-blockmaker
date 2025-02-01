@@ -37,24 +37,27 @@ public partial class Blocks
 
                 //Utils.DrawBeamsAroundBlock(player, playerHolds.block, Color.Aqua);
 
-                if (player.Buttons.HasFlag(PlayerButtons.Reload))
-                    RotateRepeat(player, playerHolds.block);
-
-                else if (player.Buttons.HasFlag(PlayerButtons.Use))
+                if (player.Buttons.HasFlag(PlayerButtons.Use))
                     DistanceRepeat(player, playerHolds.block);
+
+                else if (player.Buttons.HasFlag(PlayerButtons.Reload))
+                    RotateRepeat(player, playerHolds.block);
 
                 else
                 {
-                    var color = Utils.GetColor(BlocksEntities[playerHolds.block].Color);
-                    int alpha = Utils.GetAlpha(BlocksEntities[playerHolds.block].Transparency);
-
-                    playerHolds.block.Render = Color.FromArgb(alpha, color.R, color.G, color.B);
-                    Utilities.SetStateChanged(playerHolds.block, "CBaseModelEntity", "m_clrRender");
-
-                    foreach (var beam in playerHolds.beams)
+                    if (Props.TryGetValue(playerHolds.block, out var block))
                     {
-                        if (beam != null && beam.IsValid)
-                            beam.Remove();
+                        var color = Utils.GetColor(block.Color);
+                        int alpha = Utils.GetAlpha(block.Transparency);
+
+                        block.Entity.Render = Color.FromArgb(alpha, color.R, color.G, color.B);
+                        Utilities.SetStateChanged(block.Entity, "CBaseModelEntity", "m_clrRender");
+
+                        foreach (var beam in playerHolds.beams)
+                        {
+                            if (beam != null && beam.IsValid)
+                                beam.Remove();
+                        }
                     }
 
                     PlayerHolds.Remove(player);
@@ -72,7 +75,9 @@ public partial class Blocks
 
         if (block != null)
         {
-            if (!BlocksEntities.ContainsKey(block))
+            var teleports = Teleports.FirstOrDefault(pair => pair.Entry.Entity == block || pair.Exit.Entity == block);
+
+            if (!Props.ContainsKey(block) && teleports == null)
             {
                 Utils.PrintToChat(player, $"{ChatColors.Red}Block not found in UsedBlocks");
                 return;
@@ -94,8 +99,11 @@ public partial class Blocks
 
                 int distance = (int)VectorUtils.CalculateDistance(block.AbsOrigin!, pawn.AbsOrigin);
 
-                block.Render = Utils.ParseColor(config.Settings.Building.BlockGrabColor);
-                Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
+                if (Props.ContainsKey(block))
+                {
+                    block.Render = Utils.ParseColor(config.Settings.Building.BlockGrabColor);
+                    Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
+                }
 
                 PlayerHolds.Add(player, new BuildingData() { block = block, distance = distance });
             }
@@ -107,7 +115,7 @@ public partial class Blocks
         var playerHolds = PlayerHolds[player];
         var playerData = instance.playerData[player.Slot];
 
-        var (position, rotation) = VectorUtils.GetEndXYZ(player, block, playerHolds.distance, playerData.Grid, playerData.GridValue, playerData.Snapping, Utils.GetSize(BlocksEntities[block].Size));
+        var (position, rotation) = VectorUtils.GetEndXYZ(player, block, playerHolds.distance, playerData.Grid, playerData.GridValue, playerData.Snapping);
 
         block.Teleport(position, rotation);
 
@@ -121,20 +129,21 @@ public partial class Blocks
     private static void RotateRepeat(CCSPlayerController player, CBaseProp block)
     {
         var playerHolds = PlayerHolds[player];
-        var playerData = instance.playerData[player.Slot];
 
-        var (position, rotation) = VectorUtils.GetEndXYZ(player, block, playerHolds.distance, playerData.Grid, playerData.GridValue, playerData.Snapping, Utils.GetSize(BlocksEntities[block].Size));
+        QAngle currentEyeAngle = player.Pawn()!.EyeAngles;
 
-        block.Teleport(position, rotation);
+        QAngle angleDifference = new(
+            currentEyeAngle.X - playerHolds.EyeAngles.X,
+            currentEyeAngle.Y - playerHolds.EyeAngles.Y,
+            currentEyeAngle.Z - playerHolds.EyeAngles.Z
+        );
 
-        QAngle angle = new QAngle(rotation.X, rotation.Y, rotation.Z);
+        QAngle blockRotation = new(
+            0 + (angleDifference.X * 7.5f),
+            0 + (angleDifference.Y * 7.5f),
+            0 + (angleDifference.Z * 7.5f)
+        );
 
-        if (player.Buttons.HasFlag(PlayerButtons.Attack))
-            angle.Y += 3;
-
-        else if (player.Buttons.HasFlag(PlayerButtons.Attack2))
-            angle.Z += 3;
-
-        block.Teleport(null, angle);
+        block.Teleport(null, blockRotation);
     }
 }

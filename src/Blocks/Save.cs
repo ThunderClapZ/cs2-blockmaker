@@ -5,29 +5,23 @@ public partial class Blocks
 {
     public static void Save()
     {
-        var path = Files.blocksPath;
-
-        if (!File.Exists(path))
-        {
-            using (FileStream fs = File.Create(path))
-            {
-                Utils.Log($"Creating and saving file ({path})");
-                fs.Close();
-            }
-        }
+        var blocksPath = Path.Combine(Files.mapsFolder, "blocks.json");
+        var teleportsPath = Path.Combine(Files.mapsFolder, "teleports.json");
 
         try
         {
-            var blockDataList = new List<SaveBlockData>();
+            var blocksList = new List<SaveBlockData>();
+            var teleportsList = new List<TeleportPairDTO>();
 
-            foreach (var entry in BlocksEntities)
+            // Save blocks
+            foreach (var prop in Props)
             {
-                var block = entry.Key;
-                var data = entry.Value;
+                var block = prop.Key;
+                var data = prop.Value;
 
                 if (block != null && block.IsValid)
                 {
-                    blockDataList.Add(new SaveBlockData
+                    blocksList.Add(new SaveBlockData
                     {
                         Name = data.Name,
                         Model = data.Model,
@@ -35,35 +29,65 @@ public partial class Blocks
                         Team = data.Team,
                         Color = data.Color,
                         Transparency = data.Transparency,
+                        Properties = data.Properties,
                         Position = new VectorUtils.VectorDTO(block.AbsOrigin!),
                         Rotation = new VectorUtils.QAngleDTO(block.AbsRotation!)
                     });
                 }
             }
 
-            int blocks = Utils.GetPlacedBlocksCount();
-
-            if (blockDataList.Count() == 0 || blocks == 0)
+            // Save teleports
+            foreach (var teleport in Teleports)
             {
-                Utils.PrintToChatAll($"{ChatColors.Red}No blocks to save");
-                return;
+                if (teleport.Entry != null && teleport.Exit != null)
+                {
+                    teleportsList.Add(new TeleportPairDTO
+                    {
+                        Entry = new SaveTeleportData
+                        {
+                            Name = teleport.Entry.Name,
+                            Model = teleport.Entry.Model,
+                            Position = new VectorUtils.VectorDTO(teleport.Entry.Entity.AbsOrigin!),
+                            Rotation = new VectorUtils.QAngleDTO(teleport.Entry.Entity.AbsRotation!)
+                        },
+                        Exit = new SaveTeleportData
+                        {
+                            Name = teleport.Exit.Name,
+                            Model = teleport.Exit.Model,
+                            Position = new VectorUtils.VectorDTO(teleport.Exit.Entity.AbsOrigin!),
+                            Rotation = new VectorUtils.QAngleDTO(teleport.Exit.Entity.AbsRotation!)
+                        }
+                    });
+                }
             }
 
-            string jsonString = JsonSerializer.Serialize(blockDataList, new JsonSerializerOptions { WriteIndented = true });
+            int blocksCount = blocksList.Count;
+            int teleportsCount = teleportsList.Count;
 
-            File.WriteAllText(path, jsonString);
+            // Save blocks to blocks.json
+            if (blocksCount > 0)
+            {
+                string blocksJson = JsonSerializer.Serialize(blocksList, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(blocksPath, blocksJson);
+            }
 
-            if (config.Sounds.Building.Enabled)
-                Utils.PlaySoundAll(config.Sounds.Building.Save);
+            // Save teleports to teleports.json
+            if (teleportsCount > 0)
+            {
+                string teleportsJson = JsonSerializer.Serialize(teleportsList, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(teleportsPath, teleportsJson);
+            }
 
-            Utils.PrintToChatAll($"Saved {ChatColors.White}{blocks} {ChatColors.Grey}Block{(blocks == 1 ? "" : "s")} on {ChatColors.White}{Utils.GetMapName()}");
+            if (Plugin.Instance.Config.Sounds.Building.Enabled)
+                Utils.PlaySoundAll(Plugin.Instance.Config.Sounds.Building.Save);
 
-            Utils.Log($"Saved {blocks} Block{(blocks == 1 ? "" : "s")} on {Utils.GetMapName()}");
+            int blocks = Utils.GetPlacedBlocksCount();
+            var s = blocks == 1 ? "" : "s";
+            Utils.PrintToChatAll($"Saved {ChatColors.White}{blocks} {ChatColors.Grey}block{s} on {ChatColors.White}{Utils.GetMapName()}");
         }
-        catch
+        catch (Exception ex)
         {
-            Utils.Log("Failed to save blocks :(");
-            return;
+            Utils.Log($"Failed to save data: {ex.Message}");
         }
     }
 }

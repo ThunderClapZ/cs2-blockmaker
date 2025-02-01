@@ -111,6 +111,7 @@ public static class Commands
             {
                 playerData[target.Slot] = new PlayerData();
                 Blocks.PlayerHolds[target] = new BuildingData();
+
                 if (Utils.HasPermission(target))
                     playerData[target.Slot].Builder = true;
             }
@@ -193,6 +194,13 @@ public static class Commands
             return;
         }
 
+        if (string.Equals("Teleport", selectType, StringComparison.OrdinalIgnoreCase))
+        {
+            playerData[player.Slot].BlockType = "Teleport";
+            Utils.PrintToChat(player, $"Selected Type: {ChatColors.White}Teleport");
+            return;
+        }
+
         foreach (var property in typeof(BlockModels).GetProperties())
         {
             var model = (BlockModel)property.GetValue(Files.BlockModels)!;
@@ -205,7 +213,7 @@ public static class Commands
             }
         }
 
-        Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a matching block type");
+        Utils.PrintToChat(player, $"{ChatColors.Red}Could not find {ChatColors.White}{selectType} {ChatColors.Red}in block types");
     }
 
     public static void BlockColor(CCSPlayerController? player, string selectColor = "None")
@@ -263,6 +271,12 @@ public static class Commands
     {
         if (player == null || !AllowedCommand(player))
             return;
+
+        if (Utils.GetPlacedBlocksCount() <= 0)
+        {
+             Utils.PrintToChatAll($"{ChatColors.Red}No blocks to save");
+            return;
+        }
 
         Blocks.Save();
     }
@@ -326,8 +340,7 @@ public static class Commands
         if (playerData[player.Slot].Godmode)
             player.Pawn()!.TakesDamage = false;
 
-        else if (!playerData[player.Slot].Godmode)
-            player.Pawn()!.TakesDamage = true;
+        else player.Pawn()!.TakesDamage = true;
     }
 
     public static void TestBlock(CCSPlayerController? player)
@@ -343,7 +356,7 @@ public static class Commands
         if (player == null || !AllowedCommand(player))
             return;
 
-        Blocks.Unload();
+        Blocks.Delete(player, true);
 
         Utils.PlaySoundAll(config.Sounds.Building.Delete);
         Utils.PrintToChatAll($"{ChatColors.Red}Blocks cleared by {ChatColors.LightPurple}{player.PlayerName}");
@@ -365,7 +378,7 @@ public static class Commands
         Blocks.Copy(player);
     }
 
-    public static void TransparenyBlock(CCSPlayerController? player, string transparency = "0%")
+    public static void TransparenyBlock(CCSPlayerController? player, string transparency = "100%")
     {
         if (player == null || !AllowedCommand(player))
             return;
@@ -378,9 +391,9 @@ public static class Commands
         if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
 
-        if (Blocks.BlocksEntities.TryGetValue(entity, out var block))
+        if (Blocks.Props.TryGetValue(entity, out var block))
         {
-            Blocks.BlocksEntities[entity].Transparency = transparency;
+            Blocks.Props[entity].Transparency = transparency;
 
             var color = Utils.GetColor(block.Color);
             int alpha = Utils.GetAlpha(transparency);
@@ -397,5 +410,13 @@ public static class Commands
             return;
 
         ToggleCommand(player, ref playerData[player.Slot].Pole, "Pole");
+    }
+
+    public static void Properties(CCSPlayerController? player, string type, string input, bool reset = false)
+    {
+        if (player == null || !AllowedCommand(player))
+            return;
+
+        Blocks.ChangeProperties(player, type, input, reset);
     }
 }

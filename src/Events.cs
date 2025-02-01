@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Timers;
@@ -12,12 +13,16 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     {
         RegisterListener<Listeners.OnTick>(Blocks.OnTick);
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
+        RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
         RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
 
         RegisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull);
         RegisterEventHandler<EventRoundStart>(EventRoundStart);
         RegisterEventHandler<EventRoundEnd>(EventRoundEnd);
         RegisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
+
+        AddCommandListener("say", OnCommandSay, HookMode.Pre);
+        AddCommandListener("say_team", OnCommandSay, HookMode.Pre);
 
         HookEntityOutput("trigger_multiple", "OnStartTouch", OnStartTouch, HookMode.Pre);
 
@@ -29,12 +34,16 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     {
         RemoveListener<Listeners.OnTick>(Blocks.OnTick);
         RemoveListener<Listeners.OnMapStart>(OnMapStart);
+        RemoveListener<Listeners.OnMapEnd>(OnMapEnd);
         RemoveListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
 
         DeregisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull);
         DeregisterEventHandler<EventRoundStart>(EventRoundStart);
         DeregisterEventHandler<EventRoundEnd>(EventRoundEnd);
         DeregisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
+
+        RemoveCommandListener("say", OnCommandSay, HookMode.Pre);
+        RemoveCommandListener("say_team", OnCommandSay, HookMode.Pre);
 
         UnhookEntityOutput("trigger_multiple", "OnStartTouch", OnStartTouch, HookMode.Pre);
 
@@ -47,14 +56,12 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Utils.GetMapName());
         Directory.CreateDirectory(Files.mapsFolder);
 
-        Files.blocksPath = Path.Combine(Files.mapsFolder, "blocks.json");
-
         if (Config.Settings.Building.AutoSave)
         {
             AddTimer(Config.Settings.Building.SaveTime, () => {
                 Utils.PrintToChatAll("Auto-Saving Blocks");
                 Blocks.Save();
-            }, TimerFlags.STOP_ON_MAPCHANGE);
+            }, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
         }
 
         if (Config.Settings.Building.BuildModeConfig)
@@ -68,6 +75,11 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             foreach (string command in commands)
                 Server.ExecuteCommand(command);
         }
+    }
+
+    void OnMapEnd()
+    {
+        Blocks.Clear();
     }
 
     void OnServerPrecacheResources(ResourceManifest manifest)
@@ -88,9 +100,13 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             }
         }
 
-        manifest.AddResource(Config.Settings.Blocks.Camouflage.ModelT);
-        manifest.AddResource(Config.Settings.Blocks.Camouflage.ModelCT);
-        manifest.AddResource("particles/burning_fx/env_fire_medium.vpcf");
+        manifest.AddResource(Config.Settings.Teleports.EntryModel);
+        manifest.AddResource(Config.Settings.Teleports.ExitModel);
+
+        manifest.AddResource(Config.Settings.Blocks.CamouflageT);
+        manifest.AddResource(Config.Settings.Blocks.CamouflageCT);
+
+        manifest.AddResource(Config.Settings.Blocks.FireParticle);
     }
 
     HookResult EventPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
@@ -113,22 +129,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
     HookResult EventRoundStart(EventRoundStart @event, GameEventInfo info)
     {
-        Timers.Clear();
-
-        foreach (var kvp in Blocks.CooldownsTimers)
-        {
-            foreach (var timer in kvp.Value)
-                timer.Kill();
-        }
-
-        Blocks.PlayerHolds.Clear();
-        Blocks.PlayerCooldowns.Clear();
-        Blocks.CooldownsTimers.Clear();
-        Blocks.BlocksEntities.Clear();
-
+        Blocks.Clear();
         Blocks.Spawn();
-
-        Blocks.nuked = false;
 
         return HookResult.Continue;
     }
@@ -151,14 +153,35 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         if (buildMode)
             AddTimer(1.0f, player!.Respawn);
 
-        if (Blocks.CooldownsTimers.TryGetValue(player!, out var playerTimers))
+        if (Blocks.CooldownsTimers.TryGetValue(player.Slot, out var playerTimers))
         {
             foreach (var timer in playerTimers)
                 timer.Kill();
 
-            Blocks.CooldownsTimers[player!].Clear();
+            Blocks.CooldownsTimers[player.Slot].Clear();
         }
 
+        return HookResult.Continue;
+    }
+
+    HookResult OnCommandSay(CCSPlayerController? player, CommandInfo info)
+    {
+        if (player == null || player.NotValid())
+            return HookResult.Continue;
+
+        if (playerData.ContainsKey(player.Slot))
+        {
+            var type = playerData[player.Slot].PropertyType;
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                var input = info.ArgString.Replace("\"", "");
+
+                Commands.Properties(player, type, input);
+                return HookResult.Handled;
+            }
+        }
+    
         return HookResult.Continue;
     }
 
@@ -175,15 +198,43 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (player.IsBot) return HookResult.Continue;
 
-        if (Blocks.BlockTriggers.TryGetValue(caller, out CEntityInstance? blockEntity))
+        if (Blocks.Triggers.TryGetValue(caller, out CEntityInstance? entity))
         {
-            var block = Blocks.BlocksEntities[blockEntity.As<CBaseEntity>()];
+            var teleport = Blocks.Teleports.FirstOrDefault(pair => pair.Entry.Entity == entity || pair.Exit.Entity == entity);
 
-            if (block.Team == "T" && player.Team == CsTeam.Terrorist ||
-                block.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
-                block.Team == "Both")
+            if (teleport != null)
             {
-                Blocks.Actions(player, block.Entity);
+                if (teleport.Entry == null || teleport.Exit == null)
+                    return HookResult.Continue;
+
+                if (entity.Entity!.Name.Contains("Entry"))
+                {
+                    var playerPawn = player.PlayerPawn.Value!;
+
+                    playerPawn.Teleport(
+                        teleport.Exit.Entity.AbsOrigin,
+                        Config.Settings.Teleports.ForceAngles
+                        ? teleport.Exit.Entity.AbsRotation
+                        : playerPawn.EyeAngles,
+                        playerPawn.AbsVelocity
+                    );
+
+                    if (!String.IsNullOrEmpty(Config.Sounds.Blocks.Teleport))
+                        player.ExecuteClientCommand($"play {Config.Sounds.Blocks.Teleport}");
+                }
+
+                return HookResult.Continue;
+            }
+            else
+            {
+                var block = Blocks.Props[entity.As<CBaseEntity>()];
+
+                if (block.Team == "T" && player.Team == CsTeam.Terrorist ||
+                    block.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
+                    block.Team == "Both")
+                {
+                    Blocks.Actions(player, block.Entity);
+                }
             }
         }
 
@@ -201,7 +252,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         if (entity.DesignerName == "player" && info.Attacker.Value!.DesignerName == "player")
             return HookResult.Continue;
 
-        foreach(var block in Blocks.BlocksEntities.Where(b =>
+        foreach(var block in Blocks.Props.Where(b =>
             b.Value.Name == Files.BlockModels.NoFallDmg.Title ||
             b.Value.Name == Files.BlockModels.Trampoline.Title)
         )

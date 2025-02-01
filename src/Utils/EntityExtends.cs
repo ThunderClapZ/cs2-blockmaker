@@ -1,6 +1,5 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
@@ -42,22 +41,6 @@ public static class EntityExtends
         return player is { IsValid: true, IsHLTV: false, IsBot: false, UserId: not null, SteamID: > 0 };
     }
 
-    public static void SetMoveType(this CCSPlayerController? player, MoveType_t type)
-    {
-        CCSPlayerPawn? pawn = player.Pawn();
-
-        if (pawn != null)
-            pawn.MoveType = type;
-    }
-    public static void Freeze(this CCSPlayerController? player)
-    {
-        player.SetMoveType(MoveType_t.MOVETYPE_NONE);
-    }
-    public static void UnFreeze(this CCSPlayerController? player)
-    {
-        player.SetMoveType(MoveType_t.MOVETYPE_WALK);
-    }
-
     public static void SetGravity(this CCSPlayerController? player, float value)
     {
         CCSPlayerPawn? pawn = player.Pawn();
@@ -79,9 +62,7 @@ public static class EntityExtends
         CCSPlayerPawn? pawn = player.Pawn();
 
         if (pawn != null)
-        {
             pawn.ArmorValue = hp;
-        }
     }
 
     public static void SetModel(this CCSPlayerController? player, string model)
@@ -89,9 +70,7 @@ public static class EntityExtends
         CCSPlayerPawn? pawn = player.Pawn();
 
         if (pawn != null)
-        {
             pawn.SetModel(model);
-        }
     }
 
     public static void GiveWeapon(this CCSPlayerController? player, String weaponName)
@@ -173,22 +152,6 @@ public static class EntityExtends
                 }
             }
         }
-    }
-
-    public static bool IsVip(this CCSPlayerController? player)
-    {
-        if (!player.IsLegal())
-            return false;
-
-        return AdminManager.PlayerHasPermissions(player, new string[] { "@css/reservation" });
-    }
-
-    public static bool IsAdmin(this CCSPlayerController? player)
-    {
-        if (!player.IsLegal())
-            return false;
-
-        return AdminManager.PlayerHasPermissions(player, new string[] { "@css/generic" });
     }
 
     public static void PlaySound(this CCSPlayerController? player, string sound)
@@ -366,10 +329,9 @@ public static class EntityExtends
 
         if ((!pawn.TakesDamage && hp <= 0) || hp == 0)
             return;
+        
+        pawn.Health = Math.Min(pawn.Health + hp, pawn.MaxHealth);
 
-        int newHealth = Math.Min(pawn.Health + hp, pawn.MaxHealth);
-
-        pawn.Health = newHealth;
         Utilities.SetStateChanged(pawn, "CBaseEntity", "m_iHealth");
 
         player.ColorScreen(Color.FromArgb(100, 255, 0, 0), 0.25f, 0.5f, FadeFlags.FADE_OUT);

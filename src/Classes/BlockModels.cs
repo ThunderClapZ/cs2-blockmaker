@@ -47,8 +47,6 @@ public class BlockModels
     public BlockCamouflage Camouflage { get; set; } = new BlockCamouflage();
     public BlockTrampoline Trampoline { get; set; } = new BlockTrampoline();
     public BlockNoFallDmg NoFallDmg { get; set; } = new BlockNoFallDmg();
-    //public BlockTBarrier TBarrier { get; set; } = new BlockTBarrier();
-    //public BlockCTBarrier CTBarrier { get; set; } = new BlockCTBarrier();
 }
 
 
@@ -269,26 +267,6 @@ public class BlockSpeed : BlockModel
         Title = "Speed";
         Block = "models/blockbuilder/speed.vmdl";
         Pole = "models/blockbuilder/pole_speed.vmdl";
-    }
-}
-
-public class BlockTBarrier : BlockModel
-{
-    public BlockTBarrier()
-    {
-        Title = "T-Barrier";
-        Block = "models/blockbuilder/tbarrier.vmdl";
-        Pole = "models/blockbuilder/pole_tbarrier.vmdl";
-    }
-}
-
-public class BlockCTBarrier : BlockModel
-{
-    public BlockCTBarrier()
-    {
-        Title = "CT-Barrier";
-        Block = "models/blockbuilder/ctbarrier.vmdl";
-        Pole = "models/blockbuilder/pole_ctbarrier.vmdl";
     }
 }
 

@@ -14,7 +14,7 @@ public class Config_Settings
 
     public class Settings_Building
     {
-        public bool BuildMode { get; set; } = false;
+        public bool BuildMode { get; set; } = true;
         public bool BuildModeConfig { get; set; } = false;
         public bool AutoSave { get; set; } = false;
         public int SaveTime { get; set; } = 300;
@@ -39,52 +39,21 @@ public class Config_Settings
     public class Settings_Blocks
     {
         public bool DisableShadows { get; set; } = true;
-
-        public class Settings_Block
-        {
-            public float Duration { get; set; }
-            public float Cooldown { get; set; }
-            public float Value { get; set; }
-        }
-
-        public Settings_Block Bhop { get; set; } = new Settings_Block { Duration = 0.25f, Cooldown = 1.5f };
-        public Settings_Block Health { get; set; } = new Settings_Block { Value = 2.0f, Cooldown = 0.5f };
-        public Settings_Block Grenade { get; set; } = new Settings_Block { Cooldown = 60.0f };
-        public Settings_Block Gravity { get; set; } = new Settings_Block { Duration = 4.0f, Value = 0.4f, Cooldown = 5.0f };
-        public Settings_Block Frost { get; set; } = new Settings_Block { Cooldown = 60.0f };
-        public Settings_Block Flash { get; set; } = new Settings_Block { Cooldown = 60.0f };
-        public Settings_Block Fire { get; set; } = new Settings_Block { Duration = 5.0f, Value = 8.0f, Cooldown = 5.0f };
-        public Settings_Block Delay { get; set; } = new Settings_Block { Duration = 1.0f, Cooldown = 1.5f };
-        public Settings_Block Damage { get; set; } = new Settings_Block { Value = 5.0f, Cooldown = 0.5f };
-        public Settings_Block Stealth { get; set; } = new Settings_Block { Duration = 10.0f, Cooldown = 60.0f };
-        public Settings_Block Speed { get; set; } = new Settings_Block { Duration = 3.0f, Value = 2.0f, Cooldown = 60.0f };
-        public Settings_Block SpeedBoost { get; set; } = new Settings_Block { Value = 650.0f };
-        public Settings_Block Slap { get; set; } = new Settings_Block { Value = 2.0f };
-        public Settings_Block Random { get; set; } = new Settings_Block { Cooldown = 60.0f };
-        public Settings_Block Invincibility { get; set; } = new Settings_Block { Duration = 5.0f, Cooldown = 60.0f };
-        public Settings_Block Trampoline { get; set; } = new Settings_Block { Value = 500.0f };
-
-        //public Settings_Block Death { get; set; } = new Settings_Block();
-        //public Settings_Block Deagle { get; set; } = new Settings_Block();
-        //public Settings_Block AWP { get; set; } = new Settings_Block();
-        //public Settings_Block Nuke { get; set; } = new Settings_Block();
-
-        //public Settings_Block NoFallDmg { get; set; } = new Settings_Block();
-        //public Settings_Block Ice { get; set; } = new Settings_Block();
-        //public Settings_Block Glass { get; set; } = new Settings_Block();
-        //public Settings_Block TBarrier { get; set; } = new Settings_Block();
-        //public Settings_Block CTBarrier { get; set; } = new Settings_Block();
-        //public Settings_Block NoSlowDown { get; set; } = new Settings_Block();
-        //public Settings_Block Honey { get; set; } = new Settings_Block();
-
-        public class Settings_BlockCamouflage : Settings_Block
-        {
-            public string ModelT { get; set; } = "characters/models/ctm_fbi/ctm_fbi.vmdl";
-            public string ModelCT { get; set; } = "characters/models/tm_leet/tm_leet_variantb.vmdl";
-        }
-        public Settings_BlockCamouflage Camouflage { get; set; } = new Settings_BlockCamouflage { Duration = 10.0f, Cooldown = 60.0f};
+        public string CamouflageT { get; set; } = "characters/models/ctm_fbi/ctm_fbi.vmdl";
+        public string CamouflageCT { get; set; } = "characters/models/tm_leet/tm_leet_variantb.vmdl";
+        public string FireParticle { get; set; } = "particles/burning_fx/env_fire_medium.vpcf";
     }
     public Settings_Blocks Blocks { get; set; } = new Settings_Blocks();
+
+    public class Settings_Teleports
+    {
+        public bool ForceAngles { get; set; } = false;
+        public string EntryModel { get; set; } = "models/props/de_dust/hr_dust/dust_soccerball/dust_soccer_ball001.vmdl";
+        public string EntryColor { get; set; } = "0,255,0,200";
+        public string ExitModel { get; set; } = "models/props/de_dust/hr_dust/dust_soccerball/dust_soccer_ball001.vmdl";
+        public string ExitColor { get; set; } = "255,0,0,200";
+    }
+    public Settings_Teleports Teleports { get; set; } = new Settings_Teleports();
 }
 
 public class Config_Sounds

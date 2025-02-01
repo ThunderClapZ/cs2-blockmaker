@@ -198,7 +198,7 @@ public static class Utils
     {
         var pos = block.AbsOrigin!;
 
-        var max = VectorUtils.GetMaxs(block) * GetSize(Blocks.BlocksEntities[block].Size);
+        var max = VectorUtils.GetMaxs(block) * GetSize(Blocks.Props[block].Size);
 
         var corners = new Vector[]
         {
