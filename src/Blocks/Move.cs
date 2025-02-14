@@ -132,16 +132,10 @@ public partial class Blocks
 
         QAngle currentEyeAngle = player.Pawn()!.EyeAngles;
 
-        QAngle angleDifference = new(
-            currentEyeAngle.X - playerHolds.EyeAngles.X,
-            currentEyeAngle.Y - playerHolds.EyeAngles.Y,
-            currentEyeAngle.Z - playerHolds.EyeAngles.Z
-        );
-
         QAngle blockRotation = new(
-            0 + (angleDifference.X * 7.5f),
-            0 + (angleDifference.Y * 7.5f),
-            0 + (angleDifference.Z * 7.5f)
+            0 + (currentEyeAngle.X * 7.5f),
+            0 + (currentEyeAngle.Y * 7.5f),
+            0 + (currentEyeAngle.Z * 7.5f)
         );
 
         block.Teleport(null, blockRotation);

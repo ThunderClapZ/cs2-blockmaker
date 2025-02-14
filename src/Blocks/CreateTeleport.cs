@@ -55,7 +55,7 @@ public partial class Blocks
         }
     }
 
-    private static TeleportData? CreateTeleportEntity(Vector position, QAngle rotation, string name, string color = "None", string transparency = "100%", string team = "Both", BlockData_Properties? properties = null)
+    public static TeleportData? CreateTeleportEntity(Vector position, QAngle rotation, string name, string color = "None", string transparency = "100%", string team = "Both", BlockData_Properties? properties = null)
     {
         var teleport = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override");
 

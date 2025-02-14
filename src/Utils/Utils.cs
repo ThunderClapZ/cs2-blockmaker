@@ -91,7 +91,7 @@ public static class Utils
 
         foreach (var property in typeof(BlockModels).GetProperties())
         {
-            var block = (BlockModel)property.GetValue(Files.BlockModels)!;
+            var block = (BlockModel)property.GetValue(Files.Models.Props)!;
 
             if (block.Title.Equals(blockType, StringComparison.OrdinalIgnoreCase))
                 return pole ? block.Pole : block.Block;
@@ -114,11 +114,6 @@ public static class Utils
         }
 
         return blockCount;
-    }
-
-    public static string GetMapName()
-    {
-        return Server.MapName.ToString();
     }
 
     public static Color ParseColor(string input)
@@ -198,7 +193,7 @@ public static class Utils
     {
         var pos = block.AbsOrigin!;
 
-        var max = VectorUtils.GetMaxs(block) * GetSize(Blocks.Props[block].Size);
+        var max = block.Collision!.Maxs * GetSize(Blocks.Props[block].Size);
 
         var corners = new Vector[]
         {

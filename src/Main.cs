@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Core.Translations;
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Block Maker";
-    public override string ModuleVersion => "0.1.2";
+    public override string ModuleVersion => "0.1.3";
     public override string ModuleAuthor => "exkludera";
 
     public static Plugin Instance { get; set; } = new();
@@ -22,24 +22,22 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         Commands.Load();
 
-        Menu.Load(hotReload);
-
         if (hotReload)
         {
             foreach (var player in Utilities.GetPlayers())
             {
-                playerData[player.Slot] = new();
+                playerData[player.Slot] = new PlayerData();
 
-                if (Utils.HasPermission(player))
+                if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
                     playerData[player.Slot].Builder = true;
             }
 
-            Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Utils.GetMapName());
+            Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Server.MapName);
             Directory.CreateDirectory(Files.mapsFolder);
 
             Blocks.Clear();
 
-            Blocks.Spawn();
+            Files.PropsData.Load();
         }
     }
 
@@ -48,8 +46,6 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         UnregisterEvents();
 
         Commands.Unload();
-
-        Menu.Unload();
 
         Blocks.Clear();
     }

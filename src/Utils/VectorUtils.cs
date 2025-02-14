@@ -106,8 +106,8 @@ public static class VectorUtils
 
     public static (Vector position, QAngle rotation) GetEndXYZ(CCSPlayerController player, CBaseProp block, double distance = 250, bool grid = false, float gridValue = 0f, bool snapping = false)
     {
-        var pawn = player.Pawn();
-        var playerpos = pawn!.AbsOrigin!;
+        var pawn = player.Pawn()!;
+        var playerpos = pawn.AbsOrigin!;
 
         Vector playerPos = new Vector(playerpos.X, playerpos.Y, playerpos.Z + pawn.CameraServices!.OldPlayerViewOffsetZ); 
 
@@ -138,13 +138,18 @@ public static class VectorUtils
 
         if (snapping)
         {
-            var closestBlock = GetClosestBlock(playerPos, endPos, GetMaxs(block).X * scale * 2, block);
+            var closestBlock = GetClosestBlock(playerPos, endPos, block.Collision.Maxs.X * scale * 2, block);
             if (closestBlock != null)
             {
                 var snap = SnapToClosestBlock(endPos, closestBlock);
 
-                endPos = snap.Position;
-                endRotation = snap.Rotation;
+                var dist = CalculateDistance(closestBlock.AbsOrigin!, block.AbsOrigin!);
+
+                if (dist < (closestBlock.Collision.Maxs.X * scale * 2) + 10)
+                {
+                    endPos = snap.Position;
+                    endRotation = snap.Rotation;
+                }
             }
         }
 
@@ -159,7 +164,12 @@ public static class VectorUtils
         Vector BlockPosition = block.AbsOrigin!;
         QAngle BlockRotation = block.AbsRotation!;
 
-        Vector Maxs = GetMaxs(block) * Utils.GetSize(Blocks.Props[block].Size) * 2;
+        float scale = 1;
+
+        if (Blocks.Props.ContainsKey(block))
+            scale = Utils.GetSize(Blocks.Props[block].Size);
+
+        Vector Maxs = block.Collision.Maxs * scale * 2;
 
         System.Numerics.Matrix4x4 rotationMatrix = CalculateRotationMatrix(BlockRotation);
 
@@ -257,15 +267,6 @@ public static class VectorUtils
         bool overlapZ = Math.Abs(entityPosition.Z - playerPosition.Z) <= (entitySize.Z + playerSize.Z) / 2;
 
         return overlapX && overlapY && overlapZ;
-    }
-
-    public static Vector GetMaxs(CBaseEntity entity)
-    {
-        return new Vector(entity.Collision!.Maxs.X, entity.Collision.Maxs.Y, entity.Collision.Maxs.Z);
-    }
-    public static Vector GetMins(CBaseEntity entity)
-    {
-        return new Vector(entity.Collision!.Mins.X, entity.Collision.Mins.Y, entity.Collision.Mins.Z);
     }
 
     public class VectorDTO

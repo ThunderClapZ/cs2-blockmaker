@@ -2,7 +2,6 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using System.Drawing;
-using System.Text.Json;
 
 public partial class Blocks
 {
@@ -50,7 +49,7 @@ public partial class Blocks
     }
 
     public static Dictionary<CBaseEntity, BlockData> Props = new Dictionary<CBaseEntity, BlockData>();
-    private static void CreateBlock(string type, string model, string size, Vector position, QAngle rotation, string color = "None", string transparency = "100%", string team = "Both", BlockData_Properties? properties = null)
+    public static void CreateBlock(string type, string model, string size, Vector position, QAngle rotation, string color = "None", string transparency = "100%", string team = "Both", BlockData_Properties? properties = null)
     {
         var block = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override");
 
@@ -77,17 +76,20 @@ public partial class Blocks
 
             CreateTrigger(block, size);
 
-            if (properties == null || (properties.Duration == 0 && properties.Cooldown == 0 && properties.Value == 0))
+            if (properties == null)
             {
                 string match = type.Split('.')[0];
 
-                if (BlockDefaultProperties.ContainsKey(match))
+                var defaultProperties = Files.PropsData.Properties.BlockProperties;
+
+                if (defaultProperties.ContainsKey(match))
                 {
                     properties = new BlockData_Properties
                     {
-                        Cooldown = BlockDefaultProperties[match].Cooldown,
-                        Duration = BlockDefaultProperties[match].Duration,
-                        Value = BlockDefaultProperties[match].Value
+                        Cooldown = defaultProperties[match].Cooldown,
+                        Duration = defaultProperties[match].Duration,
+                        Value = defaultProperties[match].Value,
+                        OnTop = defaultProperties[match].OnTop
                     };
                 }
                 else properties = new BlockData_Properties();
@@ -97,7 +99,7 @@ public partial class Blocks
         }
     }
 
-    public static Dictionary<CEntityInstance, CEntityInstance> Triggers = new Dictionary<CEntityInstance, CEntityInstance>();
+    public static Dictionary<CEntityInstance, CBaseProp> Triggers = new Dictionary<CEntityInstance, CBaseProp>();
     private static void CreateTrigger(CBaseProp block, string size)
     {
         var trigger = Utilities.CreateEntityByName<CTriggerMultiple>("trigger_multiple");
@@ -116,67 +118,6 @@ public partial class Blocks
             block.AcceptInput("SetParent", trigger, block, "!activator");
 
             Triggers.Add(trigger, block);
-        }
-    }
-
-    public static void Spawn()
-    {
-        var blocksPath = Path.Combine(Files.mapsFolder, "blocks.json");
-        var teleportsPath = Path.Combine(Files.mapsFolder, "teleports.json");
-
-        // spawn blocks
-        if (File.Exists(blocksPath) && Utils.IsValidJson(blocksPath))
-        {
-            var blocksJson = File.ReadAllText(blocksPath);
-            var blocksList = JsonSerializer.Deserialize<List<SaveBlockData>>(blocksJson);
-
-            if (blocksList != null && blocksList.Count > 0)
-            {
-                foreach (var blockData in blocksList)
-                {
-                    var position = new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z);
-                    var rotation = new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll);
-
-                    CreateBlock(
-                        blockData.Name,
-                        blockData.Model,
-                        blockData.Size,
-                        position,
-                        rotation,
-                        blockData.Color,
-                        blockData.Transparency,
-                        blockData.Team,
-                        blockData.Properties
-                    );
-                }
-            }
-        }
-        else Utils.Log($"Failed to spawn Blocks. File for {Utils.GetMapName()} is empty or invalid");
-
-        // spawn teleports
-        if (File.Exists(teleportsPath) && Utils.IsValidJson(teleportsPath))
-        {
-            var teleportsJson = File.ReadAllText(teleportsPath);
-            var teleportsList = JsonSerializer.Deserialize<List<TeleportPairDTO>>(teleportsJson);
-
-            if (teleportsList != null && teleportsList.Count > 0)
-            {
-                foreach (var teleportPairData in teleportsList)
-                {
-                    var entryPosition = new Vector(teleportPairData.Entry.Position.X, teleportPairData.Entry.Position.Y, teleportPairData.Entry.Position.Z);
-                    var entryRotation = new QAngle(teleportPairData.Entry.Rotation.Pitch, teleportPairData.Entry.Rotation.Yaw, teleportPairData.Entry.Rotation.Roll);
-
-                    var entryEntity = CreateTeleportEntity(entryPosition, entryRotation, teleportPairData.Entry.Name);
-
-                    var exitPosition = new Vector(teleportPairData.Exit.Position.X, teleportPairData.Exit.Position.Y, teleportPairData.Exit.Position.Z);
-                    var exitRotation = new QAngle(teleportPairData.Exit.Rotation.Pitch, teleportPairData.Exit.Rotation.Yaw, teleportPairData.Exit.Rotation.Roll);
-
-                    var exitEntity = CreateTeleportEntity(exitPosition, exitRotation, teleportPairData.Exit.Name);
-
-                    if (entryEntity != null && exitEntity != null)
-                        Teleports.Add(new TeleportPair(entryEntity, exitEntity));
-                }
-            }
         }
     }
 }

@@ -12,7 +12,7 @@ public partial class Blocks
     private static Config config = instance.Config;
     private static Config_Settings.Settings_Blocks settings = instance.Config.Settings.Blocks;
     private static Config_Sounds.Sounds_Blocks sounds = instance.Config.Sounds.Blocks;
-    private static BlockModels blockModels = Files.BlockModels;
+    private static BlockModels blockModels = Files.Models.Props;
 
     private static Dictionary<string, Action<CCSPlayerController, CBaseEntity>> blockActions = null!;
 
@@ -76,37 +76,6 @@ public partial class Blocks
         else Utils.PrintToChat(player, $"{ChatColors.Red}Error: No action found for {entityName}");
     }
 
-    private static readonly Dictionary<string, BlockData_Properties> BlockDefaultProperties = new Dictionary<string, BlockData_Properties>
-    {
-        { Files.BlockModels.Platform.Title, new BlockData_Properties() },
-        { Files.BlockModels.NoFallDmg.Title, new BlockData_Properties() },
-        { Files.BlockModels.Ice.Title, new BlockData_Properties() },
-        { Files.BlockModels.Nuke.Title, new BlockData_Properties() },
-        { Files.BlockModels.Glass.Title, new BlockData_Properties() },
-        { Files.BlockModels.Pistol.Title, new BlockData_Properties() },
-        { Files.BlockModels.Rifle.Title, new BlockData_Properties() },
-        { Files.BlockModels.Sniper.Title, new BlockData_Properties() },
-        { Files.BlockModels.ShotgunHeavy.Title, new BlockData_Properties() },
-        { Files.BlockModels.SMG.Title, new BlockData_Properties() },
-        { Files.BlockModels.Bhop.Title, new BlockData_Properties { Duration = 0.25f, Cooldown = 1.5f } },
-        { Files.BlockModels.Health.Title, new BlockData_Properties { Value = 2.0f, Cooldown = 0.5f } },
-        { Files.BlockModels.Grenade.Title, new BlockData_Properties { Cooldown = 60.0f } },
-        { Files.BlockModels.Gravity.Title, new BlockData_Properties { Duration = 4.0f, Value = 0.4f, Cooldown = 5.0f } },
-        { Files.BlockModels.Frost.Title, new BlockData_Properties { Cooldown = 60.0f } },
-        { Files.BlockModels.Flash.Title, new BlockData_Properties { Cooldown = 60.0f } },
-        { Files.BlockModels.Fire.Title, new BlockData_Properties { Duration = 5.0f, Value = 8.0f, Cooldown = 5.0f } },
-        { Files.BlockModels.Delay.Title, new BlockData_Properties { Duration = 1.0f, Cooldown = 1.5f } },
-        { Files.BlockModels.Damage.Title, new BlockData_Properties { Value = 5.0f, Cooldown = 0.5f } },
-        { Files.BlockModels.Stealth.Title, new BlockData_Properties { Duration = 10.0f, Cooldown = 60.0f } },
-        { Files.BlockModels.Speed.Title, new BlockData_Properties { Duration = 3.0f, Value = 2.0f, Cooldown = 60.0f } },
-        { Files.BlockModels.SpeedBoost.Title, new BlockData_Properties { Value = 650.0f } },
-        { Files.BlockModels.Camouflage.Title, new BlockData_Properties { Duration = 1.0f, Cooldown = 60.0f } },
-        { Files.BlockModels.Slap.Title, new BlockData_Properties { Value = 2.0f } },
-        { Files.BlockModels.Random.Title, new BlockData_Properties { Cooldown = 60f } },
-        { Files.BlockModels.Invincibility.Title, new BlockData_Properties { Duration = 5.0f, Cooldown = 60.0f } },
-        { Files.BlockModels.Trampoline.Title, new BlockData_Properties { Value = 500.0f} },
-    };
-
     private static BlockData_Properties Properties(CBaseEntity entity)
     {
         return Props.TryGetValue(entity, out var block)
@@ -133,6 +102,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block, Properties(block).Cooldown);
     }
 
+    public static List<CBaseEntity> TempTimers = new();
     private static void Action_Bhop(CCSPlayerController player, CBaseEntity block)
     {
         string model = block.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.ModelName;
@@ -144,6 +114,11 @@ public partial class Blocks
 
         var duration = Properties(block).Duration;
         var cooldown = Properties(block).Cooldown;
+
+        if (TempTimers.Contains(block))
+            return;
+
+        TempTimers.Add(block);
 
         instance.AddTimer(duration, () =>
         {
@@ -177,6 +152,66 @@ public partial class Blocks
                 {
                     tempblock.Remove();
                     CreateBlock("Bhop", model, usedBlock.Size, pos, rotation, usedBlock.Color, usedBlock.Transparency, usedBlock.Team, usedBlock.Properties);
+
+                    if (TempTimers.Contains(block))
+                        TempTimers.Remove(block);
+                });
+            }
+        });
+    }
+
+    private static void Action_Delay(CCSPlayerController player, CBaseEntity block)
+    {
+        string model = block.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.ModelName;
+
+        Vector pos = new Vector(block.AbsOrigin!.X, block.AbsOrigin.Y, block.AbsOrigin.Z);
+        QAngle rotation = new QAngle(block.AbsRotation!.X, block.AbsRotation.Y, block.AbsRotation.Z);
+
+        var usedBlock = Props[block.As<CBaseProp>()];
+
+        var duration = Properties(block).Duration;
+        var cooldown = Properties(block).Cooldown;
+
+        if (TempTimers.Contains(block))
+            return;
+
+        TempTimers.Add(block);
+
+        instance.AddTimer(duration, () =>
+        {
+            if (block.IsValid && Props.ContainsKey(block.As<CBaseProp>()))
+            {
+                var tempblock = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override")!;
+
+                tempblock.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
+                tempblock.ShadowStrength = instance.Config.Settings.Blocks.DisableShadows ? 0.0f : 1.0f;
+
+                Color clr = Utils.GetColor(usedBlock.Color);
+                tempblock.Render = Color.FromArgb(75, clr.R, clr.G, clr.B);
+                Utilities.SetStateChanged(tempblock, "CBaseModelEntity", "m_clrRender");
+
+                tempblock.SetModel(model);
+                tempblock.DispatchSpawn();
+
+                tempblock.Collision.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
+                tempblock.Collision.CollisionAttribute.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
+                Utilities.SetStateChanged(tempblock, "CCollisionProperty", "m_CollisionGroup");
+                Utilities.SetStateChanged(tempblock, "VPhysicsCollisionAttribute_t", "m_nCollisionGroup");
+
+                tempblock.AcceptInput("DisableMotion", tempblock, tempblock);
+                tempblock.AcceptInput("SetScale", tempblock, tempblock, Utils.GetSize(usedBlock.Size).ToString());
+                tempblock.Teleport(pos, rotation);
+
+                block.Remove();
+                Props.Remove(block.As<CBaseProp>());
+
+                instance.AddTimer(cooldown, () =>
+                {
+                    tempblock.Remove();
+                    CreateBlock("Delay", model, usedBlock.Size, pos, rotation, usedBlock.Color, usedBlock.Transparency, usedBlock.Team, usedBlock.Properties);
+
+                    if (TempTimers.Contains(block))
+                        TempTimers.Remove(block);
                 });
             }
         });
@@ -267,55 +302,6 @@ public partial class Blocks
         BlockCooldownTimer(player, block, Properties(block).Cooldown, false);
     }
 
-    private static void Action_Delay(CCSPlayerController player, CBaseEntity block)
-    {
-        string model = block.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.ModelName;
-
-        Vector pos = new Vector(block.AbsOrigin!.X, block.AbsOrigin.Y, block.AbsOrigin.Z);
-        QAngle rotation = new QAngle(block.AbsRotation!.X, block.AbsRotation.Y, block.AbsRotation.Z);
-
-        var usedBlock = Props[block.As<CBaseProp>()];
-
-        var duration = Properties(block).Duration;
-        var cooldown = Properties(block).Cooldown;
-
-        instance.AddTimer(duration, () =>
-        {
-            if (block.IsValid && Props.ContainsKey(block.As<CBaseProp>()))
-            {
-                var tempblock = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override")!;
-
-                tempblock.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
-                tempblock.ShadowStrength = instance.Config.Settings.Blocks.DisableShadows ? 0.0f : 1.0f;
-
-                Color clr = Utils.GetColor(usedBlock.Color);
-                tempblock.Render = Color.FromArgb(75, clr.R, clr.G, clr.B);
-                Utilities.SetStateChanged(tempblock, "CBaseModelEntity", "m_clrRender");
-
-                tempblock.SetModel(model);
-                tempblock.DispatchSpawn();
-
-                tempblock.Collision.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
-                tempblock.Collision.CollisionAttribute.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
-                Utilities.SetStateChanged(tempblock, "CCollisionProperty", "m_CollisionGroup");
-                Utilities.SetStateChanged(tempblock, "VPhysicsCollisionAttribute_t", "m_nCollisionGroup");
-
-                tempblock.AcceptInput("DisableMotion", tempblock, tempblock);
-                tempblock.AcceptInput("SetScale", tempblock, tempblock, Utils.GetSize(usedBlock.Size).ToString());
-                tempblock.Teleport(pos, rotation);
-
-                block.Remove();
-                Props.Remove(block.As<CBaseProp>());
-
-                instance.AddTimer(cooldown, () =>
-                {
-                    tempblock.Remove();
-                    CreateBlock("Delay", model, usedBlock.Size, pos, rotation, usedBlock.Color, usedBlock.Transparency, usedBlock.Team, usedBlock.Properties);
-                });
-            }
-        });
-    }
-
     private static void Action_Death(CCSPlayerController player, CBaseEntity block)
     {
         BlockCooldownTimer(player, block, 1.0f);
@@ -349,11 +335,11 @@ public partial class Blocks
 
             if (!string.IsNullOrEmpty(weaponCategory))
             {
-                int weaponGroup = weaponCategory == Files.BlockModels.Pistol.Title ? 2 : 1;
+                int weaponGroup = weaponCategory == Files.Models.Props.Pistol.Title ? 2 : 1;
 
                 var hasGroupWeapon = player.PlayerPawn.Value?.WeaponServices?.MyWeapons
                     .Any(w => WeaponList.Categories
-                    .Where(cat => (cat.Key == Files.BlockModels.Pistol.Title ? 2 : 1) == weaponGroup)
+                    .Where(cat => (cat.Key == Files.Models.Props.Pistol.Title ? 2 : 1) == weaponGroup)
                     .SelectMany(cat => cat.Value)
                     .Contains(w.Value?.DesignerName)) ?? false;
 
@@ -400,25 +386,21 @@ public partial class Blocks
     private static void Action_SpeedBoost(CCSPlayerController player, CBaseEntity block)
     {
         CCSPlayerPawn pawn = player.Pawn()!;
+        QAngle viewAngles = pawn.EyeAngles;
 
+        float angleYaw = viewAngles.Y * (float)Math.PI / 180f;
+        float boost = Properties(block).Value;
         var vel = new Vector(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
 
-        float boost = Properties(block).Value;
-
-        float horizontalSpeed = (float)Math.Sqrt(vel.X * vel.X + vel.Y * vel.Y);
-        if (horizontalSpeed > 0)
-        {
-            float scaleFactor = boost / horizontalSpeed;
-            vel.X += vel.X * scaleFactor;
-            vel.Y += vel.Y * scaleFactor;
-        }
-
+        vel.X = (float)Math.Cos(angleYaw) * boost;
+        vel.Y = (float)Math.Sin(angleYaw) * boost;
         vel.Z = 300;
 
         pawn.Teleport(null, null, vel);
 
         BlockCooldownTimer(player, block, 0.25f);
     }
+
 
     private static void Action_Slap(CCSPlayerController player, CBaseEntity block)
     {

@@ -6,6 +6,7 @@ public class BlockData_Properties
     public float Cooldown { get; set; } = 0;
     public float Value { get; set; } = 0;
     public float Duration { get; set; } = 0;
+    public bool OnTop { get; set; } = true;
 }
 
 public class BlockData

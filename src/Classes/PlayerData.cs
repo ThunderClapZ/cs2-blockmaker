@@ -24,7 +24,6 @@ public class BuildingData
 {
     public CBaseProp block = null!;
     public Vector offset = new();
-    public QAngle EyeAngles = new();
     public int distance;
     public List<CBeam> beams = new();
 }

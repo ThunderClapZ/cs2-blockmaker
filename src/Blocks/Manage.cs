@@ -16,11 +16,8 @@ public partial class Blocks
                 rest.Remove();
         }
 
-        foreach (var kvp in CooldownsTimers)
-        {
-            foreach (var timer in kvp.Value)
-                timer.Kill();
-        }
+        foreach (var timer in Plugin.Instance.Timers)
+            timer.Kill();
 
         Props.Clear();
         Triggers.Clear();
@@ -30,8 +27,7 @@ public partial class Blocks
 
         PlayerCooldowns.Clear();
         CooldownsTimers.Clear();
-
-        Plugin.Instance.Timers.Clear();
+        TempTimers.Clear();
 
         PlayerHolds.Clear();
 
@@ -294,7 +290,7 @@ public partial class Blocks
         }
     }
 
-    public static void ChangeProperties(CCSPlayerController player, string type, string input, bool reset = false)
+    public static void ChangeProperties(CCSPlayerController player, string type, string input)
     {
         var playerData = instance.playerData[player.Slot];
 
@@ -306,21 +302,26 @@ public partial class Blocks
             return;
         }
 
-        if ((!float.TryParse(input, out float number) || number <= 0) && input != "Reset")
+        if ((!float.TryParse(input, out float number) || number <= 0) && input != "Reset" && input != "OnTop")
         {
             Utils.PrintToChat(player, $"{ChatColors.Red}Invalid {type} input value");
             return;
         }
 
         var blockname = Props[entity].Name;
+        var defaultProperties = Files.PropsData.Properties.BlockProperties;
 
         switch (type)
         {
             case "Reset":
-                Props[entity].Properties.Cooldown = BlockDefaultProperties[blockname].Cooldown;
-                Props[entity].Properties.Value = BlockDefaultProperties[blockname].Value;
-                Props[entity].Properties.Duration = BlockDefaultProperties[blockname].Duration;
+                Props[entity].Properties.Cooldown = defaultProperties[blockname].Cooldown;
+                Props[entity].Properties.Value = defaultProperties[blockname].Value;
+                Props[entity].Properties.Duration = defaultProperties[blockname].Duration;
                 Utils.PrintToChat(player, $"{ChatColors.White}{blockname} {ChatColors.Grey}properties has been reset");
+                break;
+            case "OnTop":
+                Props[entity].Properties.OnTop = Props[entity].Properties.OnTop ? false : true;
+                Utils.PrintToChat(player, $"Changed {ChatColors.White}{blockname} {ChatColors.Grey}{type} to {ChatColors.White}{Props[entity].Properties.OnTop}{ChatColors.Grey}");
                 break;
             case "Duration":
                 Props[entity].Properties.Duration = number;
@@ -339,7 +340,7 @@ public partial class Blocks
         playerData.PropertyType = "";
         playerData.PropertyEntity.Remove(type);
 
-        if (input != "Reset")
+        if (input != "Reset" && input != "OnTop")
             Utils.PrintToChat(player, $"Changed {ChatColors.White}{blockname} {ChatColors.Grey}{type} to {ChatColors.White}{input}{ChatColors.Grey}");
     }
 }

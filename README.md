@@ -4,9 +4,9 @@
 
 > block managing can be done within the building menu /buildmenu
 > 
-> USE button to hold block, look around to move, left and right click to change distance
+> hold USE button to grab block, look around to move, left and right click to change distance
 > 
-> RELOAD button to hold block, left click to rotate horizontal axis, right click to rotate vertical axis
+> hold RELOAD button and move your mouse to rotate the block
 
 > [!CAUTION]
 > **this project is not finished! any help would be very appreciated.**

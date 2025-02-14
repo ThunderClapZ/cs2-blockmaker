@@ -53,14 +53,14 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
     void OnMapStart(string mapname)
     {
-        Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Utils.GetMapName());
+        Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Server.MapName);
         Directory.CreateDirectory(Files.mapsFolder);
 
         if (Config.Settings.Building.AutoSave)
         {
             AddTimer(Config.Settings.Building.SaveTime, () => {
                 Utils.PrintToChatAll("Auto-Saving Blocks");
-                Blocks.Save();
+                Files.PropsData.Save();
             }, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
         }
 
@@ -88,7 +88,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         foreach (var property in blockProperties)
         {
-            var models = (BlockModel)property.GetValue(Files.BlockModels)!;
+            var models = (BlockModel)property.GetValue(Files.Models.Props)!;
 
             if (models != null)
             {
@@ -120,7 +120,9 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (buildMode)
         {
-            if (Utils.HasPermission(player))
+            Files.Builders.Load();
+
+            if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
                 playerData[player.Slot].Builder = true;
         }
 
@@ -130,7 +132,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     HookResult EventRoundStart(EventRoundStart @event, GameEventInfo info)
     {
         Blocks.Clear();
-        Blocks.Spawn();
+        Files.PropsData.Load();
 
         return HookResult.Continue;
     }
@@ -138,7 +140,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
     HookResult EventRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
         if (buildMode && Config.Settings.Building.AutoSave)
-            Blocks.Save();
+            Files.PropsData.Save();
 
         return HookResult.Continue;
     }
@@ -190,33 +192,29 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         if (activator.DesignerName != "player") return HookResult.Continue;
 
         var pawn = activator.As<CCSPlayerPawn>();
-
         if (!pawn.IsValid) return HookResult.Continue;
         if (!pawn.Controller.IsValid || pawn.Controller.Value is null) return HookResult.Continue;
 
         var player = pawn.Controller.Value.As<CCSPlayerController>();
-
         if (player.IsBot) return HookResult.Continue;
 
-        if (Blocks.Triggers.TryGetValue(caller, out CEntityInstance? entity))
+        if (Blocks.Triggers.TryGetValue(caller, out CBaseProp? block))
         {
-            var teleport = Blocks.Teleports.FirstOrDefault(pair => pair.Entry.Entity == entity || pair.Exit.Entity == entity);
+            var teleport = Blocks.Teleports.FirstOrDefault(pair => pair.Entry.Entity == block || pair.Exit.Entity == block);
 
             if (teleport != null)
             {
                 if (teleport.Entry == null || teleport.Exit == null)
                     return HookResult.Continue;
 
-                if (entity.Entity!.Name.Contains("Entry"))
+                if (block.Entity!.Name.Contains("Entry"))
                 {
-                    var playerPawn = player.PlayerPawn.Value!;
-
-                    playerPawn.Teleport(
+                    pawn.Teleport(
                         teleport.Exit.Entity.AbsOrigin,
                         Config.Settings.Teleports.ForceAngles
                         ? teleport.Exit.Entity.AbsRotation
-                        : playerPawn.EyeAngles,
-                        playerPawn.AbsVelocity
+                        : pawn.EyeAngles,
+                        pawn.AbsVelocity
                     );
 
                     if (!String.IsNullOrEmpty(Config.Sounds.Blocks.Teleport))
@@ -227,13 +225,23 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             }
             else
             {
-                var block = Blocks.Props[entity.As<CBaseEntity>()];
+                var blockData = Blocks.Props[block];
 
-                if (block.Team == "T" && player.Team == CsTeam.Terrorist ||
-                    block.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
-                    block.Team == "Both")
+                if (blockData.Properties.OnTop)
                 {
-                    Blocks.Actions(player, block.Entity);
+                    var playerMaxs = pawn.Collision.Maxs * 2;
+                    var blockMaxs = block.Collision.Maxs * Utils.GetSize(blockData.Size) * 2;
+
+                    if (!VectorUtils.IsWithinBounds(block.AbsOrigin!, pawn.AbsOrigin!, blockMaxs, playerMaxs))
+                        return HookResult.Continue;
+                }
+
+                if (blockData.Team == "T" && player.Team == CsTeam.Terrorist ||
+                    blockData.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
+                    blockData.Team == "Both"
+                )
+                {
+                    Blocks.Actions(player, block);
                 }
             }
         }
@@ -253,8 +261,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             return HookResult.Continue;
 
         foreach(var block in Blocks.Props.Where(b =>
-            b.Value.Name == Files.BlockModels.NoFallDmg.Title ||
-            b.Value.Name == Files.BlockModels.Trampoline.Title)
+            b.Value.Name == Files.Models.Props.NoFallDmg.Title ||
+            b.Value.Name == Files.Models.Props.Trampoline.Title)
         )
         {
             var player = entity.As<CCSPlayerPawn>();
@@ -262,8 +270,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             var playerPos = new Vector(player.AbsOrigin!.X, player.AbsOrigin.Y, player.AbsOrigin.Z);
             var blockPos = new Vector(block.Key.AbsOrigin!.X, block.Key.AbsOrigin.Y, block.Key.AbsOrigin.Z);
 
-            var playerMaxs = VectorUtils.GetMaxs(player) * 2;
-            var blockMaxs = VectorUtils.GetMaxs(block.Key) * Utils.GetSize(block.Value.Size) * 2;
+            var playerMaxs = player.Collision.Maxs * 2;
+            var blockMaxs = block.Key.Collision!.Maxs * Utils.GetSize(block.Value.Size) * 2;
 
             if (VectorUtils.IsWithinBounds(blockPos, playerPos, blockMaxs, playerMaxs))
                 return HookResult.Handled;

@@ -112,7 +112,7 @@ public static class Commands
                 playerData[target.Slot] = new PlayerData();
                 Blocks.PlayerHolds[target] = new BuildingData();
 
-                if (Utils.HasPermission(target))
+                if (Utils.HasPermission(target) || Files.Builders.steamids.Contains(target.SteamID.ToString()))
                     playerData[target.Slot].Builder = true;
             }
         }
@@ -173,6 +173,20 @@ public static class Commands
 
         Utils.PrintToChat(targetPlayer, $"{ChatColors.LightPurple}{player.PlayerName} {color}{action} your access to Build");
         Utils.PrintToChat(player, $"{color}You {action} {ChatColors.LightPurple}{targetPlayer.PlayerName} {color}access to Build");
+
+        var builders = Files.Builders.steamids;
+        string steamId = targetPlayer.SteamID.ToString();
+
+        if (builderStatus && builders.Contains(steamId))
+            builders.Remove(steamId);
+
+        else
+        {
+            if (!builders.Contains(steamId))
+                builders.Add(steamId);
+        }
+
+        Files.Builders.Save(builders);
     }
 
     public static void BuildMenu(CCSPlayerController? player)
@@ -180,7 +194,33 @@ public static class Commands
         if (player == null || !AllowedCommand(player))
             return;
 
-        Menu.Command_OpenMenus(player);
+        if (!Utils.BuildMode(player))
+            return;
+
+        switch (Instance.Config.Settings.Menu.ToLower())
+        {
+            case "chat":
+            case "text":
+                Menu.Chat.Open(player);
+                break;
+            case "html":
+            case "center":
+            case "centerhtml":
+            case "hud":
+                Menu.HTML.Open(player);
+                break;
+            case "wasd":
+            case "wasdmenu":
+                Menu.WASD.Open(player);
+                break;
+            case "screen":
+            case "screenmenu":
+                Menu.Screen.Open(player);
+                break;
+            default:
+                Menu.HTML.Open(player);
+                break;
+        }
     }
 
     public static void BlockType(CCSPlayerController? player, string selectType)
@@ -203,7 +243,7 @@ public static class Commands
 
         foreach (var property in typeof(BlockModels).GetProperties())
         {
-            var model = (BlockModel)property.GetValue(Files.BlockModels)!;
+            var model = (BlockModel)property.GetValue(Files.Models.Props)!;
 
             if (string.Equals(model.Title, selectType, StringComparison.OrdinalIgnoreCase))
             {
@@ -278,7 +318,7 @@ public static class Commands
             return;
         }
 
-        Blocks.Save();
+        Files.PropsData.Save();
     }
 
     public static void Snapping(CCSPlayerController? player)
@@ -412,11 +452,11 @@ public static class Commands
         ToggleCommand(player, ref playerData[player.Slot].Pole, "Pole");
     }
 
-    public static void Properties(CCSPlayerController? player, string type, string input, bool reset = false)
+    public static void Properties(CCSPlayerController? player, string type, string input)
     {
         if (player == null || !AllowedCommand(player))
             return;
 
-        Blocks.ChangeProperties(player, type, input, reset);
+        Blocks.ChangeProperties(player, type, input);
     }
 }
