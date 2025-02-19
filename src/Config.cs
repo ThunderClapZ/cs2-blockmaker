@@ -48,39 +48,12 @@ public class Config_Settings
     public class Settings_Teleports
     {
         public bool ForceAngles { get; set; } = false;
-        public string EntryModel { get; set; } = "models/props/de_dust/hr_dust/dust_soccerball/dust_soccer_ball001.vmdl";
-        public string EntryColor { get; set; } = "0,255,0,200";
-        public string ExitModel { get; set; } = "models/props/de_dust/hr_dust/dust_soccerball/dust_soccer_ball001.vmdl";
-        public string ExitColor { get; set; } = "255,0,0,200";
+        public string EntryModel { get; set; } = "models/blockmaker/teleport/model.vmdl";
+        public string EntryColor { get; set; } = "0,255,0,255";
+        public string ExitModel { get; set; } = "models/blockmaker/teleport/model.vmdl";
+        public string ExitColor { get; set; } = "255,0,0,255";
     }
     public Settings_Teleports Teleports { get; set; } = new Settings_Teleports();
-}
-
-public class Config_Sounds
-{
-    public class Sounds_Blocks
-    {
-        public string Speed { get; set; } = "sounds/bootsofspeed.vsnd";
-        public string Camouflage { get; set; } = "sounds/camouflage.vsnd";
-        public string Damage { get; set; } = "sounds/dmg.vsnd";
-        public string Health { get; set; } = "sounds/heartbeat.vsnd";
-        public string Invincibility { get; set; } = "sounds/invincibility.vsnd";
-        public string Nuke { get; set; } = "sounds/nuke.vsnd";
-        public string Stealth { get; set; } = "sounds/stealth.vsnd";
-        public string Teleport { get; set; } = "sounds/teleport.vsnd";
-    }
-    public Sounds_Blocks Blocks { get; set; } = new Sounds_Blocks();
-
-    public class Sounds_Building
-    {
-        public bool Enabled { get; set; } = true;
-        public string Create { get; set; } = "sounds/buttons/blip1.vsnd";
-        public string Delete { get; set; } = "sounds/buttons/blip2.vsnd";
-        public string Place { get; set; } = "sounds/buttons/latchunlocked2.vsnd";
-        public string Rotate { get; set; } = "sounds/buttons/button9.vsnd";
-        public string Save { get; set; } = "sounds/buttons/bell1.vsnd";
-    }
-    public Sounds_Building Building { get; set; } = new Sounds_Building();
 }
 
 public class Config_Commands
@@ -111,4 +84,39 @@ public class Config_Commands
         public string TestBlock { get; set; } = "test";
     }
     public Commands_Building Building { get; set; } = new Commands_Building();
+}
+
+public class Config_Sounds
+{
+    public string SoundEvents { get; set; } = "soundevents/blockmaker.vsndevts";
+
+    public class Sound
+    {
+        public string Event { get; set; } = "";
+        public float Volume { get; set; } = 1.0f;
+    }
+
+    public class Sounds_Blocks
+    {
+        public Sound Speed { get; set; } = new Sound { Event = "speed", Volume = 1.0f };
+        public Sound Camouflage { get; set; } = new Sound { Event = "camouflage", Volume = 1.0f };
+        public Sound Damage { get; set; } = new Sound { Event = "damage", Volume = 1.0f };
+        public Sound Health { get; set; } = new Sound { Event = "health", Volume = 1.0f };
+        public Sound Invincibility { get; set; } = new Sound { Event = "invincibility", Volume = 1.0f };
+        public Sound Nuke { get; set; } = new Sound { Event = "nuke", Volume = 1.0f };
+        public Sound Stealth { get; set; } = new Sound { Event = "stealth", Volume = 1.0f };
+        public Sound Teleport { get; set; } = new Sound { Event = "teleport", Volume = 1.0f };
+    }
+    public Sounds_Blocks Blocks { get; set; } = new Sounds_Blocks();
+
+    public class Sounds_Building
+    {
+        public bool Enabled { get; set; } = true;
+        public Sound Create { get; set; } = new Sound { Event = "create", Volume = 1.0f };
+        public Sound Delete { get; set; } = new Sound { Event = "delete", Volume = 1.0f };
+        public Sound Place { get; set; } = new Sound { Event = "place", Volume = 1.0f };
+        public Sound Rotate { get; set; } = new Sound { Event = "rotate", Volume = 1.0f };
+        public Sound Save { get; set; } = new Sound { Event = "save", Volume = 1.0f };
+    }
+    public Sounds_Building Building { get; set; } = new Sounds_Building();
 }

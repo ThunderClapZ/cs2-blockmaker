@@ -63,7 +63,10 @@ public partial class Blocks
                     PlayerHolds.Remove(player);
 
                     if (config.Sounds.Building.Enabled)
-                        player.PlaySound(config.Sounds.Building.Place);
+                    {
+                        var sound = config.Sounds.Building.Place;
+                        player.PlaySound(sound.Event, sound.Volume);
+                    }
                 }
             }
         }

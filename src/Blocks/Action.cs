@@ -39,6 +39,7 @@ public partial class Blocks
             { blockModels.Invincibility.Title, Action_Invincibility },
             { blockModels.Camouflage.Title, Action_Camouflage },
             { blockModels.Trampoline.Title, Action_Trampoline },
+            { blockModels.Honey.Title, Action_Honey },
         };
     }
 
@@ -66,11 +67,11 @@ public partial class Blocks
             if (entityName.Contains(weaponType, StringComparison.OrdinalIgnoreCase))
             {
                 Action_Weapons(player, block, entityName.Substring(entityName.LastIndexOf('.') + 1));
-                break;
+                return;
             }
         }
 
-        if (blockActions.TryGetValue(Props[block].Name, out var action))
+        if (blockActions.TryGetValue(Props[block].Type, out var action))
             action(player, block);
 
         else Utils.PrintToChat(player, $"{ChatColors.Red}Error: No action found for {entityName}");
@@ -151,7 +152,7 @@ public partial class Blocks
                 instance.AddTimer(cooldown, () =>
                 {
                     tempblock.Remove();
-                    CreateBlock("Bhop", model, usedBlock.Size, pos, rotation, usedBlock.Color, usedBlock.Transparency, usedBlock.Team, usedBlock.Properties);
+                    CreateBlock(usedBlock.Type, usedBlock.Pole, usedBlock.Size, pos, rotation, usedBlock.Color, usedBlock.Transparency, usedBlock.Team, usedBlock.Properties);
 
                     if (TempTimers.Contains(block))
                         TempTimers.Remove(block);
@@ -208,7 +209,7 @@ public partial class Blocks
                 instance.AddTimer(cooldown, () =>
                 {
                     tempblock.Remove();
-                    CreateBlock("Delay", model, usedBlock.Size, pos, rotation, usedBlock.Color, usedBlock.Transparency, usedBlock.Team, usedBlock.Properties);
+                    CreateBlock(usedBlock.Type, usedBlock.Pole, usedBlock.Size, pos, rotation, usedBlock.Color, usedBlock.Transparency, usedBlock.Team, usedBlock.Properties);
 
                     if (TempTimers.Contains(block))
                         TempTimers.Remove(block);
@@ -369,7 +370,7 @@ public partial class Blocks
         var velocity = player.PlayerPawn.Value!.VelocityModifier;
 
         player.SetVelocity(Properties(block).Value);
-        player.PlaySound(sounds.Speed);
+        player.PlaySound(sounds.Speed.Event, sounds.Speed.Volume);
 
         instance.AddTimer(Properties(block).Duration, () =>
         {
@@ -436,7 +437,7 @@ public partial class Blocks
 
         Utils.PrintToChatAll($"{ChatColors.LightPurple}{player.PlayerName} {ChatColors.Grey}has nuked the {teamName} team");
 
-        Utils.PlaySoundAll(sounds.Nuke);
+        Utils.PlaySoundAll(sounds.Nuke.Event, sounds.Nuke.Volume);
 
         nuked = true;
     }
@@ -444,7 +445,7 @@ public partial class Blocks
     private static void Action_Stealth(CCSPlayerController player, CBaseEntity block)
     {
         player.SetInvis(true);
-        player.PlaySound(sounds.Stealth);
+        player.PlaySound(sounds.Stealth.Event, sounds.Stealth.Volume);
         player.ColorScreen(Color.FromArgb(150, 100, 100, 100), 2.5f, 5.0f, EntityExtends.FadeFlags.FADE_OUT);
 
         instance.AddTimer(Properties(block).Duration, () =>
@@ -462,7 +463,7 @@ public partial class Blocks
     private static void Action_Invincibility(CCSPlayerController player, CBaseEntity block)
     {
         player.Pawn()!.TakesDamage = false;
-        player.PlaySound(sounds.Invincibility);
+        player.PlaySound(sounds.Invincibility.Event, sounds.Invincibility.Volume);
         player.ColorScreen(Color.FromArgb(100, 100, 0, 100), 2.5f, 5.0f, EntityExtends.FadeFlags.FADE_OUT);
 
         instance.AddTimer(Properties(block).Duration, () =>
@@ -487,7 +488,7 @@ public partial class Blocks
         else if (player.IsCT())
             player.SetModel(settings.CamouflageCT);
 
-        player.PlaySound(sounds.Camouflage);
+        player.PlaySound(sounds.Camouflage.Event, sounds.Camouflage.Volume);
 
         instance.AddTimer(Properties(block).Duration, () =>
         {
@@ -512,6 +513,13 @@ public partial class Blocks
         pawn.Teleport(null, null, vel);
 
         BlockCooldownTimer(player, block, 0.25f);
+    }
+
+    private static void Action_Honey(CCSPlayerController player, CBaseEntity block)
+    {
+        player.SetVelocity(Properties(block).Value);
+
+        BlockCooldownTimer(player, block, 0.1f);
     }
 
     public static void Test(CCSPlayerController player)

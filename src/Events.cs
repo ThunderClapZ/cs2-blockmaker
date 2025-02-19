@@ -24,10 +24,13 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         AddCommandListener("say", OnCommandSay, HookMode.Pre);
         AddCommandListener("say_team", OnCommandSay, HookMode.Pre);
 
-        HookEntityOutput("trigger_multiple", "OnStartTouch", OnStartTouch, HookMode.Pre);
+        HookEntityOutput("trigger_multiple", "OnTrigger", trigger_multiple, HookMode.Pre);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
             VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Hook(OnTakeDamage, HookMode.Pre);
+            EmitSoundExtension.Init();
+        }
     }
 
     void UnregisterEvents()
@@ -45,10 +48,13 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         RemoveCommandListener("say", OnCommandSay, HookMode.Pre);
         RemoveCommandListener("say_team", OnCommandSay, HookMode.Pre);
 
-        UnhookEntityOutput("trigger_multiple", "OnStartTouch", OnStartTouch, HookMode.Pre);
+        UnhookEntityOutput("trigger_multiple", "OnTrigger", trigger_multiple, HookMode.Pre);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
             VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Unhook(OnTakeDamage, HookMode.Pre);
+            EmitSoundExtension.CleanUp();
+        }
     }
 
     void OnMapStart(string mapname)
@@ -99,6 +105,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
                     manifest.AddResource(models.Pole);
             }
         }
+
+        manifest.AddResource(Config.Sounds.SoundEvents);
 
         manifest.AddResource(Config.Settings.Teleports.EntryModel);
         manifest.AddResource(Config.Settings.Teleports.ExitModel);
@@ -152,9 +160,6 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         if (player == null || player.NotValid())
             return HookResult.Continue;
 
-        if (buildMode)
-            AddTimer(1.0f, player!.Respawn);
-
         if (Blocks.CooldownsTimers.TryGetValue(player.Slot, out var playerTimers))
         {
             foreach (var timer in playerTimers)
@@ -187,7 +192,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         return HookResult.Continue;
     }
 
-    HookResult OnStartTouch(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
+    HookResult trigger_multiple(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
         if (activator.DesignerName != "player") return HookResult.Continue;
 
@@ -217,8 +222,9 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
                         pawn.AbsVelocity
                     );
 
-                    if (!String.IsNullOrEmpty(Config.Sounds.Blocks.Teleport))
-                        player.ExecuteClientCommand($"play {Config.Sounds.Blocks.Teleport}");
+                    var sound = Config.Sounds.Blocks.Teleport;
+
+                    player.PlaySound(sound.Event, sound.Volume);
                 }
 
                 return HookResult.Continue;
@@ -261,8 +267,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             return HookResult.Continue;
 
         foreach(var block in Blocks.Props.Where(b =>
-            b.Value.Name == Files.Models.Props.NoFallDmg.Title ||
-            b.Value.Name == Files.Models.Props.Trampoline.Title)
+            b.Value.Type == Files.Models.Props.NoFallDmg.Title ||
+            b.Value.Type == Files.Models.Props.Trampoline.Title)
         )
         {
             var player = entity.As<CCSPlayerPawn>();

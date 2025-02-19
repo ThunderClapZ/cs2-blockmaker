@@ -89,7 +89,7 @@ public partial class Blocks
 
             CreateTeleportTrigger(teleport);
 
-            var teleportData = new TeleportData(teleport, name, model);
+            var teleportData = new TeleportData(teleport, name);
 
             return teleportData;
         }

@@ -25,7 +25,7 @@
 - [MetaMod](https://github.com/alliedmodders/metamod-source)
 - [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp)
 - [MultiAddonManager](https://github.com/Source2ZE/MultiAddonManager)
-- [BlockBuilder Assets](https://steamcommunity.com/sharedfiles/filedetails/?id=3299954847)
+- [Block Maker Addon](https://steamcommunity.com/sharedfiles/filedetails/?id=3430295154)
 - [ipsvn/ChaseMod](https://github.com/ipsvn/ChaseMod) (optional for gameplay)
 
 <br>
@@ -33,7 +33,7 @@
 > [!NOTE]
 > thanks to [UgurhanK/BaseBuilder](https://github.com/UgurhanK/BaseBuilder) for the code base
 >
-> inspired by [BlockBuilder by x3ro](https://forums.alliedmods.net/showthread.php?t=258329) (block models are from them also)
+> inspired by [BlockBuilder by x3ro](https://forums.alliedmods.net/showthread.php?t=258329)
 
 <img src="https://github.com/user-attachments/assets/53e486cc-8da4-45ab-bc6e-eb38145aba36" height="200px"> <br>
 
@@ -42,6 +42,7 @@
 ## example config
 
 ```json
+{
 {
   "Settings": {
     "Prefix": "{purple}[BlockMaker]{default}",
@@ -68,11 +69,11 @@
       "FireParticle": "particles/burning_fx/env_fire_medium.vpcf"
     },
     "Teleports": {
-      "EntryModel": "models/props/de_dust/hr_dust/dust_soccerball/dust_soccer_ball001.vmdl",
-      "EntryColor": "0,255,0,200",
-      "ExitModel": "models/props/de_dust/hr_dust/dust_soccerball/dust_soccer_ball001.vmdl",
-      "ExitColor": "255,0,0,200",
-      "ForceAngles": false
+      "ForceAngles": false,
+      "EntryModel": "models/blockmaker/teleport/model.vmdl",
+      "EntryColor": "0,255,0,255",
+      "ExitModel": "models/blockmaker/teleport/model.vmdl",
+      "ExitColor": "255,0,0,255"
     }
   },
   "Commands": {
@@ -99,23 +100,24 @@
     }
   },
   "Sounds": {
+    "SoundEvents": "soundevents/blockmaker.vsndevts",
     "Blocks": {
-      "Speed": "sounds/bootsofspeed.vsnd",
-      "Camouflage": "sounds/camouflage.vsnd",
-      "Damage": "sounds/dmg.vsnd",
-      "Health": "sounds/heartbeat.vsnd",
-      "Invincibility": "sounds/invincibility.vsnd",
-      "Nuke": "sounds/nuke.vsnd",
-      "Stealth": "sounds/stealth.vsnd",
-      "Teleport": "sounds/teleport.vsnd"
+      "Speed": { "Event": "speed", "Volume": 1 },
+      "Camouflage": { "Event": "camouflage", "Volume": 1 },
+      "Damage": { "Event": "damage", "Volume": 1 },
+      "Health": { "Event": "health", "Volume": 1 },
+      "Invincibility": { "Event": "invincibility", "Volume": 1 },
+      "Nuke": { "Event": "nuke", "Volume": 1 },
+      "Stealth": { "Event": "stealth", "Volume": 1 },
+      "Teleport": { "Event": "teleport", "Volume": 1 }
     },
     "Building": {
       "Enabled": true,
-      "Create": "sounds/buttons/blip1.vsnd",
-      "Delete": "sounds/buttons/blip2.vsnd",
-      "Place": "sounds/buttons/latchunlocked2.vsnd",
-      "Rotate": "sounds/buttons/button9.vsnd",
-      "Save": "sounds/buttons/bell1.vsnd"
+      "Create": { "Event": "create", "Volume": 1 },
+      "Delete": { "Event": "delete", "Volume": 1 },
+      "Place": { "Event": "place", "Volume": 1 },
+      "Rotate": { "Event": "rotate", "Volume": 1 },
+      "Save": { "Event": "save", "Volume": 1 }
     }
   }
 }

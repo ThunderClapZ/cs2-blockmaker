@@ -307,6 +307,14 @@ public static class Commands
         Blocks.Rotate(player, rotation);
     }
 
+    public static void MoveBlock(CCSPlayerController? player, string position)
+    {
+        if (player == null || !AllowedCommand(player))
+            return;
+
+        Blocks.Move(player, position);
+    }
+
     public static void SaveBlocks(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
@@ -398,7 +406,9 @@ public static class Commands
 
         Blocks.Delete(player, true);
 
-        Utils.PlaySoundAll(config.Sounds.Building.Delete);
+        var sound = config.Sounds.Building.Delete;
+
+        Utils.PlaySoundAll(sound.Event, sound.Volume);
         Utils.PrintToChatAll($"{ChatColors.Red}Blocks cleared by {ChatColors.LightPurple}{player.PlayerName}");
     }
 
@@ -449,7 +459,7 @@ public static class Commands
         if (player == null || !AllowedCommand(player))
             return;
 
-        ToggleCommand(player, ref playerData[player.Slot].Pole, "Pole");
+        ToggleCommand(player, ref playerData[player.Slot].BlockPole, "Pole");
     }
 
     public static void Properties(CCSPlayerController? player, string type, string input)

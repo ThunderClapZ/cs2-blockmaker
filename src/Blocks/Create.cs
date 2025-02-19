@@ -25,14 +25,15 @@ public partial class Blocks
             return;
         }
 
-        string blockmodel = Utils.GetModelFromSelectedBlock(player, playerData.Pole);
-
         try
         {
-            CreateBlock(playerData.BlockType, blockmodel, playerData.BlockSize, RayTrace.Vector3toVector(hitPoint.Value), new QAngle(), playerData.BlockColor, playerData.BlockTransparency, playerData.BlockTeam);
+            CreateBlock(playerData.BlockType, playerData.BlockPole, playerData.BlockSize, RayTrace.Vector3toVector(hitPoint.Value), new QAngle(), playerData.BlockColor, playerData.BlockTransparency, playerData.BlockTeam);
 
             if (config.Sounds.Building.Enabled)
-                player.PlaySound(config.Sounds.Building.Create);
+            {
+                var sound = config.Sounds.Building.Create;
+                player.PlaySound(sound.Event, sound.Volume);
+            }
 
             Utils.PrintToChat(player, $"Created -" +
                 $" type: {ChatColors.White}{playerData.BlockType}{ChatColors.Grey}," +
@@ -49,7 +50,7 @@ public partial class Blocks
     }
 
     public static Dictionary<CBaseEntity, BlockData> Props = new Dictionary<CBaseEntity, BlockData>();
-    public static void CreateBlock(string type, string model, string size, Vector position, QAngle rotation, string color = "None", string transparency = "100%", string team = "Both", BlockData_Properties? properties = null)
+    public static void CreateBlock(string type, bool pole, string size, Vector position, QAngle rotation, string color = "None", string transparency = "100%", string team = "Both", BlockData_Properties? properties = null)
     {
         var block = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override");
 
@@ -65,37 +66,25 @@ public partial class Blocks
             block.Render = Color.FromArgb(alpha, clr.R, clr.G, clr.B);
             Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
 
+            string model = Utils.GetModelFromSelectedBlock(type, pole);
+
             block.SetModel(model);
             block.DispatchSpawn();
             block.AcceptInput("DisableMotion");
             block.AcceptInput("SetScale", block, block, Utils.GetSize(size).ToString());
-
-            var pos = new Vector(position.X, position.Y, position.Z);
-            var rot = new QAngle(rotation.X, rotation.Y, rotation.Z);
-            block.Teleport(pos, rot);
+            block.Teleport(position, rotation);
 
             CreateTrigger(block, size);
 
             if (properties == null)
             {
-                string match = type.Split('.')[0];
+                if (Files.PropsData.Properties.BlockDefaultProperties.TryGetValue(type.Split('.')[0], out var defaultProperties))
+                    properties = defaultProperties;
 
-                var defaultProperties = Files.PropsData.Properties.BlockProperties;
-
-                if (defaultProperties.ContainsKey(match))
-                {
-                    properties = new BlockData_Properties
-                    {
-                        Cooldown = defaultProperties[match].Cooldown,
-                        Duration = defaultProperties[match].Duration,
-                        Value = defaultProperties[match].Value,
-                        OnTop = defaultProperties[match].OnTop
-                    };
-                }
                 else properties = new BlockData_Properties();
             }
 
-            Props[block] = new BlockData(block, type, model, size, color, transparency, team, properties);
+            Props[block] = new BlockData(block, type, pole, size, color, transparency, team, properties);
         }
     }
 
@@ -112,7 +101,6 @@ public partial class Blocks
 
             trigger.DispatchSpawn();
             trigger.AcceptInput("SetScale", trigger, trigger, Utils.GetSize(size).ToString());
-
             trigger.Teleport(block.AbsOrigin, block.AbsRotation);
 
             block.AcceptInput("SetParent", trigger, block, "!activator");

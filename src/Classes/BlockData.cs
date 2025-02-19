@@ -14,8 +14,8 @@ public class BlockData
     public BlockData
     (
         CBaseProp block,
-        string name,
-        string model,
+        string type,
+        bool pole,
         string size = "Normal",
         string color = "None",
         string transparency = "100%",
@@ -25,8 +25,8 @@ public class BlockData
     )
     {
         Entity = block;
-        Name = name;
-        Model = model;
+        Type = type;
+        Pole = pole;
         Size = size;
         Team = team;
         Color = color;
@@ -35,8 +35,8 @@ public class BlockData
     }
 
     public CBaseProp Entity;
-    public string Name { get; set; }
-    public string Model { get; set; }
+    public string Type { get; set; }
+    public bool Pole { get; set; }
     public string Size { get; set; }
     public string Team { get; set; }
     public string Color { get; set; }
@@ -46,8 +46,8 @@ public class BlockData
 
 public class SaveBlockData
 {
-    public string Name { get; set; } = "";
-    public string Model { get; set; } = "";
+    public string Type { get; set; } = "";
+    public bool Pole { get; set; } = false;
     public string Size { get; set; } = "";
     public string Team { get; set; } = "";
     public string Color { get; set; } = "";

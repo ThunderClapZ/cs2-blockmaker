@@ -56,6 +56,13 @@ public static partial class Menu
                 RotateMenuOptions(player, rotateOptions, rotateValues);
             });
 
+            Menu.AddMenuOption("Move", (player, menuOption) =>
+            {
+                string[] moveOptions = { "X-", "X+", "Y-", "Y+", "Z-", "Z+" };
+
+                MoveMenuOptions(player, moveOptions);
+            });
+
             Menu.AddMenuOption("Convert", (player, menuOption) =>
             {
                 Commands.ConvertBlock(player);
@@ -102,6 +109,28 @@ public static partial class Menu
                     Utils.PrintToChat(player, $"Selected Rotation Value: {ChatColors.White}{rotateValueOption} Units");
 
                     RotateMenuOptions(player, rotateOptions, rotateValues);
+                });
+            }
+
+            MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
+        }
+
+        private static void MoveMenuOptions(CCSPlayerController player, string[] moveOptions)
+        {
+            CenterHtmlMenu Menu = new($"Move Block ({playerData[player.Slot].RotationValue} Units)", Instance);
+
+            Menu.AddMenuOption($"Select Units", (player, option) =>
+            {
+                float[] gridValues = Instance.Config.Settings.Building.GridValues;
+
+                GridMenuOptions(player, gridValues);
+            });
+
+            foreach (string moveOption in moveOptions)
+            {
+                Menu.AddMenuOption(moveOption, (player, option) =>
+                {
+                    Commands.MoveBlock(player, moveOption);
                 });
             }
 
@@ -236,7 +265,7 @@ public static partial class Menu
         {
             CenterHtmlMenu Menu = new($"Select Size ({playerData[player.Slot].BlockSize})", Instance);
 
-            Menu.AddMenuOption($"Pole: {(playerData[player.Slot].Pole ? "ON" : "OFF")}", (player, option) =>
+            Menu.AddMenuOption($"Pole: {(playerData[player.Slot].BlockPole ? "ON" : "OFF")}", (player, option) =>
             {
                 Commands.Pole(player);
 
@@ -328,7 +357,10 @@ public static partial class Menu
 
             if (Blocks.Props.TryGetValue(entity, out var block))
             {
-                CenterHtmlMenu Menu = new($"Properties ({block.Name})", Instance);
+                CenterHtmlMenu Menu = new($"Properties ({block.Type})", Instance);
+
+                playerData[player.Slot].PropertyType = "";
+                playerData[player.Slot].PropertyEntity.Clear();
 
                 var properties = block.Properties;
 

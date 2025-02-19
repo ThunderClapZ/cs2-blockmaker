@@ -47,10 +47,10 @@ public static class Utils
         Server.PrintToChatAll($"{config.Settings.Prefix} {ChatColors.Grey}{message}");
     }
 
-    public static void PlaySoundAll(string sound)
+    public static void PlaySoundAll(string sound, float volume = 1)
     {
-        foreach (var player in Utilities.GetPlayers().Where(p => !p.IsBot))
-            player.PlaySound(sound);
+        foreach (var player in Utilities.GetPlayers())
+            player.PlaySound(sound, volume);
     }
 
     public static bool IsValidJson(string filePath)
@@ -81,10 +81,8 @@ public static class Utils
         }
     }
 
-    public static string GetModelFromSelectedBlock(CCSPlayerController player, bool pole)
+    public static string GetModelFromSelectedBlock(string blockType, bool pole)
     {
-        var blockType = instance.playerData[player.Slot].BlockType;
-
         int hyphenIndex = blockType.IndexOf('.');
         if (hyphenIndex >= 0)
             blockType = blockType.Substring(0, hyphenIndex);

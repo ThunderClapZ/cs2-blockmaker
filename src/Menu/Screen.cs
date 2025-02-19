@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using CS2ScreenMenuAPI;
+using CS2ScreenMenuAPI.Internal;
 
 public static partial class Menu
 {
@@ -56,6 +57,13 @@ public static partial class Menu
                 RotateMenuOptions(player, rotateOptions, rotateValues);
             });
 
+            Menu.AddOption("Move", (player, menuOption) =>
+            {
+                string[] moveOptions = { "X-", "X+", "Y-", "Y+", "Z-", "Z+" };
+
+                MoveMenuOptions(player, moveOptions);
+            });
+
             Menu.AddOption("Convert", (player, menuOption) =>
             {
                 Commands.ConvertBlock(player);
@@ -102,6 +110,28 @@ public static partial class Menu
                     Utils.PrintToChat(player, $"Selected Rotation Value: {ChatColors.White}{rotateValueOption} Units");
 
                     RotateMenuOptions(player, rotateOptions, rotateValues);
+                });
+            }
+
+            MenuAPI.OpenMenu(Instance, player, Menu);
+        }
+
+        private static void MoveMenuOptions(CCSPlayerController player, string[] moveOptions)
+        {
+            ScreenMenu Menu = new ScreenMenu($"Move Block ({playerData[player.Slot].RotationValue} Units)", Instance);
+
+            Menu.AddOption($"Select Units", (player, option) =>
+            {
+                float[] gridValues = Instance.Config.Settings.Building.GridValues;
+
+                GridMenuOptions(player, gridValues);
+            });
+
+            foreach (string moveOption in moveOptions)
+            {
+                Menu.AddOption(moveOption, (player, option) =>
+                {
+                    Commands.MoveBlock(player, moveOption);
                 });
             }
 
@@ -236,7 +266,7 @@ public static partial class Menu
         {
             ScreenMenu Menu = new ScreenMenu($"Select Size ({playerData[player.Slot].BlockSize})", Instance);
 
-            Menu.AddOption($"Pole: {(playerData[player.Slot].Pole ? "ON" : "OFF")}", (player, option) =>
+            Menu.AddOption($"Pole: {(playerData[player.Slot].BlockPole ? "ON" : "OFF")}", (player, option) =>
             {
                 Commands.Pole(player);
 
@@ -328,7 +358,10 @@ public static partial class Menu
 
             if (Blocks.Props.TryGetValue(entity, out var block))
             {
-                ScreenMenu Menu = new ScreenMenu($"Properties ({block.Name})", Instance);
+                ScreenMenu Menu = new ScreenMenu($"Properties ({block.Type})", Instance);
+
+                playerData[player.Slot].PropertyType = "";
+                playerData[player.Slot].PropertyEntity.Clear();
 
                 var properties = block.Properties;
 

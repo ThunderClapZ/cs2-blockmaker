@@ -154,12 +154,18 @@ public static class EntityExtends
         }
     }
 
-    public static void PlaySound(this CCSPlayerController? player, string sound)
+    public static void PlaySound(this CCSPlayerController? player, string sound, float volume = 1.0f, float pitch = 1.0f)
     {
         if (!player.IsLegal())
             return;
 
-        player.ExecuteClientCommand($"play {sound}");
+        var parameters = new Dictionary<string, float>
+        {
+            { "volume", volume },
+            { "pitch", pitch }
+        };
+
+        player.EmitSound(sound, parameters);
     }
 
     public static CCSPlayerPawn? Pawn(this CCSPlayerController? player)
@@ -336,11 +342,13 @@ public static class EntityExtends
 
         player.ColorScreen(Color.FromArgb(100, 255, 0, 0), 0.25f, 0.5f, FadeFlags.FADE_OUT);
 
+        var sounds = Plugin.Instance.Config.Sounds.Blocks;
+
         if (hp >= 1)
-            player.PlaySound(Plugin.Instance.Config.Sounds.Blocks.Health);
+            player.PlaySound(sounds.Health.Event, sounds.Health.Volume);
 
         if (hp <= -1)
-            player.PlaySound(Plugin.Instance.Config.Sounds.Blocks.Damage);
+            player.PlaySound(sounds.Damage.Event, sounds.Damage.Volume);
 
         if (pawn.Health <= 0)
             pawn.CommitSuicide(true, true);

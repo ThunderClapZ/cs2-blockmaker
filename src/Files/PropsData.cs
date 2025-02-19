@@ -28,8 +28,8 @@ public static partial class Files
                     {
                         blocksList.Add(new SaveBlockData
                         {
-                            Name = data.Name,
-                            Model = data.Model,
+                            Type = data.Type,
+                            Pole = data.Pole,
                             Size = data.Size,
                             Team = data.Team,
                             Color = data.Color,
@@ -51,14 +51,12 @@ public static partial class Files
                             Entry = new SaveTeleportData
                             {
                                 Name = teleport.Entry.Name,
-                                Model = teleport.Entry.Model,
                                 Position = new VectorUtils.VectorDTO(teleport.Entry.Entity.AbsOrigin!),
                                 Rotation = new VectorUtils.QAngleDTO(teleport.Entry.Entity.AbsRotation!)
                             },
                             Exit = new SaveTeleportData
                             {
                                 Name = teleport.Exit.Name,
-                                Model = teleport.Exit.Model,
                                 Position = new VectorUtils.VectorDTO(teleport.Exit.Entity.AbsOrigin!),
                                 Rotation = new VectorUtils.QAngleDTO(teleport.Exit.Entity.AbsRotation!)
                             }
@@ -84,7 +82,10 @@ public static partial class Files
                 }
 
                 if (Plugin.Instance.Config.Sounds.Building.Enabled)
-                    Utils.PlaySoundAll(Plugin.Instance.Config.Sounds.Building.Save);
+                {
+                    var sound = Plugin.Instance.Config.Sounds.Building.Save;
+                    Utils.PlaySoundAll(sound.Event, sound.Volume);
+                }
 
                 int blocks = Utils.GetPlacedBlocksCount();
                 var s = blocks == 1 ? "" : "s";
@@ -116,8 +117,8 @@ public static partial class Files
                         var rotation = new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll);
 
                         Blocks.CreateBlock(
-                            blockData.Name,
-                            blockData.Model,
+                            blockData.Type,
+                            blockData.Pole,
                             blockData.Size,
                             position,
                             rotation,
@@ -174,12 +175,13 @@ public static partial class Files
                 { Models.Props.Stealth.Title, new BlockData_Properties { Duration = 10.0f, Cooldown = 60.0f } },
                 { Models.Props.Speed.Title, new BlockData_Properties { Duration = 3.0f, Value = 2.0f, Cooldown = 60.0f } },
                 { Models.Props.SpeedBoost.Title, new BlockData_Properties { Value = 650.0f } },
-                { Models.Props.Camouflage.Title, new BlockData_Properties { Duration = 1.0f, Cooldown = 60.0f } },
+                { Models.Props.Camouflage.Title, new BlockData_Properties { Duration = 10.0f, Cooldown = 60.0f } },
                 { Models.Props.Slap.Title, new BlockData_Properties { Value = 2.0f } },
                 { Models.Props.Random.Title, new BlockData_Properties { Cooldown = 60f } },
                 { Models.Props.Invincibility.Title, new BlockData_Properties { Duration = 5.0f, Cooldown = 60.0f } },
-                { Models.Props.Trampoline.Title, new BlockData_Properties { Value = 500.0f} },
+                { Models.Props.Trampoline.Title, new BlockData_Properties { Value = 500.0f } },
                 { Models.Props.Death.Title, new BlockData_Properties { OnTop = false } },
+                { Models.Props.Honey.Title, new BlockData_Properties { Value = 0.25f } },
                 { Models.Props.Platform.Title, new BlockData_Properties() },
                 { Models.Props.NoFallDmg.Title, new BlockData_Properties() },
                 { Models.Props.Ice.Title, new BlockData_Properties() },

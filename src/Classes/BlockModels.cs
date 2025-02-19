@@ -47,6 +47,7 @@ public class BlockModels
     public BlockCamouflage Camouflage { get; set; } = new BlockCamouflage();
     public BlockTrampoline Trampoline { get; set; } = new BlockTrampoline();
     public BlockNoFallDmg NoFallDmg { get; set; } = new BlockNoFallDmg();
+    public BlockHoney Honey { get; set; } = new BlockHoney();
 }
 
 
@@ -55,8 +56,8 @@ public class BlockPlatform : BlockModel
     public BlockPlatform()
     {
         Title = "Platform";
-        Block = "models/blockbuilder/platform.vmdl";
-        Pole = "models/blockbuilder/pole_platform.vmdl";
+        Block = "models/blockmaker/platform/block.vmdl";
+        Pole = "models/blockmaker/platform/pole.vmdl";
     }
 }
 
@@ -65,8 +66,8 @@ public class BlockBhop : BlockModel
     public BlockBhop()
     {
         Title = "Bhop";
-        Block = "models/blockbuilder/bhop.vmdl";
-        Pole = "models/blockbuilder/pole_bhop.vmdl";
+        Block = "models/blockmaker/bhop/block.vmdl";
+        Pole = "models/blockmaker/bhop/pole.vmdl";
     }
 }
 
@@ -75,8 +76,8 @@ public class BlockNoFallDmg : BlockModel
     public BlockNoFallDmg()
     {
         Title = "NoFallDmg";
-        Block = "models/blockbuilder/nofalldmg.vmdl";
-        Pole = "models/blockbuilder/pole_nofalldmg.vmdl";
+        Block = "models/blockmaker/nofall/block.vmdl";
+        Pole = "models/blockmaker/nofall/pole.vmdl";
     }
 }
 
@@ -85,8 +86,8 @@ public class BlockHealth : BlockModel
     public BlockHealth()
     {
         Title = "Health";
-        Block = "models/blockbuilder/health.vmdl";
-        Pole = "models/blockbuilder/pole_health.vmdl";
+        Block = "models/blockmaker/health/block.vmdl";
+        Pole = "models/blockmaker/health/pole.vmdl";
     }
 }
 
@@ -95,8 +96,8 @@ public class BlockGrenade : BlockModel
     public BlockGrenade()
     {
         Title = "Grenade";
-        Block = "models/blockbuilder/he.vmdl";
-        Pole = "models/blockbuilder/pole_he.vmdl";
+        Block = "models/blockmaker/grenade/block.vmdl";
+        Pole = "models/blockmaker/grenade/pole.vmdl";
     }
 }
 
@@ -105,8 +106,8 @@ public class BlockGravity : BlockModel
     public BlockGravity()
     {
         Title = "Gravity";
-        Block = "models/blockbuilder/gravity.vmdl";
-        Pole = "models/blockbuilder/pole_gravity.vmdl";
+        Block = "models/blockmaker/gravity/block.vmdl";
+        Pole = "models/blockmaker/gravity/pole.vmdl";
     }
 }
 
@@ -115,8 +116,8 @@ public class BlockGlass : BlockModel
     public BlockGlass()
     {
         Title = "Glass";
-        Block = "models/blockbuilder/glass.vmdl";
-        Pole = "models/blockbuilder/pole_glass.vmdl";
+        Block = "models/blockmaker/glass/block.vmdl";
+        Pole = "models/blockmaker/glass/pole.vmdl";
     }
 }
 
@@ -125,8 +126,8 @@ public class BlockFrost : BlockModel
     public BlockFrost()
     {
         Title = "Frost";
-        Block = "models/blockbuilder/frost.vmdl";
-        Pole = "models/blockbuilder/pole_frost.vmdl";
+        Block = "models/blockmaker/frost/block.vmdl";
+        Pole = "models/blockmaker/frost/pole.vmdl";
     }
 }
 
@@ -135,8 +136,8 @@ public class BlockFlash : BlockModel
     public BlockFlash()
     {
         Title = "Flash";
-        Block = "models/blockbuilder/flash.vmdl";
-        Pole = "models/blockbuilder/pole_flash.vmdl";
+        Block = "models/blockmaker/flash/block.vmdl";
+        Pole = "models/blockmaker/flash/pole.vmdl";
     }
 }
 
@@ -145,8 +146,8 @@ public class BlockFire : BlockModel
     public BlockFire()
     {
         Title = "Fire";
-        Block = "models/blockbuilder/fire.vmdl";
-        Pole = "models/blockbuilder/pole_fire.vmdl";
+        Block = "models/blockmaker/fire/block.vmdl";
+        Pole = "models/blockmaker/fire/pole.vmdl";
     }
 }
 
@@ -155,8 +156,8 @@ public class BlockDelay : BlockModel
     public BlockDelay()
     {
         Title = "Delay";
-        Block = "models/blockbuilder/delay.vmdl";
-        Pole = "models/blockbuilder/pole_delay.vmdl";
+        Block = "models/blockmaker/delay/block.vmdl";
+        Pole = "models/blockmaker/delay/pole.vmdl";
     }
 }
 
@@ -165,8 +166,8 @@ public class BlockDeath : BlockModel
     public BlockDeath()
     {
         Title = "Death";
-        Block = "models/blockbuilder/death.vmdl";
-        Pole = "models/blockbuilder/pole_death.vmdl";
+        Block = "models/blockmaker/death/block.vmdl";
+        Pole = "models/blockmaker/death/pole.vmdl";
     }
 }
 
@@ -175,8 +176,8 @@ public class BlockDamage : BlockModel
     public BlockDamage()
     {
         Title = "Damage";
-        Block = "models/blockbuilder/damage.vmdl";
-        Pole = "models/blockbuilder/pole_damage.vmdl";
+        Block = "models/blockmaker/damage/block.vmdl";
+        Pole = "models/blockmaker/damage/pole.vmdl";
     }
 }
 
@@ -185,8 +186,8 @@ public class BlockPistol : BlockModel
     public BlockPistol()
     {
         Title = "Pistol";
-        Block = "models/blockbuilder/deagle.vmdl";
-        Pole = "models/blockbuilder/pole_deagle.vmdl";
+        Block = "models/blockmaker/pistol/block.vmdl";
+        Pole = "models/blockmaker/pistol/pole.vmdl";
     }
 }
 
@@ -195,8 +196,8 @@ public class BlockRifle : BlockModel
     public BlockRifle()
     {
         Title = "Rifle";
-        Block = "models/blockbuilder/awp.vmdl";
-        Pole = "models/blockbuilder/pole_awp.vmdl";
+        Block = "models/blockmaker/rifle/block.vmdl";
+        Pole = "models/blockmaker/rifle/pole.vmdl";
     }
 }
 
@@ -205,8 +206,8 @@ public class BlockSniper : BlockModel
     public BlockSniper()
     {
         Title = "Sniper";
-        Block = "models/blockbuilder/awp.vmdl";
-        Pole = "models/blockbuilder/pole_awp.vmdl";
+        Block = "models/blockmaker/sniper/block.vmdl";
+        Pole = "models/blockmaker/sniper/pole.vmdl";
     }
 }
 
@@ -215,8 +216,8 @@ public class BlockSMG : BlockModel
     public BlockSMG()
     {
         Title = "SMG";
-        Block = "models/blockbuilder/awp.vmdl";
-        Pole = "models/blockbuilder/pole_awp.vmdl";
+        Block = "models/blockmaker/smg/block.vmdl";
+        Pole = "models/blockmaker/smg/pole.vmdl";
     }
 }
 
@@ -225,8 +226,8 @@ public class BlockShotgunHeavy : BlockModel
     public BlockShotgunHeavy()
     {
         Title = "Shotgun/Heavy";
-        Block = "models/blockbuilder/awp.vmdl";
-        Pole = "models/blockbuilder/pole_awp.vmdl";
+        Block = "models/blockmaker/heavy/block.vmdl";
+        Pole = "models/blockmaker/heavy/pole.vmdl";
     }
 }
 
@@ -235,8 +236,8 @@ public class BlockTrampoline : BlockModel
     public BlockTrampoline()
     {
         Title = "Trampoline";
-        Block = "models/blockbuilder/tramp.vmdl";
-        Pole = "models/blockbuilder/pole_tramp.vmdl";
+        Block = "models/blockmaker/trampoline/block.vmdl";
+        Pole = "models/blockmaker/trampoline/pole.vmdl";
     }
 }
 
@@ -245,8 +246,8 @@ public class BlockStealth : BlockModel
     public BlockStealth()
     {
         Title = "Stealth";
-        Block = "models/blockbuilder/stealth.vmdl";
-        Pole = "models/blockbuilder/pole_stealth.vmdl";
+        Block = "models/blockmaker/stealth/block.vmdl";
+        Pole = "models/blockmaker/stealth/pole.vmdl";
     }
 }
 
@@ -255,8 +256,8 @@ public class BlockSpeedBoost : BlockModel
     public BlockSpeedBoost()
     {
         Title = "SpeedBoost";
-        Block = "models/blockbuilder/speedboost.vmdl";
-        Pole = "models/blockbuilder/pole_speedboost.vmdl";
+        Block = "models/blockmaker/speedboost/block.vmdl";
+        Pole = "models/blockmaker/speedboost/pole.vmdl";
     }
 }
 
@@ -265,8 +266,8 @@ public class BlockSpeed : BlockModel
     public BlockSpeed()
     {
         Title = "Speed";
-        Block = "models/blockbuilder/speed.vmdl";
-        Pole = "models/blockbuilder/pole_speed.vmdl";
+        Block = "models/blockmaker/speed/block.vmdl";
+        Pole = "models/blockmaker/speed/pole.vmdl";
     }
 }
 
@@ -275,8 +276,8 @@ public class BlockSlap : BlockModel
     public BlockSlap()
     {
         Title = "Slap";
-        Block = "models/blockbuilder/slap.vmdl";
-        Pole = "models/blockbuilder/pole_slap.vmdl";
+        Block = "models/blockmaker/slap/block.vmdl";
+        Pole = "models/blockmaker/slap/pole.vmdl";
     }
 }
 
@@ -285,8 +286,8 @@ public class BlockRandom : BlockModel
     public BlockRandom()
     {
         Title = "Random";
-        Block = "models/blockbuilder/random.vmdl";
-        Pole = "models/blockbuilder/pole_random.vmdl";
+        Block = "models/blockmaker/random/block.vmdl";
+        Pole = "models/blockmaker/random/pole.vmdl";
     }
 }
 
@@ -295,8 +296,8 @@ public class BlockNuke : BlockModel
     public BlockNuke()
     {
         Title = "Nuke";
-        Block = "models/blockbuilder/nuke.vmdl";
-        Pole = "models/blockbuilder/pole_nuke.vmdl";
+        Block = "models/blockmaker/nuke/block.vmdl";
+        Pole = "models/blockmaker/nuke/pole.vmdl";
     }
 }
 
@@ -305,8 +306,8 @@ public class BlockInvincibility : BlockModel
     public BlockInvincibility()
     {
         Title = "Invincibility";
-        Block = "models/blockbuilder/invincibility.vmdl";
-        Pole = "models/blockbuilder/pole_invincibility.vmdl";
+        Block = "models/blockmaker/invincibility/block.vmdl";
+        Pole = "models/blockmaker/invincibility/pole.vmdl";
     }
 }
 
@@ -315,8 +316,8 @@ public class BlockIce : BlockModel
     public BlockIce()
     {
         Title = "Ice";
-        Block = "models/blockbuilder/ice.vmdl";
-        Pole = "models/blockbuilder/pole_ice.vmdl";
+        Block = "models/blockmaker/ice/block.vmdl";
+        Pole = "models/blockmaker/ice/pole.vmdl";
     }
 }
 
@@ -325,7 +326,17 @@ public class BlockCamouflage : BlockModel
     public BlockCamouflage()
     {
         Title = "Camouflage";
-        Block = "models/blockbuilder/camouflage.vmdl";
-        Pole = "models/blockbuilder/pole_camouflage.vmdl";
+        Block = "models/blockmaker/camouflage/block.vmdl";
+        Pole = "models/blockmaker/camouflage/pole.vmdl";
+    }
+}
+
+public class BlockHoney : BlockModel
+{
+    public BlockHoney()
+    {
+        Title = "Honey";
+        Block = "models/blockmaker/honey/block.vmdl";
+        Pole = "models/blockmaker/honey/pole.vmdl";
     }
 }

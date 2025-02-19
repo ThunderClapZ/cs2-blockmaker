@@ -59,6 +59,13 @@ public static partial class Menu
                 RotateMenuOptions(player, rotateOptions, rotateValues);
             });
 
+            Menu.Add("Move", (player, menuOption) =>
+            {
+                string[] moveOptions = { "X-", "X+", "Y-", "Y+", "Z-", "Z+" };
+
+                MoveMenuOptions(player, moveOptions);
+            });
+
             Menu.Add("Convert", (player, menuOption) =>
             {
                 Commands.ConvertBlock(player);
@@ -105,6 +112,28 @@ public static partial class Menu
                     Utils.PrintToChat(player, $"Selected Rotation Value: {ChatColors.White}{rotateValueOption} Units");
 
                     RotateMenuOptions(player, rotateOptions, rotateValues);
+                });
+            }
+
+            WasdManager.OpenMainMenu(player, Menu);
+        }
+
+        private static void MoveMenuOptions(CCSPlayerController player, string[] moveOptions)
+        {
+            IWasdMenu Menu = WasdManager.CreateMenu($"Move Block ({playerData[player.Slot].RotationValue} Units)");
+
+            Menu.Add($"Select Units", (player, option) =>
+            {
+                float[] gridValues = Instance.Config.Settings.Building.GridValues;
+
+                GridMenuOptions(player, gridValues);
+            });
+
+            foreach (string moveOption in moveOptions)
+            {
+                Menu.Add(moveOption, (player, option) =>
+                {
+                    Commands.MoveBlock(player, moveOption);
                 });
             }
 
@@ -239,7 +268,7 @@ public static partial class Menu
         {
             IWasdMenu Menu = WasdManager.CreateMenu($"Select Size ({playerData[player.Slot].BlockSize})");
 
-            Menu.Add($"Pole: {(playerData[player.Slot].Pole ? "ON" : "OFF")}", (player, option) =>
+            Menu.Add($"Pole: {(playerData[player.Slot].BlockPole ? "ON" : "OFF")}", (player, option) =>
             {
                 Commands.Pole(player);
 
@@ -331,7 +360,10 @@ public static partial class Menu
 
             if (Blocks.Props.TryGetValue(entity, out var block))
             {
-                IWasdMenu Menu = WasdManager.CreateMenu($"Properties ({block.Name})");
+                IWasdMenu Menu = WasdManager.CreateMenu($"Properties ({block.Type})");
+
+                playerData[player.Slot].PropertyType = "";
+                playerData[player.Slot].PropertyEntity.Clear();
 
                 var properties = block.Properties;
 

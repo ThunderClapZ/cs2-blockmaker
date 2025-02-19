@@ -6,24 +6,20 @@ public class TeleportData
     public TeleportData
     (
         CBaseProp teleport,
-        string name,
-        string model
+        string name
     )
     {
         Entity = teleport;
         Name = name;
-        Model = model;
     }
 
     public CBaseProp Entity;
     public string Name { get; set; }
-    public string Model { get; set; }
 }
 
 public class SaveTeleportData
 {
     public string Name { get; set; } = "";
-    public string Model { get; set; } = "";
     public VectorUtils.VectorDTO Position { get; set; } = new VectorUtils.VectorDTO(Vector.Zero);
     public VectorUtils.QAngleDTO Rotation { get; set; } = new VectorUtils.QAngleDTO(QAngle.Zero);
 }

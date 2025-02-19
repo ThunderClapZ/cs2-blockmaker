@@ -4,8 +4,8 @@ using CounterStrikeSharp.API.Modules.Utils;
 public class PlayerData
 {
     public bool Builder = false;
-    public bool Pole = false;
     public string BlockType = "Platform";
+    public bool BlockPole = false;
     public string BlockSize = "Normal";
     public string BlockTeam = "Both";
     public string BlockColor = "None";
