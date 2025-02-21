@@ -43,7 +43,6 @@
 
 ```json
 {
-{
   "Settings": {
     "Prefix": "{purple}[BlockMaker]{default}",
     "Menu": "html",
@@ -53,8 +52,6 @@
       "AutoSave": false,
       "SaveTime": 300,
       "BlockGrabColor": "255,255,255,128",
-      "GridValues": [ 16, 32, 64, 128, 256 ],
-      "RotationValues": [ 15, 30, 45, 60, 90, 120 ],
       "BlockSizes": [
         { "Title": "Small", "Size": 0.5 },
         { "Title": "Normal", "Size": 1 },
@@ -87,16 +84,18 @@
       "CreateBlock": "create",
       "DeleteBlock": "delete",
       "RotateBlock": "rotate",
+      "PositionBlock": "position",
       "BlockType": "type",
       "BlockColor": "color",
       "CopyBlock": "copy",
       "ConvertBlock": "convert",
+      "LockBlock": "lock",
       "SaveBlocks": "save",
       "Snapping": "snap",
       "Grid": "grid",
       "Noclip": "nc",
       "Godmode": "godmode",
-      "TestBlock": "test"
+      "TestBlock": "testblock"
     }
   },
   "Sounds": {

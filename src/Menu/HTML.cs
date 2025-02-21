@@ -7,24 +7,21 @@ public static partial class Menu
 {
     public static class HTML
     {
-        private static Plugin Instance = Plugin.Instance;
-        private static Dictionary<int, PlayerData> playerData = Instance.playerData;
-
         public static void Open(CCSPlayerController player)
         {
             CenterHtmlMenu Menu = new("Block Maker", Instance);
 
-            Menu.AddMenuOption($"Block Commands", (player, menuOption) =>
+            Menu.AddMenuOption($"Block Commands", (player, option) =>
             {
                 Menu_Commands(player);
             });
 
-            Menu.AddMenuOption($"Block Settings", (player, menuOption) =>
+            Menu.AddMenuOption($"Block Settings", (player, option) =>
             {
                 Menu_BlockSettings(player);
             });
 
-            Menu.AddMenuOption("Build Settings", (player, menuOption) =>
+            Menu.AddMenuOption("Build Settings", (player, option) =>
             {
                 Menu_Settings(player);
             });
@@ -34,103 +31,72 @@ public static partial class Menu
 
         /* Menu_Commands */
 
-        private static void Menu_Commands(CCSPlayerController player)
+        static void Menu_Commands(CCSPlayerController player)
         {
             CenterHtmlMenu Menu = new("Block Commands", Instance);
 
-            Menu.AddMenuOption("Create", (player, menuOption) =>
+            Menu.AddMenuOption("Create", (player, option) =>
             {
                 Commands.CreateBlock(player);
             });
 
-            Menu.AddMenuOption("Delete", (player, menuOption) =>
+            Menu.AddMenuOption("Delete", (player, option) =>
             {
                 Commands.DeleteBlock(player);
             });
 
-            Menu.AddMenuOption("Rotate", (player, menuOption) =>
+            Menu.AddMenuOption("Rotate", (player, option) =>
             {
-                float[] rotateValues = Instance.Config.Settings.Building.RotationValues;
-                string[] rotateOptions = { "Reset", "X-", "X+", "Y-", "Y+", "Z-", "Z+" };
+                string[] options = { "Reset", "X-", "X+", "Y-", "Y+", "Z-", "Z+" };
 
-                RotateMenuOptions(player, rotateOptions, rotateValues);
+                PositionMenuOptions(player, options, true);
             });
 
-            Menu.AddMenuOption("Move", (player, menuOption) =>
+            Menu.AddMenuOption("Move", (player, option) =>
             {
-                string[] moveOptions = { "X-", "X+", "Y-", "Y+", "Z-", "Z+" };
+                string[] options = { "X-", "X+", "Y-", "Y+", "Z-", "Z+" };
 
-                MoveMenuOptions(player, moveOptions);
+                PositionMenuOptions(player, options, false);
             });
 
-            Menu.AddMenuOption("Convert", (player, menuOption) =>
+            Menu.AddMenuOption("Convert", (player, option) =>
             {
                 Commands.ConvertBlock(player);
             });
 
-            Menu.AddMenuOption("Copy", (player, menuOption) =>
+            Menu.AddMenuOption("Copy", (player, option) =>
             {
                 Commands.CopyBlock(player);
             });
 
+            Menu.AddMenuOption("Lock", (player, option) =>
+            {
+                Commands.LockBlock(player);
+            });
+
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }
 
-        private static void RotateMenuOptions(CCSPlayerController player, string[] rotateOptions, float[] rotateValues)
+        static void PositionMenuOptions(CCSPlayerController player, string[] options, bool rotate)
         {
-            CenterHtmlMenu Menu = new($"Rotate Block ({playerData[player.Slot].RotationValue} Units)", Instance);
+            float value = rotate ? playerData.RotationValue : playerData.PositionValue;
+            string title = $"{(rotate ? "Rotate" : "Move")} Block ({value} Units)";
+
+            CenterHtmlMenu Menu = new(title, Instance);
 
             Menu.AddMenuOption($"Select Units", (player, option) =>
             {
-                RotateValuesMenuOptions(player, rotateOptions, rotateValues);
+                playerData.ChatInput = rotate ? "Rotation" : "Position";
+                Utils.PrintToChat(player, $"Write your desired number in the chat");
+                PositionMenuOptions(player, options, rotate);
             });
 
-            foreach (string rotateOption in rotateOptions)
+            foreach (string input in options)
             {
-                Menu.AddMenuOption(rotateOption, (player, option) =>
+                Menu.AddMenuOption(input, (player, option) =>
                 {
-                    Commands.RotateBlock(player, rotateOption);
-                });
-            }
-
-            MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
-        }
-
-        private static void RotateValuesMenuOptions(CCSPlayerController player, string[] rotateOptions, float[] rotateValues)
-        {
-            CenterHtmlMenu Menu = new($"Rotate Values", Instance);
-
-            foreach (float rotateValueOption in rotateValues)
-            {
-                Menu.AddMenuOption(rotateValueOption.ToString() + " Units", (player, option) =>
-                {
-                    playerData[player.Slot].RotationValue = rotateValueOption;
-
-                    Utils.PrintToChat(player, $"Selected Rotation Value: {ChatColors.White}{rotateValueOption} Units");
-
-                    RotateMenuOptions(player, rotateOptions, rotateValues);
-                });
-            }
-
-            MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
-        }
-
-        private static void MoveMenuOptions(CCSPlayerController player, string[] moveOptions)
-        {
-            CenterHtmlMenu Menu = new($"Move Block ({playerData[player.Slot].RotationValue} Units)", Instance);
-
-            Menu.AddMenuOption($"Select Units", (player, option) =>
-            {
-                float[] gridValues = Instance.Config.Settings.Building.GridValues;
-
-                GridMenuOptions(player, gridValues);
-            });
-
-            foreach (string moveOption in moveOptions)
-            {
-                Menu.AddMenuOption(moveOption, (player, option) =>
-                {
-                    Commands.MoveBlock(player, moveOption);
+                    if (rotate) Commands.RotateBlock(player, input);
+                    else Commands.PositionBlock(player, input);
                 });
             }
 
@@ -141,40 +107,40 @@ public static partial class Menu
 
         /* Menu_BlockSettings */
 
-        private static void Menu_BlockSettings(CCSPlayerController player)
+        static void Menu_BlockSettings(CCSPlayerController player)
         {
             CenterHtmlMenu Menu = new("Block Settings", Instance);
 
-            Menu.AddMenuOption($"Type: {playerData[player.Slot].BlockType}", (player, menuOption) =>
+            Menu.AddMenuOption($"Type: {playerData.BlockType}", (player, option) =>
             {
                 TypeMenuOptions(player);
             });
 
-            Menu.AddMenuOption($"Size: {playerData[player.Slot].BlockSize}", (player, menuOption) =>
+            Menu.AddMenuOption($"Size: {playerData.BlockSize}", (player, option) =>
             {
                 string[] sizeValues = Instance.Config.Settings.Building.BlockSizes.Select(b => b.Title).ToArray();
 
                 SizeMenuOptions(player, sizeValues);
             });
 
-            Menu.AddMenuOption($"Team: {playerData[player.Slot].BlockTeam}", (player, menuOption) =>
+            Menu.AddMenuOption($"Team: {playerData.BlockTeam}", (player, option) =>
             {
                 string[] teamValues = { "Both", "T", "CT" };
 
                 TeamMenuOptions(player, teamValues);
             });
 
-            Menu.AddMenuOption($"Transparency: {playerData[player.Slot].BlockTransparency}", (player, menuOption) =>
+            Menu.AddMenuOption($"Transparency: {playerData.BlockTransparency}", (player, option) =>
             {
                 TransparencyMenuOptions(player);
             });
 
-            Menu.AddMenuOption($"Color: {playerData[player.Slot].BlockColor}", (player, menuOption) =>
+            Menu.AddMenuOption($"Color: {playerData.BlockColor}", (player, option) =>
             {
                 ColorMenuOptions(player);
             });
 
-            Menu.AddMenuOption($"Properties", (player, menuOption) =>
+            Menu.AddMenuOption($"Properties", (player, option) =>
             {
                 PropertiesMenuOptions(player);
             });
@@ -182,9 +148,9 @@ public static partial class Menu
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }
 
-        private static void TypeMenuOptions(CCSPlayerController player)
+        static void TypeMenuOptions(CCSPlayerController player)
         {
-            CenterHtmlMenu Menu = new($"Select Type ({playerData[player.Slot].BlockType})", Instance);
+            CenterHtmlMenu Menu = new($"Select Type ({playerData.BlockType})", Instance);
 
             var blockmodels = Files.Models.Props;
 
@@ -194,7 +160,7 @@ public static partial class Menu
 
                 string blockName = block.Title;
 
-                Menu.AddMenuOption(blockName, (player, menuOption) =>
+                Menu.AddMenuOption(blockName, (player, option) =>
                 {
                     if (block.Title == blockmodels.Pistol.Title ||
                         block.Title == blockmodels.Sniper.Title ||
@@ -213,9 +179,9 @@ public static partial class Menu
                 });
             }
 
-            Menu.AddMenuOption("Teleport", (player, menuOption) =>
+            Menu.AddMenuOption("Teleport", (player, option) =>
             {
-                playerData[player.Slot].BlockType = "Teleport";
+                playerData.BlockType = "Teleport";
                 Utils.PrintToChat(player, $"Selected Type: {ChatColors.White}Teleport");
 
                 Menu_BlockSettings(player);
@@ -224,7 +190,7 @@ public static partial class Menu
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }
 
-        private static void GunTypeMenu(CCSPlayerController player, string gunType)
+        static void GunTypeMenu(CCSPlayerController player, string gunType)
         {
             CenterHtmlMenu Menu = new($"Select {gunType}", Instance);
 
@@ -238,7 +204,7 @@ public static partial class Menu
 
                     if (weapon != null)
                     {
-                        Menu.AddMenuOption(weapon.Name, (player, menuOption) =>
+                        Menu.AddMenuOption(weapon.Name, (player, option) =>
                         {
                             foreach (var property in typeof(BlockModels).GetProperties())
                             {
@@ -246,7 +212,7 @@ public static partial class Menu
 
                                 if (string.Equals(model.Title, gunType, StringComparison.OrdinalIgnoreCase))
                                 {
-                                    playerData[player.Slot].BlockType = $"{model.Title}.{weapon.Name}";
+                                    playerData.BlockType = $"{model.Title}.{weapon.Name}";
                                     Utils.PrintToChat(player, $"Selected Type: {ChatColors.White}{model.Title}.{weapon.Name}");
 
                                     Menu_BlockSettings(player);
@@ -261,11 +227,11 @@ public static partial class Menu
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }
 
-        private static void SizeMenuOptions(CCSPlayerController player, string[] sizeValues)
+        static void SizeMenuOptions(CCSPlayerController player, string[] sizeValues)
         {
-            CenterHtmlMenu Menu = new($"Select Size ({playerData[player.Slot].BlockSize})", Instance);
+            CenterHtmlMenu Menu = new($"Select Size ({playerData.BlockSize})", Instance);
 
-            Menu.AddMenuOption($"Pole: {(playerData[player.Slot].BlockPole ? "ON" : "OFF")}", (player, option) =>
+            Menu.AddMenuOption($"Pole: {(playerData.BlockPole ? "ON" : "OFF")}", (player, option) =>
             {
                 Commands.Pole(player);
 
@@ -276,7 +242,7 @@ public static partial class Menu
             {
                 Menu.AddMenuOption(sizeValue, (player, option) =>
                 {
-                    playerData[player.Slot].BlockSize = sizeValue;
+                    playerData.BlockSize = sizeValue;
 
                     Utils.PrintToChat(player, $"Selected Size: {ChatColors.White}{sizeValue}");
 
@@ -287,15 +253,15 @@ public static partial class Menu
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }
 
-        private static void TeamMenuOptions(CCSPlayerController player, string[] teamValues)
+        static void TeamMenuOptions(CCSPlayerController player, string[] teamValues)
         {
-            CenterHtmlMenu Menu = new($"Select Team ({playerData[player.Slot].BlockTeam})", Instance);
+            CenterHtmlMenu Menu = new($"Select Team ({playerData.BlockTeam})", Instance);
 
             foreach (string teamValue in teamValues)
             {
                 Menu.AddMenuOption(teamValue, (player, option) =>
                 {
-                    playerData[player.Slot].BlockTeam = teamValue;
+                    playerData.BlockTeam = teamValue;
 
                     Utils.PrintToChat(player, $"Selected Team: {ChatColors.White}{teamValue}");
 
@@ -306,15 +272,15 @@ public static partial class Menu
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }
 
-        private static void TransparencyMenuOptions(CCSPlayerController player)
+        static void TransparencyMenuOptions(CCSPlayerController player)
         {
-            CenterHtmlMenu Menu = new($"Select Transparency ({playerData[player.Slot].BlockTransparency})", Instance);
+            CenterHtmlMenu Menu = new($"Select Transparency ({playerData.BlockTransparency})", Instance);
 
             foreach (var value in Utils.AlphaMapping.Keys)
             {
-                Menu.AddMenuOption(value, (player, menuOption) =>
+                Menu.AddMenuOption(value, (player, option) =>
                 {
-                    playerData[player.Slot].BlockTransparency = value;
+                    playerData.BlockTransparency = value;
 
                     Utils.PrintToChat(player, $"Selected Transparency: {ChatColors.White}{value}");
 
@@ -327,13 +293,13 @@ public static partial class Menu
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }
 
-        private static void ColorMenuOptions(CCSPlayerController player)
+        static void ColorMenuOptions(CCSPlayerController player)
         {
-            CenterHtmlMenu Menu = new($"Select Color ({playerData[player.Slot].BlockColor})", Instance);
+            CenterHtmlMenu Menu = new($"Select Color ({playerData.BlockColor})", Instance);
 
             foreach (var color in Utils.ColorMapping.Keys)
             {
-                Menu.AddMenuOption(color, (player, menuOption) =>
+                Menu.AddMenuOption(color, (player, option) =>
                 {
                     Commands.BlockColor(player, color);
 
@@ -344,7 +310,7 @@ public static partial class Menu
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }
 
-        private static void PropertiesMenuOptions(CCSPlayerController player)
+        static void PropertiesMenuOptions(CCSPlayerController player)
         {
             var entity = player.GetBlockAimTarget();
 
@@ -359,8 +325,8 @@ public static partial class Menu
             {
                 CenterHtmlMenu Menu = new($"Properties ({block.Type})", Instance);
 
-                playerData[player.Slot].PropertyType = "";
-                playerData[player.Slot].PropertyEntity.Clear();
+                playerData.ChatInput = "";
+                playerData.PropertyEntity.Clear();
 
                 var properties = block.Properties;
 
@@ -374,7 +340,7 @@ public static partial class Menu
             }
         }
 
-        private static void PropertyMenuOption(CenterHtmlMenu Menu, string property, float value, CCSPlayerController player, CBaseProp entity)
+        static void PropertyMenuOption(CenterHtmlMenu Menu, string property, float value, CCSPlayerController player, CBaseProp entity)
         {
             if (value != 0)
             {
@@ -386,10 +352,10 @@ public static partial class Menu
                 if (property == "OnTop")
                     title = Blocks.Props[entity].Properties.OnTop ? ": Enabled" : ": Disabled";
 
-                Menu.AddMenuOption($"{property}{title}", (player, menuOption) =>
+                Menu.AddMenuOption($"{property}{title}", (player, option) =>
                 {
-                    playerData[player.Slot].PropertyType = property;
-                    playerData[player.Slot].PropertyEntity[property] = entity;
+                    playerData.ChatInput = property;
+                    playerData.PropertyEntity[property] = entity;
 
                     if (property == "Reset" || property == "OnTop")
                     {
@@ -409,55 +375,53 @@ public static partial class Menu
 
         /* Menu_Settings */
 
-        private static void Menu_Settings(CCSPlayerController player)
+        static void Menu_Settings(CCSPlayerController player)
         {
             CenterHtmlMenu Menu = new("Build Settings", Instance);
 
-            Menu.AddMenuOption("Build Mode: " + (Instance.buildMode ? "ON" : "OFF"), (player, menuOption) =>
+            Menu.AddMenuOption("Build Mode: " + (Instance.buildMode ? "ON" : "OFF"), (player, option) =>
             {
                 Commands.BuildMode(player);
 
                 Menu_Settings(player);
             });
 
-            Menu.AddMenuOption("Godmode: " + (playerData[player.Slot].Godmode ? "ON" : "OFF"), (player, menuOption) =>
+            Menu.AddMenuOption("Godmode: " + (playerData.Godmode ? "ON" : "OFF"), (player, option) =>
             {
                 Commands.Godmode(player);
 
                 Menu_Settings(player);
             });
 
-            Menu.AddMenuOption("Noclip: " + (playerData[player.Slot].Noclip ? "ON" : "OFF"), (player, menuOption) =>
+            Menu.AddMenuOption("Noclip: " + (playerData.Noclip ? "ON" : "OFF"), (player, option) =>
             {
                 Commands.Noclip(player);
 
                 Menu_Settings(player);
             });
 
-            Menu.AddMenuOption($"Grid: {playerData[player.Slot].GridValue} Units", (player, menuOption) =>
+            Menu.AddMenuOption($"Grid Settings", (player, option) =>
             {
-                float[] gridValues = Instance.Config.Settings.Building.GridValues;
-
-                GridMenuOptions(player, gridValues);
+                GridMenuOptions(player);
             });
 
-            Menu.AddMenuOption("Save Blocks", (player, menuOption) =>
+            Menu.AddMenuOption("Save Blocks", (player, option) =>
             {
                 Commands.SaveBlocks(player);
 
                 Menu_Settings(player);
             });
 
-            Menu.AddMenuOption("Clear Blocks", (player, menuOption) =>
+            Menu.AddMenuOption("Clear Blocks", (player, option) =>
             {
                 CenterHtmlMenu ConfirmMenu = new("Confirm", Instance);
 
-                ConfirmMenu.AddMenuOption("NO - keep blocks", (player, menuOption) =>
+                ConfirmMenu.AddMenuOption("NO - keep blocks", (player, option) =>
                 {
                     Menu_Settings(player);
                 });
 
-                ConfirmMenu.AddMenuOption("YES - remove blocks", (player, menuOption) =>
+                ConfirmMenu.AddMenuOption("YES - remove blocks", (player, option) =>
                 {
                     Commands.ClearBlocks(player);
 
@@ -467,13 +431,13 @@ public static partial class Menu
                 MenuManager.OpenCenterHtmlMenu(Instance, player, ConfirmMenu);
             });
 
-            Menu.AddMenuOption("Manage Builders", (player, menuOption) =>
+            Menu.AddMenuOption("Manage Builders", (player, option) =>
             {
                 CenterHtmlMenu BuildersMenu = new("Manage Builders", Instance);
 
                 foreach (var target in Utilities.GetPlayers().Where(t => t.SteamID != player.SteamID && t.SteamID > 0))
                 {
-                    BuildersMenu.AddMenuOption(target.PlayerName, (player, menuOption) =>
+                    BuildersMenu.AddMenuOption(target.PlayerName, (player, option) =>
                     {
                         Commands.ManageBuilder(player, target.SteamID.ToString());
                     });
@@ -485,33 +449,31 @@ public static partial class Menu
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }
 
-        private static void GridMenuOptions(CCSPlayerController player, float[] gridValues)
+        static void GridMenuOptions(CCSPlayerController player)
         {
-            CenterHtmlMenu Menu = new($"Grid Options ({playerData[player.Slot].GridValue} Units)", Instance);
+            CenterHtmlMenu Menu = new($"Grid Options ({playerData.GridValue} Units)", Instance);
 
-            Menu.AddMenuOption($"Grid: " + (playerData[player.Slot].Grid ? "ON" : "OFF"), (player, option) =>
+            Menu.AddMenuOption($"Select Units", (player, option) =>
+            {
+                playerData.ChatInput = "Grid";
+
+                Utils.PrintToChat(player, $"Write your desired number in the chat");
+                GridMenuOptions(player);
+            });
+
+            Menu.AddMenuOption($"Grid: " + (playerData.Grid ? "ON" : "OFF"), (player, option) =>
             {
                 Commands.Grid(player, "");
 
-                GridMenuOptions(player, gridValues);
+                GridMenuOptions(player);
             });
 
-            Menu.AddMenuOption($"Snap: " + (playerData[player.Slot].Snapping ? "ON" : "OFF"), (player, option) =>
+            Menu.AddMenuOption($"Snap: " + (playerData.Snapping ? "ON" : "OFF"), (player, option) =>
             {
                 Commands.Snapping(player);
 
-                GridMenuOptions(player, gridValues);
+                GridMenuOptions(player);
             });
-
-            foreach (float gridValue in gridValues)
-            {
-                Menu.AddMenuOption(gridValue.ToString() + " Units", (player, option) =>
-                {
-                    Commands.Grid(player, gridValue.ToString());
-
-                    GridMenuOptions(player, gridValues);
-                });
-            }
 
             MenuManager.OpenCenterHtmlMenu(Instance, player, Menu);
         }

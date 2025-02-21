@@ -13,10 +13,11 @@ public class PlayerData
     public bool Grid = false;
     public float GridValue = 32f;
     public float RotationValue = 30f;
+    public float PositionValue = 8f;
     public bool Snapping = false;
     public bool Noclip = false;
     public bool Godmode = false;
-    public string PropertyType = "";
+    public string ChatInput = "";
     public Dictionary<string, CBaseEntity> PropertyEntity = new();
 }
 
@@ -26,4 +27,5 @@ public class BuildingData
     public Vector offset = new();
     public int distance;
     public List<CBeam> beams = new();
+    public bool lockedmessage = false;
 }

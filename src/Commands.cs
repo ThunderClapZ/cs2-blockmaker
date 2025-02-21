@@ -22,6 +22,7 @@ public static class Commands
         AddCommands(commands.Building.CreateBlock, CreateBlock);
         AddCommands(commands.Building.DeleteBlock, DeleteBlock);
         AddCommands(commands.Building.RotateBlock, RotateBlock);
+        AddCommands(commands.Building.PositionBlock, PositionBlock);
         AddCommands(commands.Building.SaveBlocks, SaveBlocks);
         AddCommands(commands.Building.Snapping, Snapping);
         AddCommands(commands.Building.Grid, Grid);
@@ -30,6 +31,7 @@ public static class Commands
         AddCommands(commands.Building.TestBlock, TestBlock);
         AddCommands(commands.Building.ConvertBlock, ConvertBlock);
         AddCommands(commands.Building.CopyBlock, CopyBlock);
+        AddCommands(commands.Building.LockBlock, LockBlock);
     }
     private static void AddCommands(string commands, Action<CCSPlayerController?> action)
     {
@@ -52,6 +54,7 @@ public static class Commands
         RemoveCommands(commands.Building.CreateBlock, CreateBlock);
         RemoveCommands(commands.Building.DeleteBlock, DeleteBlock);
         RemoveCommands(commands.Building.RotateBlock, RotateBlock);
+        RemoveCommands(commands.Building.PositionBlock, PositionBlock);
         RemoveCommands(commands.Building.SaveBlocks, SaveBlocks);
         RemoveCommands(commands.Building.Snapping, Snapping);
         RemoveCommands(commands.Building.Grid, Grid);
@@ -60,6 +63,7 @@ public static class Commands
         RemoveCommands(commands.Building.TestBlock, TestBlock);
         RemoveCommands(commands.Building.ConvertBlock, ConvertBlock);
         RemoveCommands(commands.Building.CopyBlock, CopyBlock);
+        RemoveCommands(commands.Building.LockBlock, LockBlock);
     }
     private static void RemoveCommands(string commands, Action<CCSPlayerController?> action)
     {
@@ -197,30 +201,7 @@ public static class Commands
         if (!Utils.BuildMode(player))
             return;
 
-        switch (Instance.Config.Settings.Menu.ToLower())
-        {
-            case "chat":
-            case "text":
-                Menu.Chat.Open(player);
-                break;
-            case "html":
-            case "center":
-            case "centerhtml":
-            case "hud":
-                Menu.HTML.Open(player);
-                break;
-            case "wasd":
-            case "wasdmenu":
-                Menu.WASD.Open(player);
-                break;
-            case "screen":
-            case "screenmenu":
-                Menu.Screen.Open(player);
-                break;
-            default:
-                Menu.HTML.Open(player);
-                break;
-        }
+        Menu.Open(player);
     }
 
     public static void BlockType(CCSPlayerController? player, string selectType)
@@ -304,15 +285,15 @@ public static class Commands
         if (player == null || !AllowedCommand(player))
             return;
 
-        Blocks.Rotate(player, rotation);
+        Blocks.Position(player, rotation, true);
     }
 
-    public static void MoveBlock(CCSPlayerController? player, string position)
+    public static void PositionBlock(CCSPlayerController? player, string position)
     {
         if (player == null || !AllowedCommand(player))
             return;
 
-        Blocks.Move(player, position);
+        Blocks.Position(player, position, false);
     }
 
     public static void SaveBlocks(CCSPlayerController? player)
@@ -426,6 +407,15 @@ public static class Commands
             return;
 
         Blocks.Copy(player);
+    }
+
+
+    public static void LockBlock(CCSPlayerController? player)
+    {
+        if (player == null || !AllowedCommand(player))
+            return;
+
+        Blocks.Lock(player);
     }
 
     public static void TransparenyBlock(CCSPlayerController? player, string transparency = "100%")

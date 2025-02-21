@@ -19,8 +19,6 @@ public class Config_Settings
         public bool AutoSave { get; set; } = false;
         public int SaveTime { get; set; } = 300;
         public string BlockGrabColor { get; set; } = "255,255,255,128";
-        public float[] GridValues { get; set; } = { 16f, 32f, 64f, 128f, 256f };
-        public float[] RotationValues { get; set; } = { 15f, 30f, 45f, 60f, 90f, 120f };
 
         public List<BlockSize> BlockSizes { get; set; }
         public Settings_Building()
@@ -72,16 +70,18 @@ public class Config_Commands
         public string CreateBlock { get; set; } = "create";
         public string DeleteBlock { get; set; } = "delete";
         public string RotateBlock { get; set; } = "rotate";
+        public string PositionBlock { get; set; } = "position";
         public string BlockType { get; set; } = "type";
         public string BlockColor { get; set; } = "color";
         public string CopyBlock { get; set; } = "copy";
         public string ConvertBlock { get; set; } = "convert";
+        public string LockBlock { get; set; } = "lock";
         public string SaveBlocks { get; set; } = "save";
         public string Snapping { get; set; } = "snap";
         public string Grid { get; set; } = "grid";
         public string Noclip { get; set; } = "nc";
         public string Godmode { get; set; } = "godmode";
-        public string TestBlock { get; set; } = "test";
+        public string TestBlock { get; set; } = "testblock";
     }
     public Commands_Building Building { get; set; } = new Commands_Building();
 }

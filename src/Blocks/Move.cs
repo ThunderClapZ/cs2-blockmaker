@@ -90,13 +90,18 @@ public partial class Blocks
 
             Vector position = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
 
-            var hitPoint = RayTrace.TraceShape(position, pawn.EyeAngles!, false, true);
+            var hitPoint = RayTrace.TraceShape(position, pawn.EyeAngles!);
 
-            if (block != null && block.IsValid && hitPoint != null && hitPoint.HasValue)
+            string size = "1";
+
+            if (Props.ContainsKey(block))
+                size = Props[block].Size;
+
+            if (block != null && hitPoint != null)
             {
-                if (VectorUtils.CalculateDistance(block.AbsOrigin!, RayTrace.Vector3toVector(hitPoint.Value)) > 150)
+                if (VectorUtils.CalculateDistance(block.AbsOrigin!, hitPoint) > (block.Collision.Maxs.X * 2 * Utils.GetSize(size)))
                 {
-                    Utils.PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
+                    //Utils.PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
                     return;
                 }
 

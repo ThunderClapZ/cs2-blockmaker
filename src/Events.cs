@@ -178,13 +178,41 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (playerData.ContainsKey(player.Slot))
         {
-            var type = playerData[player.Slot].PropertyType;
+            var pData = playerData[player.Slot];
+            var type = pData.ChatInput;
 
             if (!string.IsNullOrEmpty(type))
             {
                 var input = info.ArgString.Replace("\"", "");
 
-                Commands.Properties(player, type, input);
+                if (!float.TryParse(input, out float number) || number <= 0)
+                {
+                    Utils.PrintToChat(player, $"{ChatColors.Red}Invalid input value: {ChatColors.White}{input}");
+                    return HookResult.Handled;
+                }
+
+                switch (type)
+                {
+                    case "Grid":
+                        pData.GridValue = number;
+                        Utils.PrintToChat(player, $"Grid Value: {ChatColors.White}{number}");
+                        break;
+                    case "Rotation":
+                        pData.RotationValue = number;
+                        Utils.PrintToChat(player, $"Rotation Value: {ChatColors.White}{number}");
+                        break;
+                    case "Position":
+                        pData.PositionValue = number;
+                        Utils.PrintToChat(player, $"Position Value: {ChatColors.White}{number}");
+                        break;
+                    case "Reset":
+                    default:
+                        Commands.Properties(player, type, input);
+                        break;
+                }
+
+                pData.ChatInput = "";
+
                 return HookResult.Handled;
             }
         }
@@ -231,6 +259,13 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             }
             else
             {
+                if (buildMode)
+                {
+                    foreach (var kvp in Blocks.PlayerHolds)
+                        if (kvp.Value.block == block)
+                            return HookResult.Continue;
+                }
+
                 var blockData = Blocks.Props[block];
 
                 if (blockData.Properties.OnTop)

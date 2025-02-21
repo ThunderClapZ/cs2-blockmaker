@@ -18,8 +18,8 @@ public partial class Blocks
         var pawn = player.Pawn()!;
         Vector position = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
 
-        var hitPoint = RayTrace.TraceShape(position, pawn.EyeAngles!, false, true);
-        if (hitPoint == null && !hitPoint.HasValue)
+        var hitPoint = RayTrace.TraceShape(position, pawn.EyeAngles!);
+        if (hitPoint == null)
         {
             Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a valid location to create block");
             return;
@@ -27,7 +27,16 @@ public partial class Blocks
 
         try
         {
-            CreateBlock(playerData.BlockType, playerData.BlockPole, playerData.BlockSize, RayTrace.Vector3toVector(hitPoint.Value), new QAngle(), playerData.BlockColor, playerData.BlockTransparency, playerData.BlockTeam);
+            CreateBlock(
+                playerData.BlockType,
+                playerData.BlockPole,
+                playerData.BlockSize,
+                hitPoint,
+                new QAngle(),
+                playerData.BlockColor,
+                playerData.BlockTransparency,
+                playerData.BlockTeam
+            );
 
             if (config.Sounds.Building.Enabled)
             {
@@ -50,7 +59,17 @@ public partial class Blocks
     }
 
     public static Dictionary<CBaseEntity, BlockData> Props = new Dictionary<CBaseEntity, BlockData>();
-    public static void CreateBlock(string type, bool pole, string size, Vector position, QAngle rotation, string color = "None", string transparency = "100%", string team = "Both", BlockData_Properties? properties = null)
+    public static void CreateBlock(
+        string type,
+        bool pole,
+        string size,
+        Vector position,
+        QAngle rotation,
+        string color = "None",
+        string transparency = "100%",
+        string team = "Both",
+        BlockData_Properties? properties = null
+    )
     {
         var block = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override");
 
@@ -76,12 +95,29 @@ public partial class Blocks
 
             CreateTrigger(block, size);
 
-            if (properties == null)
+            if (properties == null || (properties.Cooldown == 0 && properties.Duration == 0 && properties.Value == 0 && properties.Locked != true))
             {
                 if (Files.PropsData.Properties.BlockDefaultProperties.TryGetValue(type.Split('.')[0], out var defaultProperties))
-                    properties = defaultProperties;
+                    properties = new BlockData_Properties
+                    {
+                        Cooldown = defaultProperties.Cooldown,
+                        Value = defaultProperties.Value,
+                        Duration = defaultProperties.Duration,
+                        OnTop = defaultProperties.OnTop,
+                    };
 
                 else properties = new BlockData_Properties();
+            }
+            else
+            {
+                properties = new BlockData_Properties
+                {
+                    Cooldown = properties.Cooldown,
+                    Value = properties.Value,
+                    Duration = properties.Duration,
+                    OnTop = properties.OnTop,
+                    Locked = properties.Locked,
+                };
             }
 
             Props[block] = new BlockData(block, type, pole, size, color, transparency, team, properties);

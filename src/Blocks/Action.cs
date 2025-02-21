@@ -152,7 +152,18 @@ public partial class Blocks
                 instance.AddTimer(cooldown, () =>
                 {
                     tempblock.Remove();
-                    CreateBlock(usedBlock.Type, usedBlock.Pole, usedBlock.Size, pos, rotation, usedBlock.Color, usedBlock.Transparency, usedBlock.Team, usedBlock.Properties);
+
+                    CreateBlock(
+                        usedBlock.Type,
+                        usedBlock.Pole,
+                        usedBlock.Size,
+                        pos,
+                        rotation,
+                        usedBlock.Color,
+                        usedBlock.Transparency,
+                        usedBlock.Team,
+                        usedBlock.Properties
+                    );
 
                     if (TempTimers.Contains(block))
                         TempTimers.Remove(block);
@@ -209,7 +220,18 @@ public partial class Blocks
                 instance.AddTimer(cooldown, () =>
                 {
                     tempblock.Remove();
-                    CreateBlock(usedBlock.Type, usedBlock.Pole, usedBlock.Size, pos, rotation, usedBlock.Color, usedBlock.Transparency, usedBlock.Team, usedBlock.Properties);
+
+                    CreateBlock(
+                        usedBlock.Type,
+                        usedBlock.Pole,
+                        usedBlock.Size,
+                        pos,
+                        rotation,
+                        usedBlock.Color,
+                        usedBlock.Transparency,
+                        usedBlock.Team,
+                        usedBlock.Properties
+                    );
 
                     if (TempTimers.Contains(block))
                         TempTimers.Remove(block);

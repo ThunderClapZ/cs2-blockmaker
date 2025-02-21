@@ -106,6 +106,19 @@ public static class VectorUtils
 
     public static (Vector position, QAngle rotation) GetEndXYZ(CCSPlayerController player, CBaseProp block, double distance = 250, bool grid = false, float gridValue = 0f, bool snapping = false)
     {
+        if (Blocks.Props.TryGetValue(Blocks.PlayerHolds[player].block, out var locked))
+        {
+            if (Blocks.Props[locked.Entity].Properties.Locked)
+            {
+                if (Blocks.PlayerHolds[player].lockedmessage == false)
+                    Utils.PrintToChat(player, $"{ChatColors.Red}Block is locked");
+
+                Blocks.PlayerHolds[player].lockedmessage = true;
+
+                return (block.AbsOrigin!, block.AbsRotation!);
+            }
+        }
+
         var pawn = player.Pawn()!;
         var playerpos = pawn.AbsOrigin!;
 
@@ -141,7 +154,7 @@ public static class VectorUtils
             var closestBlock = GetClosestBlock(playerPos, endPos, block.Collision.Maxs.X * scale * 2, block);
             if (closestBlock != null)
             {
-                var snap = SnapToClosestBlock(endPos, closestBlock);
+                var snap = SnapToClosestBlock(block, closestBlock);
 
                 var dist = CalculateDistance(closestBlock.AbsOrigin!, block.AbsOrigin!);
 
@@ -156,81 +169,86 @@ public static class VectorUtils
         return (endPos, endRotation);
     }
 
-    public static (Vector Position, QAngle Rotation) SnapToClosestBlock(Vector endPos, CBaseProp block)
+    public static (Vector Position, QAngle Rotation) SnapToClosestBlock(CBaseProp block, CBaseProp closestBlock)
     {
         Vector position = new();
         QAngle rotation = new();
 
-        Vector BlockPosition = block.AbsOrigin!;
-        QAngle BlockRotation = block.AbsRotation!;
+        Vector BlockPosition = closestBlock.AbsOrigin!;
+        QAngle BlockRotation = closestBlock.AbsRotation!;
 
         float scale = 1;
 
-        if (Blocks.Props.ContainsKey(block))
-            scale = Utils.GetSize(Blocks.Props[block].Size);
+        if (Blocks.Props.ContainsKey(closestBlock))
+            scale = Utils.GetSize(Blocks.Props[closestBlock].Size);
 
-        Vector Maxs = block.Collision.Maxs * scale * 2;
+        Vector Maxs = closestBlock.Collision.Maxs * scale * 2;
 
         System.Numerics.Matrix4x4 rotationMatrix = CalculateRotationMatrix(BlockRotation);
 
-        Vector[] localFaceOffsets =
+        var hitBlock = RayTrace.TraceShape(block.AbsOrigin, closestBlock.AbsOrigin!, closestBlock.Handle);
+
+        if (hitBlock != null)
         {
-            new Vector(-(Maxs.X / 2 + Maxs.X / 2), 0, 0), // -X face (left)
-            new Vector(Maxs.X / 2 + Maxs.X / 2, 0, 0),   // +X face (right)
-            new Vector(0, -(Maxs.Y / 2 + Maxs.Y / 2), 0), // -Y face (back)
-            new Vector(0, Maxs.Y / 2 + Maxs.Y / 2, 0),   // +Y face (front)
-            new Vector(0, 0, -(Maxs.Z / 2 + Maxs.Z / 2)), // -Z face (bottom)
-            new Vector(0, 0, Maxs.Z / 2 + Maxs.Z / 2)    // +Z face (top)
-        };
-
-        float closestDistance = float.MaxValue;
-
-        for (int i = 0; i < localFaceOffsets.Length; ++i)
-        {
-            Vector worldFaceOffset = TransformVector(localFaceOffsets[i], rotationMatrix);
-            Vector testPos = BlockPosition + worldFaceOffset;
-
-            float distance = CalculateDistance(endPos, testPos);
-
-            if (distance < closestDistance)
+            Vector[] localFaceOffsets =
             {
-                closestDistance = distance;
+                new Vector(-(Maxs.X / 2 + Maxs.X / 2), 0, 0), // -X face (left)
+                new Vector(Maxs.X / 2 + Maxs.X / 2, 0, 0),   // +X face (right)
+                new Vector(0, -(Maxs.Y / 2 + Maxs.Y / 2), 0), // -Y face (back)
+                new Vector(0, Maxs.Y / 2 + Maxs.Y / 2, 0),   // +Y face (front)
+                new Vector(0, 0, -(Maxs.Z / 2 + Maxs.Z / 2)), // -Z face (bottom)
+                new Vector(0, 0, Maxs.Z / 2 + Maxs.Z / 2)    // +Z face (top)
+            };
 
-                position = testPos;
-                rotation = BlockRotation;
+            float closestDistance = float.MaxValue;
 
-                if (BlockRotation.X == 90 || BlockRotation.X == -90)
+            for (int i = 0; i < localFaceOffsets.Length; ++i)
+            {
+                Vector worldFaceOffset = TransformVector(localFaceOffsets[i], rotationMatrix);
+                Vector testPos = BlockPosition + worldFaceOffset;
+
+                float distance = CalculateDistance(block.AbsOrigin!, testPos);
+
+                if (distance < closestDistance)
                 {
-                    if (i == 0)
-                        position.X = testPos.X + Maxs.X - Maxs.Z;
-                    else if (i == 1)
-                        position.X = testPos.X - Maxs.X + Maxs.Z;
-                    else if (i == 4)
-                        position.Y = testPos.Y - (BlockRotation.X == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
-                    else if (i == 5)
-                        position.Y = testPos.Y + (BlockRotation.X == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
-                }
-                else if (BlockRotation.Z == 90 || BlockRotation.Z == -90)
-                {
-                    if (i == 0)
-                        position.Y = testPos.Y - (BlockRotation.Z == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
-                    else if (i == 1)
-                        position.Y = testPos.Y + (BlockRotation.Z == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
-                    else if (i == 4)
-                        position.Z = testPos.Z - Maxs.X + Maxs.Z;
-                    else if (i == 5)
-                        position.Z = testPos.Z + Maxs.X - Maxs.Z;
-                }
-                else if (BlockRotation.Y == 90 || BlockRotation.Y == -90)
-                {
-                    if (i == 0)
-                        position.Z = testPos.Z + (BlockRotation.Y == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
-                    else if (i == 1)
-                        position.Z = testPos.Z - (BlockRotation.Y == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
-                    else if (i == 4)
-                        position.X = testPos.X + (BlockRotation.Y == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
-                    else if (i == 5)
-                        position.X = testPos.X - (BlockRotation.Y == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
+                    closestDistance = distance;
+
+                    position = testPos;
+                    rotation = BlockRotation;
+
+                    if (BlockRotation.X == 90 || BlockRotation.X == -90)
+                    {
+                        if (i == 0)
+                            position.X = testPos.X + Maxs.X - Maxs.Z;
+                        else if (i == 1)
+                            position.X = testPos.X - Maxs.X + Maxs.Z;
+                        else if (i == 4)
+                            position.Y = testPos.Y - (BlockRotation.X == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
+                        else if (i == 5)
+                            position.Y = testPos.Y + (BlockRotation.X == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
+                    }
+                    else if (BlockRotation.Z == 90 || BlockRotation.Z == -90)
+                    {
+                        if (i == 0)
+                            position.Y = testPos.Y - (BlockRotation.Z == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
+                        else if (i == 1)
+                            position.Y = testPos.Y + (BlockRotation.Z == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
+                        else if (i == 4)
+                            position.Z = testPos.Z - Maxs.X + Maxs.Z;
+                        else if (i == 5)
+                            position.Z = testPos.Z + Maxs.X - Maxs.Z;
+                    }
+                    else if (BlockRotation.Y == 90 || BlockRotation.Y == -90)
+                    {
+                        if (i == 0)
+                            position.Z = testPos.Z + (BlockRotation.Y == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
+                        else if (i == 1)
+                            position.Z = testPos.Z - (BlockRotation.Y == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
+                        else if (i == 4)
+                            position.X = testPos.X + (BlockRotation.Y == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
+                        else if (i == 5)
+                            position.X = testPos.X - (BlockRotation.Y == 90 ? Maxs.X - Maxs.Z : -(Maxs.X - Maxs.Z));
+                    }
                 }
             }
         }
