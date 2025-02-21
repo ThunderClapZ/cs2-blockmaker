@@ -82,6 +82,8 @@ public static partial class Menu
 
         static void PositionMenuOptions(CCSPlayerController player, string[] options, bool rotate)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             float value = rotate ? playerData.RotationValue : playerData.PositionValue;
             string title = $"{(rotate ? "Rotate" : "Move")} Block ({value} Units)";
 
@@ -112,6 +114,8 @@ public static partial class Menu
 
         static void Menu_BlockSettings(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             IWasdMenu Menu = WasdManager.CreateMenu("Block Settings");
 
             Menu.Add($"Type: {playerData.BlockType}", (player, option) =>
@@ -153,6 +157,8 @@ public static partial class Menu
 
         static void TypeMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             IWasdMenu Menu = WasdManager.CreateMenu($"Select Type ({playerData.BlockType})");
 
             var blockmodels = Files.Models.Props;
@@ -195,6 +201,8 @@ public static partial class Menu
 
         static void GunTypeMenu(CCSPlayerController player, string gunType)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             IWasdMenu Menu = WasdManager.CreateMenu($"Select {gunType}");
 
             if (WeaponList.Categories.ContainsKey(gunType))
@@ -232,6 +240,8 @@ public static partial class Menu
 
         static void SizeMenuOptions(CCSPlayerController player, string[] sizeValues)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             IWasdMenu Menu = WasdManager.CreateMenu($"Select Size ({playerData.BlockSize})");
 
             Menu.Add($"Pole: {(playerData.BlockPole ? "ON" : "OFF")}", (player, option) =>
@@ -258,6 +268,8 @@ public static partial class Menu
 
         static void TeamMenuOptions(CCSPlayerController player, string[] teamValues)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             IWasdMenu Menu = WasdManager.CreateMenu($"Select Team ({playerData.BlockTeam})");
 
             foreach (string teamValue in teamValues)
@@ -277,6 +289,8 @@ public static partial class Menu
 
         static void TransparencyMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             IWasdMenu Menu = WasdManager.CreateMenu($"Select Transparency ({playerData.BlockTransparency})");
 
             foreach (var value in Utils.AlphaMapping.Keys)
@@ -298,6 +312,8 @@ public static partial class Menu
 
         static void ColorMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             IWasdMenu Menu = WasdManager.CreateMenu($"Select Color ({playerData.BlockColor})");
 
             foreach (var color in Utils.ColorMapping.Keys)
@@ -315,6 +331,8 @@ public static partial class Menu
 
         static void PropertiesMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             var entity = player.GetBlockAimTarget();
 
             if (entity?.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
@@ -345,6 +363,8 @@ public static partial class Menu
 
         static void PropertyMenuOption(IWasdMenu Menu, string property, float value, CCSPlayerController player, CBaseProp entity)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             if (value != 0)
             {
                 string title = $": {value}";
@@ -380,6 +400,8 @@ public static partial class Menu
 
         static void Menu_Settings(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             IWasdMenu Menu = WasdManager.CreateMenu("Build Settings");
 
             Menu.Add("Build Mode: " + (Instance.buildMode ? "ON" : "OFF"), (player, option) =>
@@ -454,6 +476,8 @@ public static partial class Menu
 
         static void GridMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             IWasdMenu Menu = WasdManager.CreateMenu($"Grid Options ({playerData.GridValue} Units)");
 
             Menu.Add($"Select Units", (player, option) =>

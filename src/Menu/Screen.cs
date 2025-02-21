@@ -80,6 +80,8 @@ public static partial class Menu
 
         static void PositionMenuOptions(CCSPlayerController player, string[] options, bool rotate)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             float value = rotate ? playerData.RotationValue : playerData.PositionValue;
             string title = $"{(rotate ? "Rotate" : "Move")} Block ({value} Units)";
 
@@ -110,6 +112,8 @@ public static partial class Menu
 
         static void Menu_BlockSettings(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             ScreenMenu Menu = new("Block Settings", Instance);
 
             Menu.AddOption($"Type: {playerData.BlockType}", (player, option) =>
@@ -151,6 +155,8 @@ public static partial class Menu
 
         static void TypeMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             ScreenMenu Menu = new($"Select Type ({playerData.BlockType})", Instance);
 
             var blockmodels = Files.Models.Props;
@@ -193,6 +199,8 @@ public static partial class Menu
 
         static void GunTypeMenu(CCSPlayerController player, string gunType)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             ScreenMenu Menu = new($"Select {gunType}", Instance);
 
             if (WeaponList.Categories.ContainsKey(gunType))
@@ -230,6 +238,8 @@ public static partial class Menu
 
         static void SizeMenuOptions(CCSPlayerController player, string[] sizeValues)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             ScreenMenu Menu = new($"Select Size ({playerData.BlockSize})", Instance);
 
             Menu.AddOption($"Pole: {(playerData.BlockPole ? "ON" : "OFF")}", (player, option) =>
@@ -256,6 +266,8 @@ public static partial class Menu
 
         static void TeamMenuOptions(CCSPlayerController player, string[] teamValues)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             ScreenMenu Menu = new($"Select Team ({playerData.BlockTeam})", Instance);
 
             foreach (string teamValue in teamValues)
@@ -275,6 +287,8 @@ public static partial class Menu
 
         static void TransparencyMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             ScreenMenu Menu = new($"Select Transparency ({playerData.BlockTransparency})", Instance);
 
             foreach (var value in Utils.AlphaMapping.Keys)
@@ -296,6 +310,8 @@ public static partial class Menu
 
         static void ColorMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             ScreenMenu Menu = new($"Select Color ({playerData.BlockColor})", Instance);
 
             foreach (var color in Utils.ColorMapping.Keys)
@@ -313,6 +329,8 @@ public static partial class Menu
 
         static void PropertiesMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             var entity = player.GetBlockAimTarget();
 
             if (entity?.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
@@ -343,6 +361,8 @@ public static partial class Menu
 
         static void PropertyMenuOption(ScreenMenu Menu, string property, float value, CCSPlayerController player, CBaseProp entity)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             if (value != 0)
             {
                 string title = $": {value}";
@@ -378,6 +398,8 @@ public static partial class Menu
 
         static void Menu_Settings(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             ScreenMenu Menu = new("Build Settings", Instance);
 
             Menu.AddOption("Build Mode: " + (Instance.buildMode ? "ON" : "OFF"), (player, option) =>
@@ -452,6 +474,8 @@ public static partial class Menu
 
         static void GridMenuOptions(CCSPlayerController player)
         {
+            var playerData = Instance.playerData[player.Slot];
+
             ScreenMenu Menu = new($"Grid Options ({playerData.GridValue} Units)", Instance);
 
             Menu.AddOption($"Select Units", (player, option) =>

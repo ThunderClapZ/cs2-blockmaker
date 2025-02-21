@@ -3,12 +3,9 @@
 public partial class Menu
 {
     private static Plugin Instance = Plugin.Instance;
-    private static PlayerData playerData = null!;
 
     public static void Open(CCSPlayerController player)
     {
-        playerData = Instance.playerData[player.Slot];
-
         switch (Instance.Config.Settings.Menu.ToLower())
         {
             case "chat":
