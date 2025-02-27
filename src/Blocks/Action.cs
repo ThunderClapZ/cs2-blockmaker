@@ -3,14 +3,12 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
-using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 using System.Drawing;
 
 public partial class Blocks
 {
     private static Plugin instance = Plugin.Instance;
     private static Config config = instance.Config;
-    private static Config_Settings.Settings_Blocks settings = instance.Config.Settings.Blocks;
     private static Config_Sounds.Sounds_Blocks sounds = instance.Config.Sounds.Blocks;
     private static BlockModels blockModels = Files.Models.Props;
 
@@ -45,12 +43,6 @@ public partial class Blocks
 
     public static void Actions(CCSPlayerController player, CBaseEntity block)
     {
-        if (!PlayerCooldowns.ContainsKey(player.Slot))
-            PlayerCooldowns[player.Slot] = new BlocksCooldown();
-
-        if (!CooldownsTimers.ContainsKey(player.Slot))
-            CooldownsTimers[player.Slot] = new List<Timer>();
-
         if (block == null || block.Entity == null)
             return;
 
@@ -58,6 +50,12 @@ public partial class Blocks
 
         if (string.IsNullOrEmpty(entityName) || !entityName.StartsWith("blockmaker"))
             return;
+
+        if (!PlayerCooldowns.ContainsKey(player.Slot))
+            PlayerCooldowns[player.Slot] = new();
+
+        if (!CooldownsTimers.ContainsKey(player.Slot))
+            CooldownsTimers[player.Slot] = new();
 
         if (BlockCooldown(player, block))
             return;
@@ -84,6 +82,15 @@ public partial class Blocks
         : new BlockData_Properties();
     }
 
+    private static void ActivatedMessage(CCSPlayerController player, string blocktitle)
+    {
+        Server.NextFrame(() => Utils.PrintToChat(player, $"{ChatColors.White}{blocktitle} {ChatColors.Grey}activated"));
+    }
+    private static void DeactivatedMessage(CCSPlayerController player, string blocktitle)
+    {
+        Server.NextFrame(() => Utils.PrintToChat(player, $"{ChatColors.White}{blocktitle} {ChatColors.Grey}has worn off"));
+    }
+
     private static void Action_Random(CCSPlayerController player, CBaseEntity block)
     {
         var availableActions = blockActions.Where(kvp =>
@@ -108,8 +115,8 @@ public partial class Blocks
     {
         string model = block.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.ModelName;
 
-        Vector pos = new Vector(block.AbsOrigin!.X, block.AbsOrigin.Y, block.AbsOrigin.Z);
-        QAngle rotation = new QAngle(block.AbsRotation!.X, block.AbsRotation.Y, block.AbsRotation.Z);
+        Vector pos = new(block.AbsOrigin!.X, block.AbsOrigin.Y, block.AbsOrigin.Z);
+        QAngle rotation = new(block.AbsRotation!.X, block.AbsRotation.Y, block.AbsRotation.Z);
  
         var usedBlock = Props[block.As<CBaseProp>()];
 
@@ -176,8 +183,8 @@ public partial class Blocks
     {
         string model = block.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.ModelName;
 
-        Vector pos = new Vector(block.AbsOrigin!.X, block.AbsOrigin.Y, block.AbsOrigin.Z);
-        QAngle rotation = new QAngle(block.AbsRotation!.X, block.AbsRotation.Y, block.AbsRotation.Z);
+        Vector pos = new(block.AbsOrigin!.X, block.AbsOrigin.Y, block.AbsOrigin.Z);
+        QAngle rotation = new(block.AbsRotation!.X, block.AbsRotation.Y, block.AbsRotation.Z);
 
         var usedBlock = Props[block.As<CBaseProp>()];
 
@@ -242,30 +249,37 @@ public partial class Blocks
 
     private static void Action_Gravity(CCSPlayerController player, CBaseEntity block)
     {
+        var title = blockModels.Gravity.Title;
+        var settings = Properties(block);
         var gravity = player.GravityScale;
 
-        player.SetGravity(Properties(block).Value);
+        player.SetGravity(settings.Value);
 
-        instance.AddTimer(Properties(block).Duration, () =>
+        ActivatedMessage(player, title);
+
+        instance.AddTimer(settings.Duration, () =>
         {
-            if (!player.IsAlive())
-                return;
-
             player.SetGravity(gravity);
-            Utils.PrintToChat(player, $"{blockModels.Gravity.Title} has worn off");
+
+            DeactivatedMessage(player, title);
         });
 
-        BlockCooldownTimer(player, block, Properties(block).Cooldown);
+        BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
     private static void Action_Health(CCSPlayerController player, CBaseEntity block)
     {
-        if (player.Pawn()!.Health >= player.Pawn()!.MaxHealth)
+        var pawn = player.Pawn();
+        if (pawn == null) return;
+
+        if (player.Health >= player.MaxHealth)
             return;
 
-        player.Health((int)+Properties(block).Value);
+        var settings = Properties(block);
 
-        BlockCooldownTimer(player, block, Properties(block).Cooldown, false);
+        player.Health((int)+settings.Value);
+
+        BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
     private static void Action_Grenade(CCSPlayerController player, CBaseEntity block)
@@ -291,26 +305,23 @@ public partial class Blocks
 
     private static void Action_Fire(CCSPlayerController player, CBaseEntity block)
     {
+        var settings = Properties(block);
+
         var fire = Utilities.CreateEntityByName<CParticleSystem>("info_particle_system")!;
 
         fire.EffectName = "particles/burning_fx/env_fire_medium.vpcf";
-
         fire.DispatchSpawn();
         fire.AcceptInput("Start");
         fire.AcceptInput("FollowEntity", player.Pawn(), player.Pawn(), "!activator");
 
-        player.Health((int)-Properties(block).Value);
-
+        player.Health((int)-settings.Value);
+        Server.NextFrame(() => player.PlaySound(sounds.Damage.Event, sounds.Damage.Volume));
         var firetimer = instance.AddTimer(1.0f, () =>
         {
-            if (!player.IsAlive())
-                return;
-
-            player.Health((int)-Properties(block).Value);
-
+            player.Health((int)-settings.Value);
         }, TimerFlags.REPEAT);
 
-        instance.AddTimer(Properties(block).Duration, () =>
+        instance.AddTimer(settings.Duration, () =>
         {
             if (firetimer != null)
                 firetimer.Kill();
@@ -322,14 +333,17 @@ public partial class Blocks
             }
         });
 
-        BlockCooldownTimer(player, block, Properties(block).Cooldown, false);
+        BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
     private static void Action_Death(CCSPlayerController player, CBaseEntity block)
     {
+        var pawn = player.Pawn();
+        if (pawn == null) return;
+
         BlockCooldownTimer(player, block, 1.0f);
 
-        if (player.Pawn()!.TakesDamage == false)
+        if (pawn.TakesDamage == false)
             return;
 
         player.CommitSuicide(false, true);
@@ -337,14 +351,11 @@ public partial class Blocks
 
     private static void Action_Damage(CCSPlayerController player, CBaseEntity block)
     {
-        var playerPawn = player.Pawn();
+        var settings = Properties(block);
 
-        if (playerPawn == null)
-            return;
-
-        player.Health((int)-Properties(block).Value);
+        player.Health((int)-settings.Value);
   
-        BlockCooldownTimer(player, block, Properties(block).Cooldown);
+        BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
     private static void Action_Weapons(CCSPlayerController player, CBaseEntity block, string weapon)
@@ -370,16 +381,16 @@ public partial class Blocks
                     return;
             }
 
-            player.GiveWeapon(gun.Designer);
-
             var designer = gun.Designer;
+
+            player.GiveWeapon(designer);
 
             if (WeaponList.SpecialWeapons.TryGetValue(designer, out var special))
                 designer = special;
 
             player.FindWeapon(designer).SetAmmo(1, 0);
 
-            Utils.PrintToChatAll($"{ChatColors.LightPurple}{player.PlayerName} {ChatColors.Grey}equipped a {weapon}");
+            Utils.PrintToChatAll($"{ChatColors.LightPurple}{player.PlayerName} {ChatColors.Grey}equipped a {ChatColors.White}{weapon}");
 
             BlockCooldownTimer(player, block, 999);
         }
@@ -390,20 +401,21 @@ public partial class Blocks
     private static void Action_Speed(CCSPlayerController player, CBaseEntity block)
     {
         var velocity = player.PlayerPawn.Value!.VelocityModifier;
+        var title = blockModels.Speed.Title;
+        var settings = Properties(block);
+        var sound = sounds.Speed;
 
-        player.SetVelocity(Properties(block).Value);
-        player.PlaySound(sounds.Speed.Event, sounds.Speed.Volume);
+        player.SetVelocity(settings.Value);
+        player.PlaySound(sound.Event, sound.Volume);
+        ActivatedMessage(player, title);
 
-        instance.AddTimer(Properties(block).Duration, () =>
+        instance.AddTimer(settings.Duration, () =>
         {
-            if (!player.IsAlive())
-                return;
-
             player.SetVelocity(velocity);
-            Utils.PrintToChat(player, $"{blockModels.Speed.Title} has worn off");
+            DeactivatedMessage(player, title);
         });
 
-        BlockCooldownTimer(player, block, Properties(block).Cooldown);
+        BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
     private static void Action_SpeedBoost(CCSPlayerController player, CBaseEntity block)
@@ -413,7 +425,8 @@ public partial class Blocks
 
         float angleYaw = viewAngles.Y * (float)Math.PI / 180f;
         float boost = Properties(block).Value;
-        var vel = new Vector(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
+
+        Vector vel = new(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
 
         vel.X = (float)Math.Cos(angleYaw) * boost;
         vel.Y = (float)Math.Sin(angleYaw) * boost;
@@ -466,69 +479,78 @@ public partial class Blocks
 
     private static void Action_Stealth(CCSPlayerController player, CBaseEntity block)
     {
+        var title = blockModels.Stealth.Title;
+        var settings = Properties(block);
+
         player.SetInvis(true);
         player.PlaySound(sounds.Stealth.Event, sounds.Stealth.Volume);
-        player.ColorScreen(Color.FromArgb(150, 100, 100, 100), 2.5f, 5.0f, EntityExtends.FadeFlags.FADE_OUT);
+        player.ColorScreen(Color.FromArgb(150, 75, 75, 75), settings.Duration / 2, settings.Duration, EntityExtends.FadeFlags.FADE_OUT);
+        ActivatedMessage(player, title);
 
-        instance.AddTimer(Properties(block).Duration, () =>
+        instance.AddTimer(settings.Duration, () =>
         {
-            if (!player.IsAlive())
-                return;
-
             player.SetInvis(false);
-            Utils.PrintToChat(player, $"{blockModels.Stealth.Title} has worn off");
+            DeactivatedMessage(player, title);
         });
 
-        BlockCooldownTimer(player, block, Properties(block).Cooldown);
+        BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
     private static void Action_Invincibility(CCSPlayerController player, CBaseEntity block)
     {
-        player.Pawn()!.TakesDamage = false;
-        player.PlaySound(sounds.Invincibility.Event, sounds.Invincibility.Volume);
-        player.ColorScreen(Color.FromArgb(100, 100, 0, 100), 2.5f, 5.0f, EntityExtends.FadeFlags.FADE_OUT);
+        var pawn = player.Pawn();
+        if (pawn == null) return;
 
-        instance.AddTimer(Properties(block).Duration, () =>
+        var title = blockModels.Invincibility.Title;
+        var settings = Properties(block);
+        var takesdamage = pawn.TakesDamage;
+        var sound = sounds.Invincibility;
+
+        takesdamage = false;
+        player.PlaySound(sound.Event, sound.Volume);
+        player.ColorScreen(Color.FromArgb(50, 255, 0, 255), settings.Duration / 2, settings.Duration, EntityExtends.FadeFlags.FADE_OUT);
+        ActivatedMessage(player, title);
+
+        instance.AddTimer(settings.Duration, () =>
         {
-            if (!player.IsAlive())
-                return;
-
-            player.Pawn()!.TakesDamage = true;
-            Utils.PrintToChat(player, $"{blockModels.Invincibility.Title} has worn off");
+            takesdamage = true;
+            DeactivatedMessage(player, title);
         });
 
-        BlockCooldownTimer(player, block, Properties(block).Cooldown);
+        BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
     private static void Action_Camouflage(CCSPlayerController player, CBaseEntity block)
     {
-        var model = player.Pawn()!.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.ModelName;
+        var pawn = player.Pawn();
+        if (pawn == null) return;
 
-        if (player.IsT())
-            player.SetModel(settings.CamouflageT);
+        var title = blockModels.Camouflage.Title;
+        var settings = Properties(block);
+        var sound = sounds.Camouflage;
+        var model = pawn.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName!;
 
-        else if (player.IsCT())
-            player.SetModel(settings.CamouflageCT);
+        if (player.IsT()) player.SetModel(config.Settings.Blocks.CamouflageT);
+        else if (player.IsCT()) player.SetModel(config.Settings.Blocks.CamouflageCT);
 
         player.PlaySound(sounds.Camouflage.Event, sounds.Camouflage.Volume);
+        player.ColorScreen(Color.FromArgb(50, 0, 255, 0), settings.Duration / 2, settings.Duration, EntityExtends.FadeFlags.FADE_OUT);
+        ActivatedMessage(player, title);
 
-        instance.AddTimer(Properties(block).Duration, () =>
+        instance.AddTimer(settings.Duration, () =>
         {
-            if (!player.IsAlive())
-                return;
-
             player.SetModel(model);
-            Utils.PrintToChat(player, $"{blockModels.Camouflage.Title} has worn off");
+            DeactivatedMessage(player, title);
         });
 
-        BlockCooldownTimer(player, block, Properties(block).Cooldown);
+        BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
     private static void Action_Trampoline(CCSPlayerController player, CBaseEntity block)
     {
         CCSPlayerPawn pawn = player.Pawn()!;
 
-        var vel = new Vector(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
+        Vector vel = new(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
 
         vel.Z = Properties(block).Value;
 

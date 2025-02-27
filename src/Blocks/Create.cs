@@ -95,17 +95,19 @@ public partial class Blocks
 
             CreateTrigger(block, size);
 
-            if (properties == null || (properties.Cooldown == 0 && properties.Duration == 0 && properties.Value == 0 && properties.Locked != true))
+            if (properties == null)
             {
-                if (Files.PropsData.Properties.BlockDefaultProperties.TryGetValue(type.Split('.')[0], out var defaultProperties))
+                if (Files.PropsData.Properties.BlockProperties.TryGetValue(type.Split('.')[0], out var defaultProperties))
+                {
                     properties = new BlockData_Properties
                     {
                         Cooldown = defaultProperties.Cooldown,
                         Value = defaultProperties.Value,
                         Duration = defaultProperties.Duration,
                         OnTop = defaultProperties.OnTop,
+                        Locked = defaultProperties.Locked,
                     };
-
+                }
                 else properties = new BlockData_Properties();
             }
             else

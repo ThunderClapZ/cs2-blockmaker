@@ -164,14 +164,14 @@ public static partial class Files
             public static readonly Dictionary<string, BlockData_Properties> BlockDefaultProperties = new Dictionary<string, BlockData_Properties>
             {
                 { Models.Props.Bhop.Title, new BlockData_Properties { Duration = 0.25f, Cooldown = 1.5f } },
-                { Models.Props.Health.Title, new BlockData_Properties { Value = 2.0f, Cooldown = 0.5f } },
+                { Models.Props.Health.Title, new BlockData_Properties { Value = 8.0f, Cooldown = 0.75f } },
                 { Models.Props.Grenade.Title, new BlockData_Properties { Cooldown = 60.0f } },
                 { Models.Props.Gravity.Title, new BlockData_Properties { Duration = 4.0f, Value = 0.4f, Cooldown = 5.0f } },
                 { Models.Props.Frost.Title, new BlockData_Properties { Cooldown = 60.0f } },
                 { Models.Props.Flash.Title, new BlockData_Properties { Cooldown = 60.0f } },
                 { Models.Props.Fire.Title, new BlockData_Properties { Duration = 5.0f, Value = 8.0f, Cooldown = 5.0f } },
                 { Models.Props.Delay.Title, new BlockData_Properties { Duration = 1.0f, Cooldown = 1.5f } },
-                { Models.Props.Damage.Title, new BlockData_Properties { Value = 5.0f, Cooldown = 0.5f } },
+                { Models.Props.Damage.Title, new BlockData_Properties { Value = 8.0f, Cooldown = 0.75f } },
                 { Models.Props.Stealth.Title, new BlockData_Properties { Duration = 10.0f, Cooldown = 60.0f } },
                 { Models.Props.Speed.Title, new BlockData_Properties { Duration = 3.0f, Value = 2.0f, Cooldown = 60.0f } },
                 { Models.Props.SpeedBoost.Title, new BlockData_Properties { Value = 650.0f } },

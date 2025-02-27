@@ -425,10 +425,7 @@ public static class Commands
 
         var entity = player.GetBlockAimTarget();
 
-        if (entity == null)
-            return;
-
-        if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+        if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
 
         if (Blocks.Props.TryGetValue(entity, out var block))
@@ -441,6 +438,23 @@ public static class Commands
             Utilities.SetStateChanged(entity, "CBaseModelEntity", "m_clrRender");
 
             Utils.PrintToChat(player, $"Changed block transparency to {ChatColors.White}{transparency}");
+        }
+    }
+
+    public static void TeamBlock(CCSPlayerController? player, string team = "Both")
+    {
+        if (player == null || !AllowedCommand(player))
+            return;
+
+        var entity = player.GetBlockAimTarget();
+
+        if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+            return;
+
+        if (Blocks.Props.TryGetValue(entity, out var block))
+        {
+            Blocks.Props[entity].Team = team;
+            Utils.PrintToChat(player, $"Changed block team to {ChatColors.White}{team}");
         }
     }
 

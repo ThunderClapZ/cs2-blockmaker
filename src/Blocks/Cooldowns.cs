@@ -4,12 +4,7 @@ using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 public partial class Blocks
 {
-    public class BlocksCooldown
-    {
-        public Dictionary<CBaseEntity, bool> Block = new Dictionary<CBaseEntity, bool>();
-    }
-
-    public static Dictionary<int, BlocksCooldown> PlayerCooldowns = new Dictionary<int, BlocksCooldown>();
+    public static Dictionary<int, List<CBaseEntity>> PlayerCooldowns = new();
     public static Dictionary<int, List<Timer>> CooldownsTimers = new();
 
     private static void BlockCooldownTimer(CCSPlayerController player, CBaseEntity block, float timer = 0, bool message = false)
@@ -17,18 +12,16 @@ public partial class Blocks
         if (timer <= 0 || block == null || block.Entity == null)
             return;
 
-        var blockCooldowns = PlayerCooldowns[player.Slot].Block;
+        var cooldown = PlayerCooldowns[player.Slot];
 
         if (!BlockCooldown(player, block))
-            blockCooldowns[block] = true;
+            cooldown.Add(block);
 
         var cdtimer = instance.AddTimer(timer, () =>
         {
-            if (!player.IsAlive()) return;
-
-            if (blockCooldowns.ContainsKey(block))
+            if (cooldown.Contains(block))
             {
-                blockCooldowns[block] = false;
+                cooldown.Remove(block);
 
                 if (message)
                     Utils.PrintToChat(player, $"{ChatColors.White}{block.Entity.Name} {ChatColors.Grey}block is no longer on cooldown");
@@ -42,7 +35,6 @@ public partial class Blocks
 
     private static bool BlockCooldown(CCSPlayerController player, CBaseEntity block)
     {
-        var blockCooldowns = PlayerCooldowns[player.Slot].Block;
-        return blockCooldowns.TryGetValue(block, out bool isOnCooldown) && isOnCooldown;
+        return PlayerCooldowns.TryGetValue(player.Slot, out var blockList) && blockList.Contains(block);
     }
 }

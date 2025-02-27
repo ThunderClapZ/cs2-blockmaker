@@ -39,12 +39,12 @@ public static class Utils
 
     public static void PrintToChat(CCSPlayerController player, string message)
     {
-        player.PrintToChat($"{config.Settings.Prefix} {ChatColors.Grey}{message}");
+        player.PrintToChat($" {config.Settings.Prefix} {message}");
     }
 
     public static void PrintToChatAll(string message)
     {
-        Server.PrintToChatAll($"{config.Settings.Prefix} {ChatColors.Grey}{message}");
+        Server.PrintToChatAll($" {config.Settings.Prefix} {message}");
     }
 
     public static void PlaySoundAll(string sound, float volume = 1)

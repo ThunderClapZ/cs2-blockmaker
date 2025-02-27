@@ -277,6 +277,8 @@ public static partial class Menu
 
                     Utils.PrintToChat(player, $"Selected Team: {ChatColors.White}{teamValue}");
 
+                    Commands.TeamBlock(player, teamValue);
+
                     Menu_BlockSettings(player);
                 });
             }
@@ -457,7 +459,7 @@ public static partial class Menu
             {
                 ChatMenu BuildersMenu = new("Manage Builders");
 
-                foreach (var target in Utilities.GetPlayers().Where(t => t.SteamID != player.SteamID && t.SteamID > 0))
+                foreach (var target in Utilities.GetPlayers().Where(x => x != player))
                 {
                     BuildersMenu.AddMenuOption(target.PlayerName, (player, option) =>
                     {

@@ -7,10 +7,13 @@ public partial class Blocks
 {
     public static void Clear()
     {
-        foreach (var rest in Utilities.GetAllEntities().Where(r => r.DesignerName == "prop_physics_override" || r.DesignerName == "trigger_multiple"))
+        foreach (var entity in Utilities.GetAllEntities().Where(x => x.DesignerName == "prop_physics_override" || x.DesignerName == "trigger_multiple") )
         {
-            if (!String.IsNullOrEmpty(rest.Entity!.Name) && rest.Entity.Name.StartsWith("blockmaker"))
-                rest.Remove();
+            if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+                continue;
+
+            if (entity.Entity.Name.StartsWith("blockmaker"))
+                entity.Remove();
         }
 
         foreach (var timer in Plugin.Instance.Timers)
@@ -40,7 +43,7 @@ public partial class Blocks
                 if (rest == null || !rest.IsValid || rest.Entity == null)
                     continue;
 
-                if (!String.IsNullOrEmpty(rest.Entity.Name) && rest.Entity.Name.StartsWith("blockmaker"))
+                if (!string.IsNullOrEmpty(rest.Entity.Name) && rest.Entity.Name.StartsWith("blockmaker"))
                     rest.Remove();
             }
 

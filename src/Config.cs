@@ -9,7 +9,7 @@ public class Config : BasePluginConfig
 
 public class Config_Settings
 {
-    public string Prefix { get; set; } = "{purple}[BlockMaker]{default}";
+    public string Prefix { get; set; } = "{purple}BlockMaker {grey}|";
     public string Menu { get; set; } = "html";
 
     public class Settings_Building

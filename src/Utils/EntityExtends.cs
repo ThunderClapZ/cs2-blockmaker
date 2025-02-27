@@ -9,12 +9,6 @@ using System.Runtime.InteropServices;
 
 public static class EntityExtends
 {
-    public const int TEAM_SPEC = 1;
-    public const int TEAM_T = 2;
-    public const int TEAM_CT = 3;
-
-    public static readonly Color DEFAULT_COLOUR = Color.FromArgb(255, 255, 255, 255);
-
     public static void SetHp(this CCSPlayerController controller, int health = 100)
     {
         if (health <= 0 || !controller.PawnIsAlive || controller.PlayerPawn.Value == null || !controller.IsValid) return;
@@ -36,7 +30,7 @@ public static class EntityExtends
         return (player == null || !player.IsValid || !player.PlayerPawn.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || player.IsBot || player.IsHLTV);
     }
 
-    internal static bool IsPlayer(this CCSPlayerController? player)
+    public static bool IsPlayer(this CCSPlayerController? player)
     {
         return player is { IsValid: true, IsHLTV: false, IsBot: false, UserId: not null, SteamID: > 0 };
     }
@@ -185,12 +179,12 @@ public static class EntityExtends
 
     public static bool IsT([NotNullWhen(true)] this CCSPlayerController? player)
     {
-        return IsLegal(player) && player.TeamNum == TEAM_T;
+        return IsLegal(player) && player.Team == CsTeam.Terrorist;
     }
 
     public static bool IsCT([NotNullWhen(true)] this CCSPlayerController? player)
     {
-        return IsLegal(player) && player.TeamNum == TEAM_CT;
+        return IsLegal(player) && player.Team == CsTeam.CounterTerrorist;
     }
 
     public static bool IsAlive([NotNullWhen(true)] this CCSPlayerController? player)
@@ -198,77 +192,30 @@ public static class EntityExtends
         return player!.PawnIsAlive && player.PlayerPawn.Value?.LifeState == (byte)LifeState_t.LIFE_ALIVE;
     }
 
-    static public CBasePlayerWeapon? FindWeapon(this CCSPlayerController? player, String name)
+    static public CBasePlayerWeapon? FindWeapon(this CCSPlayerController? player, string designername)
     {
-        if (!player.IsAlive())
-            return null;
-
         CCSPlayerPawn? pawn = player.Pawn();
 
         if (pawn == null)
             return null;
 
-        var weapons = pawn.WeaponServices?.MyWeapons;
+        var matchedWeapon = pawn.WeaponServices?.MyWeapons.Where(x => x.Value?.DesignerName == designername).FirstOrDefault();
 
-        if (weapons == null)
-            return null;
-
-        foreach (var weaponOpt in weapons)
-        {
-            CBasePlayerWeapon? weapon = weaponOpt.Value;
-
-            if (weapon == null)
-                continue;
-
-            if (weapon.DesignerName.Contains(name))
-                return weapon;
-        }
+        if (matchedWeapon != null && matchedWeapon.IsValid)
+            return matchedWeapon.Value;
 
         return null;
     }
-
-    static public bool IsLegal([NotNullWhen(true)] this CBasePlayerWeapon? weapon)
-    {
-        return weapon != null && weapon.IsValid;
-    }
-
     static public void SetAmmo(this CBasePlayerWeapon? weapon, int clip, int reserve)
     {
-        if (!weapon.IsLegal())
+        if (weapon == null || !weapon.IsValid)
             return;
 
-        // overide reserve max so it doesn't get clipped when
-        // setting "infinite ammo"
-        // thanks 1Mack
-        CCSWeaponBaseVData? weaponData = weapon.As<CCSWeaponBase>().VData;
+        weapon.Clip1 = clip;
+        Utilities.SetStateChanged(weapon, "CBasePlayerWeapon", "m_iClip1");
 
-
-        if (weaponData != null)
-        {
-            // TODO: this overide it for every gun the player has...
-            // when not a map gun, this is not a big deal
-            // for the reserve ammo it is for the clip though
-            /*
-                if(clip > weaponData.MaxClip1)
-                {
-                    weaponData.MaxClip1 = clip;
-                }
-            */
-            if (reserve > weaponData.PrimaryReserveAmmoMax)
-                weaponData.PrimaryReserveAmmoMax = reserve;
-        }
-
-        if (clip != -1)
-        {
-            weapon.Clip1 = clip;
-            Utilities.SetStateChanged(weapon, "CBasePlayerWeapon", "m_iClip1");
-        }
-
-        if (reserve != -1)
-        {
-            weapon.ReserveAmmo[0] = reserve;
-            Utilities.SetStateChanged(weapon, "CBasePlayerWeapon", "m_pReserveAmmo");
-        }
+        weapon.ReserveAmmo[0] = reserve;
+        Utilities.SetStateChanged(weapon, "CBasePlayerWeapon", "m_pReserveAmmo");
     }
 
     public enum FadeFlags

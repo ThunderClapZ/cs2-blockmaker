@@ -7,7 +7,7 @@ using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using System.Runtime.InteropServices;
 
-public partial class Plugin : BasePlugin, IPluginConfig<Config>
+public partial class Plugin
 {
     void RegisterEvents()
     {
@@ -24,7 +24,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         AddCommandListener("say", OnCommandSay, HookMode.Pre);
         AddCommandListener("say_team", OnCommandSay, HookMode.Pre);
 
-        HookEntityOutput("trigger_multiple", "OnTrigger", trigger_multiple, HookMode.Pre);
+        HookEntityOutput("trigger_multiple", "OnStartTouch", trigger_multiple, HookMode.Pre);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
@@ -48,7 +48,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         RemoveCommandListener("say", OnCommandSay, HookMode.Pre);
         RemoveCommandListener("say_team", OnCommandSay, HookMode.Pre);
 
-        UnhookEntityOutput("trigger_multiple", "OnTrigger", trigger_multiple, HookMode.Pre);
+        UnhookEntityOutput("trigger_multiple", "OnStartTouch", trigger_multiple, HookMode.Pre);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
@@ -160,12 +160,15 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         if (player == null || player.NotValid())
             return HookResult.Continue;
 
+        if (Blocks.PlayerCooldowns.TryGetValue(player.Slot, out var playerCooldowns))
+            playerCooldowns.Clear();
+
         if (Blocks.CooldownsTimers.TryGetValue(player.Slot, out var playerTimers))
         {
             foreach (var timer in playerTimers)
                 timer.Kill();
 
-            Blocks.CooldownsTimers[player.Slot].Clear();
+            playerTimers.Clear();
         }
 
         return HookResult.Continue;
@@ -222,14 +225,16 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
     HookResult trigger_multiple(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
-        if (activator.DesignerName != "player") return HookResult.Continue;
+        if (activator.DesignerName != "player")
+            return HookResult.Continue;
 
         var pawn = activator.As<CCSPlayerPawn>();
-        if (!pawn.IsValid) return HookResult.Continue;
-        if (!pawn.Controller.IsValid || pawn.Controller.Value is null) return HookResult.Continue;
+        if (pawn == null || !pawn.IsValid)
+            return HookResult.Continue;
 
-        var player = pawn.Controller.Value.As<CCSPlayerController>();
-        if (player.IsBot) return HookResult.Continue;
+        var player = pawn.OriginalController?.Value?.As<CCSPlayerController>();
+        if (player == null || player.IsBot)
+            return HookResult.Continue;
 
         if (Blocks.Triggers.TryGetValue(caller, out CBaseProp? block))
         {
@@ -295,24 +300,26 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         var entity = hook.GetParam<CEntityInstance>(0);
         var info = hook.GetParam<CTakeDamageInfo>(1);
 
-        if (!entity.IsValid || !info.Attacker.IsValid)
+        if (entity.DesignerName == "player" && info.Attacker.Value?.DesignerName == "player")
             return HookResult.Continue;
 
-        if (entity.DesignerName == "player" && info.Attacker.Value!.DesignerName == "player")
-            return HookResult.Continue;
+        var props = Files.Models.Props;
+        string NoFallDmg = props.NoFallDmg.Title;
+        string Trampoline = props.Trampoline.Title;
 
-        foreach(var block in Blocks.Props.Where(b =>
-            b.Value.Type == Files.Models.Props.NoFallDmg.Title ||
-            b.Value.Type == Files.Models.Props.Trampoline.Title)
-        )
+        foreach (var blocktarget in Blocks.Props.Where(x => x.Value.Type.Equals(NoFallDmg) || x.Value.Type.Equals(Trampoline)))
         {
             var player = entity.As<CCSPlayerPawn>();
+            var block = blocktarget.Key;
 
-            var playerPos = new Vector(player.AbsOrigin!.X, player.AbsOrigin.Y, player.AbsOrigin.Z);
-            var blockPos = new Vector(block.Key.AbsOrigin!.X, block.Key.AbsOrigin.Y, block.Key.AbsOrigin.Z);
+            if (player.AbsOrigin == null || block.AbsOrigin == null)
+                return HookResult.Continue;
+
+            Vector playerPos = new (player.AbsOrigin.X, player.AbsOrigin.Y, player.AbsOrigin.Z);
+            Vector blockPos = new (block.AbsOrigin.X, block.AbsOrigin.Y, block.AbsOrigin.Z);
 
             var playerMaxs = player.Collision.Maxs * 2;
-            var blockMaxs = block.Key.Collision!.Maxs * Utils.GetSize(block.Value.Size) * 2;
+            var blockMaxs = block.Collision!.Maxs * Utils.GetSize(blocktarget.Value.Size) * 2;
 
             if (VectorUtils.IsWithinBounds(blockPos, playerPos, blockMaxs, playerMaxs))
                 return HookResult.Handled;

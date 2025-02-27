@@ -5,11 +5,11 @@ using CounterStrikeSharp.API.Core.Translations;
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Block Maker";
-    public override string ModuleVersion => "0.1.5";
+    public override string ModuleVersion => "0.1.6";
     public override string ModuleAuthor => "exkludera";
 
-    public static Plugin Instance { get; set; } = new();
-    public Dictionary<int, PlayerData> playerData = new Dictionary<int, PlayerData>();
+    public static Plugin Instance = new();
+    public Dictionary<int, PlayerData> playerData = new();
     public bool buildMode = false;
 
     public override void Load(bool hotReload)
@@ -50,7 +50,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Blocks.Clear();
     }
 
-    public Config Config { get; set; } = new Config();
+    public Config Config { get; set; } = new();
     public void OnConfigParsed(Config config)
     {
         Config = config;
