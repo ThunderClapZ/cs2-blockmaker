@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Menu;
 using CounterStrikeSharp.API.Modules.Utils;
+using MenuManagerOld = CounterStrikeSharp.API.Modules.Menu.MenuManager;
 
 public static partial class Menu
 {
@@ -26,7 +27,7 @@ public static partial class Menu
                 Menu_Settings(player);
             });
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         /* Menu_Commands */
@@ -74,7 +75,7 @@ public static partial class Menu
                 Commands.LockBlock(player);
             });
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         static void PositionMenuOptions(CCSPlayerController player, string[] options, bool rotate)
@@ -102,7 +103,7 @@ public static partial class Menu
                 });
             }
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         /* Menu_Commands */
@@ -149,7 +150,7 @@ public static partial class Menu
                 PropertiesMenuOptions(player);
             });
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         static void TypeMenuOptions(CCSPlayerController player)
@@ -193,7 +194,7 @@ public static partial class Menu
                 Menu_BlockSettings(player);
             });
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         static void GunTypeMenu(CCSPlayerController player, string gunType)
@@ -232,7 +233,7 @@ public static partial class Menu
                 }
             }
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         static void SizeMenuOptions(CCSPlayerController player, string[] sizeValues)
@@ -260,7 +261,7 @@ public static partial class Menu
                 });
             }
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         static void TeamMenuOptions(CCSPlayerController player, string[] teamValues)
@@ -283,7 +284,7 @@ public static partial class Menu
                 });
             }
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         static void TransparencyMenuOptions(CCSPlayerController player)
@@ -306,7 +307,7 @@ public static partial class Menu
                 });
             }
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         static void ColorMenuOptions(CCSPlayerController player)
@@ -325,7 +326,7 @@ public static partial class Menu
                 });
             }
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         static void PropertiesMenuOptions(CCSPlayerController player)
@@ -356,7 +357,7 @@ public static partial class Menu
                 PropertyMenuOption(Menu, "Value", properties.Value, player, entity);
                 PropertyMenuOption(Menu, "Cooldown", properties.Cooldown, player, entity);
 
-                MenuManager.OpenChatMenu(player, Menu);
+                MenuManagerOld.OpenChatMenu(player, Menu);
             }
         }
 
@@ -452,7 +453,7 @@ public static partial class Menu
                     Menu_Settings(player);
                 });
 
-                MenuManager.OpenChatMenu(player, ConfirmMenu);
+                MenuManagerOld.OpenChatMenu(player, ConfirmMenu);
             });
 
             Menu.AddMenuOption("Manage Builders", (player, option) =>
@@ -467,10 +468,10 @@ public static partial class Menu
                     });
                 }
 
-                MenuManager.OpenChatMenu(player, BuildersMenu);
+                MenuManagerOld.OpenChatMenu(player, BuildersMenu);
             });
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         static void GridMenuOptions(CCSPlayerController player)
@@ -501,7 +502,7 @@ public static partial class Menu
                 GridMenuOptions(player);
             });
 
-            MenuManager.OpenChatMenu(player, Menu);
+            MenuManagerOld.OpenChatMenu(player, Menu);
         }
 
         /* Menu_Settings */

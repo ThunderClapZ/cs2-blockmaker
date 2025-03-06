@@ -34,7 +34,7 @@ public static class Utils
 
     public static void Log(string message)
     {
-        instance.Logger.LogInformation($"[BlockMaker] {message}");
+        instance.Logger.LogInformation(message);
     }
 
     public static void PrintToChat(CCSPlayerController player, string message)
@@ -50,7 +50,7 @@ public static class Utils
     public static void PlaySoundAll(string sound, float volume = 1)
     {
         foreach (var player in Utilities.GetPlayers())
-            player.PlaySound(sound, volume);
+            player.EmitSound(sound, volume);
     }
 
     public static bool IsValidJson(string filePath)
@@ -86,13 +86,12 @@ public static class Utils
         int hyphenIndex = blockType.IndexOf('.');
         if (hyphenIndex >= 0)
             blockType = blockType.Substring(0, hyphenIndex);
+        var blockModels = Files.Models.Props;
 
-        foreach (var property in typeof(BlockModels).GetProperties())
+        foreach (var model in blockModels.GetAllBlocks())
         {
-            var block = (BlockModel)property.GetValue(Files.Models.Props)!;
-
-            if (block.Title.Equals(blockType, StringComparison.OrdinalIgnoreCase))
-                return pole ? block.Pole : block.Block;
+            if (model.Title.Equals(blockType, StringComparison.OrdinalIgnoreCase))
+                return pole ? model.Pole : model.Block;
         }
 
         return string.Empty;
@@ -187,7 +186,7 @@ public static class Utils
         return beam;
     }
 
-    public static void DrawBeamsAroundBlock(CCSPlayerController player, CBaseEntity block, Color color)
+    public static void DrawBeamsAroundBlock(CCSPlayerController player, CBaseProp block, Color color)
     {
         var pos = block.AbsOrigin!;
 

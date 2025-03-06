@@ -5,7 +5,6 @@ using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
-using System.Runtime.InteropServices;
 
 public partial class Plugin
 {
@@ -26,11 +25,9 @@ public partial class Plugin
 
         HookEntityOutput("trigger_multiple", "OnStartTouch", trigger_multiple, HookMode.Pre);
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Hook(OnTakeDamage, HookMode.Pre);
-            EmitSoundExtension.Init();
-        }
+        VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Hook(OnTakeDamage, HookMode.Pre);
+
+        Transmit.Load();
     }
 
     void UnregisterEvents()
@@ -50,11 +47,9 @@ public partial class Plugin
 
         UnhookEntityOutput("trigger_multiple", "OnStartTouch", trigger_multiple, HookMode.Pre);
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Unhook(OnTakeDamage, HookMode.Pre);
-            EmitSoundExtension.CleanUp();
-        }
+        VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Unhook(OnTakeDamage, HookMode.Pre);
+
+        Transmit.Unload();
     }
 
     void OnMapStart(string mapname)
@@ -65,6 +60,7 @@ public partial class Plugin
         if (Config.Settings.Building.AutoSave)
         {
             AddTimer(Config.Settings.Building.SaveTime, () => {
+                if (!buildMode) return;
                 Utils.PrintToChatAll("Auto-Saving Blocks");
                 Files.PropsData.Save();
             }, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
@@ -90,20 +86,10 @@ public partial class Plugin
 
     void OnServerPrecacheResources(ResourceManifest manifest)
     {
-        var blockProperties = typeof(BlockModels).GetProperties();
-
-        foreach (var property in blockProperties)
+        foreach (var model in Files.Models.Props.GetAllBlocks())
         {
-            var models = (BlockModel)property.GetValue(Files.Models.Props)!;
-
-            if (models != null)
-            {
-                if (!string.IsNullOrEmpty(models.Block))
-                    manifest.AddResource(models.Block);
-
-                if (!string.IsNullOrEmpty(models.Pole))
-                    manifest.AddResource(models.Pole);
-            }
+            manifest.AddResource(model.Block);
+            manifest.AddResource(model.Pole);
         }
 
         manifest.AddResource(Config.Sounds.SoundEvents);
@@ -170,6 +156,9 @@ public partial class Plugin
 
             playerTimers.Clear();
         }
+
+        if (Blocks.HiddenPlayers.TryGetValue(player, out var hiddenPlayer))
+            Blocks.HiddenPlayers.Remove(player);
 
         return HookResult.Continue;
     }
@@ -257,7 +246,7 @@ public partial class Plugin
 
                     var sound = Config.Sounds.Blocks.Teleport;
 
-                    player.PlaySound(sound.Event, sound.Volume);
+                    player.EmitSound(sound.Event, sound.Volume);
                 }
 
                 return HookResult.Continue;
@@ -315,13 +304,10 @@ public partial class Plugin
             if (player.AbsOrigin == null || block.AbsOrigin == null)
                 return HookResult.Continue;
 
-            Vector playerPos = new (player.AbsOrigin.X, player.AbsOrigin.Y, player.AbsOrigin.Z);
-            Vector blockPos = new (block.AbsOrigin.X, block.AbsOrigin.Y, block.AbsOrigin.Z);
-
             var playerMaxs = player.Collision.Maxs * 2;
             var blockMaxs = block.Collision!.Maxs * Utils.GetSize(blocktarget.Value.Size) * 2;
 
-            if (VectorUtils.IsWithinBounds(blockPos, playerPos, blockMaxs, playerMaxs))
+            if (VectorUtils.IsWithinBounds(block.AbsOrigin, player.AbsOrigin, blockMaxs, playerMaxs))
                 return HookResult.Handled;
         }
 

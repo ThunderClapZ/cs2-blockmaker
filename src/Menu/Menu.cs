@@ -26,6 +26,9 @@ public partial class Menu
             case "screenmenu":
                 Screen.Open(player);
                 break;
+            case "menumanager":
+                MenuManagerAPI.Open(player);
+                break;
             default:
                 HTML.Open(player);
                 break;

@@ -44,7 +44,7 @@
 ```json
 {
   "Settings": {
-    "Prefix": "{purple}[BlockMaker]{default}",
+    "Prefix": "{purple}BlockMaker {grey}|",
     "Menu": "html",
     "Building": {
       "BuildMode": true,

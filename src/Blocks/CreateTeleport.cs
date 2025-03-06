@@ -13,7 +13,7 @@ public partial class Blocks
         var playerData = instance.playerData[player.Slot];
         var playerPawn = player.PlayerPawn.Value!;
         var position = new Vector(playerPawn.AbsOrigin!.X, playerPawn.AbsOrigin.Y, playerPawn.AbsOrigin.Z + playerPawn.Collision.Maxs.Z / 2);
-        var rotation = new QAngle(playerPawn.AbsRotation!.X, playerPawn.AbsRotation.Y, playerPawn.AbsRotation.Z);
+        var rotation = playerPawn.AbsRotation!;
 
         if (!isNextTeleport.ContainsKey(player))
             isNextTeleport.Add(player, false);
@@ -64,8 +64,6 @@ public partial class Blocks
         var entryModel = config.EntryModel;
         var exitModel = config.ExitModel;
 
-        var model = name == "Entry" ? entryModel : exitModel;
-
         var entryColor = config.EntryColor;
         var exitColor = config.ExitColor;
 
@@ -78,14 +76,14 @@ public partial class Blocks
             teleport.ShadowStrength = instance.Config.Settings.Blocks.DisableShadows ? 0.0f : 1.0f;
             teleport.Render = Utils.ParseColor(name == "Entry" ? entryColor : exitColor);
 
-            teleport.SetModel(model);
+            teleport.SetModel(name == "Entry" ? entryModel : exitModel);
             teleport.DispatchSpawn();
 
             teleport.Collision.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
             teleport.Collision.CollisionAttribute.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
 
             teleport.AcceptInput("DisableMotion", teleport, teleport);
-            teleport.Teleport(new Vector(position.X, position.Y, position.Z), new QAngle(rotation.X, rotation.Y, rotation.Z));
+            teleport.Teleport(position, rotation);
 
             CreateTeleportTrigger(teleport);
 

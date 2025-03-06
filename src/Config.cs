@@ -98,25 +98,26 @@ public class Config_Sounds
 
     public class Sounds_Blocks
     {
-        public Sound Speed { get; set; } = new Sound { Event = "speed", Volume = 1.0f };
-        public Sound Camouflage { get; set; } = new Sound { Event = "camouflage", Volume = 1.0f };
-        public Sound Damage { get; set; } = new Sound { Event = "damage", Volume = 1.0f };
-        public Sound Health { get; set; } = new Sound { Event = "health", Volume = 1.0f };
-        public Sound Invincibility { get; set; } = new Sound { Event = "invincibility", Volume = 1.0f };
-        public Sound Nuke { get; set; } = new Sound { Event = "nuke", Volume = 1.0f };
-        public Sound Stealth { get; set; } = new Sound { Event = "stealth", Volume = 1.0f };
-        public Sound Teleport { get; set; } = new Sound { Event = "teleport", Volume = 1.0f };
+        public Sound Speed { get; set; } = new Sound { Event = "bm_speed", Volume = 1.0f };
+        public Sound Camouflage { get; set; } = new Sound { Event = "bm_camouflage", Volume = 1.0f };
+        public Sound Damage { get; set; } = new Sound { Event = "bm_damage", Volume = 1.0f };
+        public Sound Fire { get; set; } = new Sound { Event = "bm_fire", Volume = 1.0f };
+        public Sound Health { get; set; } = new Sound { Event = "bm_health", Volume = 1.0f };
+        public Sound Invincibility { get; set; } = new Sound { Event = "bm_invincibility", Volume = 1.0f };
+        public Sound Nuke { get; set; } = new Sound { Event = "bm_nuke", Volume = 1.0f };
+        public Sound Stealth { get; set; } = new Sound { Event = "bm_stealth", Volume = 1.0f };
+        public Sound Teleport { get; set; } = new Sound { Event = "bm_teleport", Volume = 1.0f };
     }
     public Sounds_Blocks Blocks { get; set; } = new Sounds_Blocks();
 
     public class Sounds_Building
     {
         public bool Enabled { get; set; } = true;
-        public Sound Create { get; set; } = new Sound { Event = "create", Volume = 1.0f };
-        public Sound Delete { get; set; } = new Sound { Event = "delete", Volume = 1.0f };
-        public Sound Place { get; set; } = new Sound { Event = "place", Volume = 1.0f };
-        public Sound Rotate { get; set; } = new Sound { Event = "rotate", Volume = 1.0f };
-        public Sound Save { get; set; } = new Sound { Event = "save", Volume = 1.0f };
+        public Sound Create { get; set; } = new Sound { Event = "bm_create", Volume = 1.0f };
+        public Sound Delete { get; set; } = new Sound { Event = "bm_delete", Volume = 1.0f };
+        public Sound Place { get; set; } = new Sound { Event = "bm_place", Volume = 1.0f };
+        public Sound Rotate { get; set; } = new Sound { Event = "bm_rotate", Volume = 1.0f };
+        public Sound Save { get; set; } = new Sound { Event = "bm_save", Volume = 1.0f };
     }
     public Sounds_Building Building { get; set; } = new Sounds_Building();
 }

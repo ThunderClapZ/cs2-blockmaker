@@ -186,7 +186,7 @@ public static class VectorUtils
 
         System.Numerics.Matrix4x4 rotationMatrix = CalculateRotationMatrix(BlockRotation);
 
-        var hitBlock = RayTrace.TraceShape(block.AbsOrigin, closestBlock.AbsOrigin!, closestBlock.Handle);
+        var hitBlock = RayTrace.TraceShape(block.AbsOrigin!, closestBlock.AbsOrigin!, closestBlock.Handle);
 
         if (hitBlock != null)
         {

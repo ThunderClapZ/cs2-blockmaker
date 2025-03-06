@@ -32,7 +32,7 @@ public partial class Blocks
                 playerData.BlockPole,
                 playerData.BlockSize,
                 hitPoint,
-                new QAngle(),
+                null!,
                 playerData.BlockColor,
                 playerData.BlockTransparency,
                 playerData.BlockTeam
@@ -41,7 +41,7 @@ public partial class Blocks
             if (config.Sounds.Building.Enabled)
             {
                 var sound = config.Sounds.Building.Create;
-                player.PlaySound(sound.Event, sound.Volume);
+                player.EmitSound(sound.Event, sound.Volume);
             }
 
             Utils.PrintToChat(player, $"Created -" +
@@ -58,7 +58,7 @@ public partial class Blocks
         }
     }
 
-    public static Dictionary<CBaseEntity, BlockData> Props = new Dictionary<CBaseEntity, BlockData>();
+    public static Dictionary<CBaseEntity, BlockData> Props = new();
     public static void CreateBlock(
         string type,
         bool pole,

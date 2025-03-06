@@ -113,15 +113,12 @@ public static partial class Files
                 {
                     foreach (var blockData in blocksList)
                     {
-                        var position = new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z);
-                        var rotation = new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll);
-
                         Blocks.CreateBlock(
                             blockData.Type,
                             blockData.Pole,
                             blockData.Size,
-                            position,
-                            rotation,
+                            new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z),
+                            new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll),
                             blockData.Color,
                             blockData.Transparency,
                             blockData.Team,
@@ -172,7 +169,7 @@ public static partial class Files
                 { Models.Props.Fire.Title, new BlockData_Properties { Duration = 5.0f, Value = 8.0f, Cooldown = 5.0f } },
                 { Models.Props.Delay.Title, new BlockData_Properties { Duration = 1.0f, Cooldown = 1.5f } },
                 { Models.Props.Damage.Title, new BlockData_Properties { Value = 8.0f, Cooldown = 0.75f } },
-                { Models.Props.Stealth.Title, new BlockData_Properties { Duration = 10.0f, Cooldown = 60.0f } },
+                { Models.Props.Stealth.Title, new BlockData_Properties { Duration = 7.5f, Cooldown = 60.0f } },
                 { Models.Props.Speed.Title, new BlockData_Properties { Duration = 3.0f, Value = 2.0f, Cooldown = 60.0f } },
                 { Models.Props.SpeedBoost.Title, new BlockData_Properties { Value = 650.0f } },
                 { Models.Props.Camouflage.Title, new BlockData_Properties { Duration = 10.0f, Cooldown = 60.0f } },
@@ -181,17 +178,17 @@ public static partial class Files
                 { Models.Props.Invincibility.Title, new BlockData_Properties { Duration = 5.0f, Cooldown = 60.0f } },
                 { Models.Props.Trampoline.Title, new BlockData_Properties { Value = 500.0f } },
                 { Models.Props.Death.Title, new BlockData_Properties { OnTop = false } },
-                { Models.Props.Honey.Title, new BlockData_Properties { Value = 0.25f } },
+                { Models.Props.Honey.Title, new BlockData_Properties { Value = 0.3f } },
                 { Models.Props.Platform.Title, new BlockData_Properties() },
                 { Models.Props.NoFallDmg.Title, new BlockData_Properties() },
                 { Models.Props.Ice.Title, new BlockData_Properties() },
                 { Models.Props.Nuke.Title, new BlockData_Properties() },
                 { Models.Props.Glass.Title, new BlockData_Properties() },
-                { Models.Props.Pistol.Title, new BlockData_Properties() },
-                { Models.Props.Rifle.Title, new BlockData_Properties() },
-                { Models.Props.Sniper.Title, new BlockData_Properties() },
-                { Models.Props.ShotgunHeavy.Title, new BlockData_Properties() },
-                { Models.Props.SMG.Title, new BlockData_Properties() },
+                { Models.Props.Pistol.Title, new BlockData_Properties{  Value = 1f, Cooldown = 999f } },
+                { Models.Props.Rifle.Title, new BlockData_Properties{ Value = 1f, Cooldown = 999f } },
+                { Models.Props.Sniper.Title, new BlockData_Properties{ Value = 1f, Cooldown = 999f } },
+                { Models.Props.ShotgunHeavy.Title, new BlockData_Properties{ Value = 1f, Cooldown = 999f } },
+                { Models.Props.SMG.Title, new BlockData_Properties{ Value = 1f, Cooldown = 999f } },
             };
 
             public static Dictionary<string, BlockData_Properties> BlockProperties { get; set; } = new Dictionary<string, BlockData_Properties>();

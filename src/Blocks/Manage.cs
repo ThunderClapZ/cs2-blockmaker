@@ -31,6 +31,8 @@ public partial class Blocks
 
         PlayerHolds.Clear();
 
+        HiddenPlayers.Clear();
+
         nuked = false;
     }
 
@@ -78,7 +80,7 @@ public partial class Blocks
                 if (config.Sounds.Building.Enabled)
                 {
                     var sound = config.Sounds.Building.Delete;
-                    player.PlaySound(sound.Event, sound.Volume);
+                    player.EmitSound(sound.Event, sound.Volume);
                 }
 
                 Utils.PrintToChat(player, $"Deleted -" +
@@ -127,7 +129,7 @@ public partial class Blocks
                 if (config.Sounds.Building.Enabled)
                 {
                     var sound = config.Sounds.Building.Delete;
-                    player.PlaySound(sound.Event, sound.Volume);
+                    player.EmitSound(sound.Event, sound.Volume);
                 }
 
                 Utils.PrintToChat(player, $"Deleted teleport pair");
@@ -155,11 +157,11 @@ public partial class Blocks
                 return;
             }
 
-            var AbsRotation = block.Entity.AbsRotation!;
-            var AbsOrigin = block.Entity.AbsOrigin!;
+            var Rotation = block.Entity.AbsRotation!;
+            var Position = block.Entity.AbsOrigin!;
 
-            QAngle rot = new QAngle(AbsRotation.X, AbsRotation.Y, AbsRotation.Z);
-            Vector pos = new Vector(AbsOrigin.X, AbsOrigin.Y, AbsOrigin.Z);
+            QAngle rot = new(Rotation.X, Rotation.Y, Rotation.Z);
+            Vector pos = new(Position.X, Position.Y, Position.Z);
 
             if (string.Equals(input, "x-", StringComparison.OrdinalIgnoreCase))
             {
@@ -208,7 +210,7 @@ public partial class Blocks
             if (config.Sounds.Building.Enabled)
             {
                 var sound = config.Sounds.Building.Rotate;
-                player.PlaySound(sound.Event, sound.Volume);
+                player.EmitSound(sound.Event, sound.Volume);
             }
 
             string text = $"{ChatColors.White}{input} {(string.Equals(input, "reset", StringComparison.OrdinalIgnoreCase) ? $"" : $"by {value} Units")}";
@@ -279,7 +281,7 @@ public partial class Blocks
             if (config.Sounds.Building.Enabled)
             {
                 var sound = config.Sounds.Building.Create;
-                player.PlaySound(sound.Event, sound.Volume);
+                player.EmitSound(sound.Event, sound.Volume);
             }
 
             Utils.PrintToChat(player, $"Copied -" +

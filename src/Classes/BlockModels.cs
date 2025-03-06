@@ -48,8 +48,29 @@ public class BlockModels
     public BlockTrampoline Trampoline { get; set; } = new BlockTrampoline();
     public BlockNoFallDmg NoFallDmg { get; set; } = new BlockNoFallDmg();
     public BlockHoney Honey { get; set; } = new BlockHoney();
+
+    public List<CustomBlockModel> CustomBlocks { get; set; } = new List<CustomBlockModel>();
+    public List<BlockModel> GetAllBlocks()
+    {
+        var allBlocks = new List<BlockModel>
+        {
+            Platform, Bhop, Health, Grenade, Gravity, Glass, Frost, Flash, Fire, Delay,
+            Death, Damage, Pistol, Rifle, Sniper, SMG, ShotgunHeavy, Stealth, Speed,
+            SpeedBoost, Slap, Random, Nuke, Invincibility, Ice, Camouflage, Trampoline,
+            NoFallDmg, Honey
+        };
+
+        if (CustomBlocks != null && CustomBlocks.Count > 0)
+            allBlocks.AddRange(CustomBlocks);
+
+        return allBlocks;
+    }
 }
 
+public class CustomBlockModel : BlockModel
+{
+    public string[] Command { get; set; } = [ "css_example {NAME} {STEAMID} {STEAMID64} {USERID} {SLOT}", "css_yourcommand {STEAMID64} 1"];
+}
 
 public class BlockPlatform : BlockModel
 {

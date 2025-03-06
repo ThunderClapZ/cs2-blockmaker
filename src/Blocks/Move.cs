@@ -65,7 +65,7 @@ public partial class Blocks
                     if (config.Sounds.Building.Enabled)
                     {
                         var sound = config.Sounds.Building.Place;
-                        player.PlaySound(sound.Event, sound.Volume);
+                        player.EmitSound(sound.Event, sound.Volume);
                     }
                 }
             }

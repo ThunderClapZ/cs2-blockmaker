@@ -1,33 +1,17 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.UserMessages;
 using CounterStrikeSharp.API.Modules.Utils;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using System.Runtime.InteropServices;
 
 public static class EntityExtends
 {
-    public static void SetHp(this CCSPlayerController controller, int health = 100)
-    {
-        if (health <= 0 || !controller.PawnIsAlive || controller.PlayerPawn.Value == null || !controller.IsValid) return;
-
-        controller.Health = health;
-        controller.PlayerPawn.Value.Health = health;
-
-        if (health > 100)
-        {
-            controller.MaxHealth = health;
-            controller.PlayerPawn.Value.MaxHealth = health;
-        }
-
-        Server.NextFrame(() => Utilities.SetStateChanged(controller.PlayerPawn.Value, "CBaseEntity", "m_iHealth"));
-    }
-
     public static bool NotValid(this CCSPlayerController? player)
     {
-        return (player == null || !player.IsValid || !player.PlayerPawn.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || player.IsBot || player.IsHLTV);
+        return player == null || !player.IsValid || !player.PlayerPawn.IsValid || player.Connected != PlayerConnectedState.PlayerConnected || player.IsBot || player.IsHLTV;
     }
 
     public static bool IsPlayer(this CCSPlayerController? player)
@@ -73,93 +57,15 @@ public static class EntityExtends
             player.GiveNamedItem(weaponName);
     }
 
-    public static void StripWeapons(this CCSPlayerController? player, bool removeKnife = false)
+    private static MemoryFunctionVoid<CBaseEntity, string, int, float, float> CBaseEntity_EmitSoundParamsFunc = new(GameData.GetSignature("CBaseEntity_EmitSoundParams"));
+    public static void EmitSound(this CBaseEntity entity, string soundEventName, float volume = 1f, int pitch = 1, float delay = 1f)
     {
-        if (!player.IsAlive())
-            return;
+        if (entity is null
+        || entity.IsValid is not true
+        || string.IsNullOrEmpty(soundEventName) is true
+        || CBaseEntity_EmitSoundParamsFunc is null) return;
 
-        player.RemoveWeapons();
-
-        if (!removeKnife)
-            player.GiveWeapon("knife");
-    }
-
-    public static void SetColour(this CCSPlayerController? player, Color colour)
-    {
-        CCSPlayerPawn? pawn = player.Pawn();
-
-        if (pawn != null && player.IsAlive())
-        {
-            pawn.RenderMode = RenderMode_t.kRenderTransColor;
-            pawn.Render = colour;
-            Utilities.SetStateChanged(pawn, "CBaseModelEntity", "m_clrRender");
-        }
-    }
-
-
-    private static readonly MemoryFunctionWithReturn<nint, string, int, int> SetBodygroupFunc = new(RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-        ? "55 48 89 E5 41 56 49 89 F6 41 55 41 89 D5 41 54 49 89 FC 48 83 EC 08"
-        : "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 41 8B F8 48 8B F2 48 8B D9 E8 ? ? ? ?");
-
-    private static readonly Func<nint, string, int, int> SetBodygroup = SetBodygroupFunc.Invoke;
-
-    public static void SetInvis(this CCSPlayerController? player, bool status, int strength = 255)
-    {
-        CCSPlayerPawn? pawn = player.Pawn();
-
-        if (pawn != null && player.IsAlive())
-        {
-            var respawnpos = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z);
-            var respawnrotation = new QAngle(pawn.AbsRotation!.X, pawn.AbsRotation.Y, pawn.AbsRotation.Z);
-
-            pawn!.Render = status ? Color.FromArgb(0, 0, 0, 0) : Color.FromArgb(strength, strength, strength, strength);
-            Utilities.SetStateChanged(pawn, "CBaseModelEntity", "m_clrRender");
-
-            SetBodygroup(pawn.Handle, "default_gloves", status ? 0 : 1);
-
-            var activeWeapon = pawn!.WeaponServices?.ActiveWeapon.Value;
-            if (activeWeapon != null && activeWeapon.IsValid)
-            {
-                activeWeapon.Render = status ? Color.FromArgb(0, 0, 0, 0) : Color.FromArgb(strength, strength, strength, strength);
-                activeWeapon.ShadowStrength = status ? 0.0f : 1.0f;
-                Utilities.SetStateChanged(activeWeapon, "CBaseModelEntity", "m_clrRender");
-            }
-
-            var myWeapons = pawn!.WeaponServices?.MyWeapons;
-            if (myWeapons != null)
-            {
-                foreach (var gun in myWeapons)
-                {
-                    var weapon = gun.Value;
-                    if (weapon != null)
-                    {
-                        weapon.Render = status ? Color.FromArgb(0, 0, 0, 0) : Color.FromArgb(strength, strength, strength, strength);
-                        weapon.ShadowStrength = status ? 0.0f : 1.0f;
-                        Utilities.SetStateChanged(weapon, "CBaseModelEntity", "m_clrRender");
-
-                        if (weapon.DesignerName == "weapon_c4")
-                        {
-                            weapon.AnimationUpdateScheduled = false;
-                            Utilities.SetStateChanged(weapon, "CBaseAnimGraph", "m_bAnimationUpdateScheduled");
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public static void PlaySound(this CCSPlayerController? player, string sound, float volume = 1.0f, float pitch = 1.0f)
-    {
-        if (!player.IsLegal())
-            return;
-
-        var parameters = new Dictionary<string, float>
-        {
-            { "volume", volume },
-            { "pitch", pitch }
-        };
-
-        player.EmitSound(sound, parameters);
+        CBaseEntity_EmitSoundParamsFunc.Invoke(entity, soundEventName, pitch, volume, delay);
     }
 
     public static CCSPlayerPawn? Pawn(this CCSPlayerController? player)
@@ -206,6 +112,7 @@ public static class EntityExtends
 
         return null;
     }
+
     static public void SetAmmo(this CBasePlayerWeapon? weapon, int clip, int reserve)
     {
         if (weapon == null || !weapon.IsValid)
@@ -249,55 +156,57 @@ public static class EntityExtends
 
     public static void Slap(this CCSPlayerController player, int damage)
     {
-        if (!player.IsLegal() && !player.IsAlive())
-            return;
-
-        CCSPlayerPawn pawn = player.Pawn()!;
-
-        /* Teleport in a random direction - thank you, Mani!*/
-        /* Thank you AM & al!*/
-
-        // ^^ & thanks to daffyyyy/CS2-SimpleAdmin
+        var pawn = player.Pawn();
+        if (pawn == null) return;
 
         var random = new Random();
-        var vel = new Vector(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
 
-        vel.X += ((random.Next(180) + 50) * ((random.Next(2) == 1) ? -1 : 1));
-        vel.Y += ((random.Next(180) + 50) * ((random.Next(2) == 1) ? -1 : 1));
-        vel.Z += random.Next(200) + 100;
-
-        pawn.AbsVelocity.X = vel.X;
-        pawn.AbsVelocity.Y = vel.Y;
-        pawn.AbsVelocity.Z = vel.Z;
+        pawn.AbsVelocity.X += (random.Next(180) + 50) * ((random.Next(2) == 1) ? -1 : 1);
+        pawn.AbsVelocity.Y += (random.Next(180) + 50) * ((random.Next(2) == 1) ? -1 : 1);
+        pawn.AbsVelocity.Z += random.Next(200) + 100;
 
         player.Health(-damage);
     }
 
     public static void Health(this CCSPlayerController player, int hp)
     {
-        if (!player.IsLegal() && !player.IsAlive())
+        var pawn = player.Pawn();
+        if (pawn == null)
             return;
 
-        CCSPlayerPawn pawn = player.Pawn()!;
-
-        if ((!pawn.TakesDamage && hp <= 0) || hp == 0)
+        if (pawn.TakesDamage == false && hp <= 0)
             return;
-        
-        pawn.Health = Math.Min(pawn.Health + hp, pawn.MaxHealth);
 
+        int newHealth = pawn.Health + hp;
+        if (hp > 0) newHealth = Math.Min(newHealth, pawn.MaxHealth);
+        else if (hp < 0) newHealth = Math.Max(newHealth, 0);
+
+        pawn.Health = newHealth;
         Utilities.SetStateChanged(pawn, "CBaseEntity", "m_iHealth");
-
         player.ColorScreen(Color.FromArgb(100, 255, 0, 0), 0.25f, 0.5f, FadeFlags.FADE_OUT);
 
         var sounds = Plugin.Instance.Config.Sounds.Blocks;
-
-        if (hp >= 1)
-            player.PlaySound(sounds.Health.Event, sounds.Health.Volume);
-
-        if (hp <= -1)
-            player.PlaySound(sounds.Damage.Event, sounds.Damage.Volume);
+        if (hp > 0) player.EmitSound(sounds.Health.Event, sounds.Health.Volume);
+        else if (hp < 0) player.EmitSound(sounds.Damage.Event, sounds.Damage.Volume);
 
         if (pawn.Health <= 0)
             pawn.CommitSuicide(true, true);
+    }
+
+    private static Action<IntPtr>? CollisionRulesChangedDelegate;
+    public static void CollisionRulesChanged(this CEntityInstance entity)
+    {
+        if (CollisionRulesChangedDelegate == null)
+        {
+            CollisionRulesChangedDelegate = VirtualFunction.CreateVoid<IntPtr>(entity.Handle, GameData.GetOffset("CollisionRulesChanged"));
+
+            if (CollisionRulesChangedDelegate == null)
+            {
+                Console.WriteLine("Failed to create CollisionRulesChanged delegate!");
+                return;
+            }
+        }
+
+        CollisionRulesChangedDelegate.Invoke(entity.Handle);
     }
 }

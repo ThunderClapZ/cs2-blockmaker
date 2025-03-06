@@ -21,13 +21,9 @@ public static class RayTrace
 
     private static TraceShapeDelegate? _traceShape;
 
-    private static nint TraceFunc = NativeAPI.FindSignature(Addresses.ServerPath, Environment.OSVersion.Platform == PlatformID.Unix
-        ? "48 B8 ? ? ? ? ? ? ? ? 55 48 89 E5 41 57 41 56 49 89 D6 41 55"
-        : "4C 8B DC 49 89 5B ? 49 89 6B ? 49 89 73 ? 57 41 56 41 57 48 81 EC ? ? ? ? 0F 57 C0");
+    private static nint TraceFunc = NativeAPI.FindSignature(Addresses.ServerPath, GameData.GetSignature("TraceFunc"));
 
-    private static nint GameTraceManager = NativeAPI.FindSignature(Addresses.ServerPath, Environment.OSVersion.Platform == PlatformID.Unix
-        ? "48 8D 05 ? ? ? ? F3 0F 58 8D ? ? ? ? 31 FF"
-        : "48 8B 0D ? ? ? ? 48 8D 45 ? 48 89 44 24 ? 4C 8D 44 24 ? C7 44 24 ? ? ? ? ? 48 8D 54 24 ? 4C 8B CB");
+    private static nint GameTraceManager = NativeAPI.FindSignature(Addresses.ServerPath, GameData.GetSignature("GameTraceManager"));
 
     public static unsafe Vector? TraceShape(Vector _origin, QAngle _viewangles, nint skip = 0, ulong mask = 12289UL, bool drawResult = false)
     {

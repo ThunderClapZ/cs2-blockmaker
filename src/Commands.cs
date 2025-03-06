@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Menu;
 using CounterStrikeSharp.API.Modules.Utils;
 using System.Drawing;
+using MenuManagerOld = CounterStrikeSharp.API.Modules.Menu.MenuManager;
 
 public static class Commands
 {
@@ -32,6 +33,7 @@ public static class Commands
         AddCommands(commands.Building.ConvertBlock, ConvertBlock);
         AddCommands(commands.Building.CopyBlock, CopyBlock);
         AddCommands(commands.Building.LockBlock, LockBlock);
+        AddCommands("resetproperties", ResetProperties);
     }
     private static void AddCommands(string commands, Action<CCSPlayerController?> action)
     {
@@ -64,6 +66,7 @@ public static class Commands
         RemoveCommands(commands.Building.ConvertBlock, ConvertBlock);
         RemoveCommands(commands.Building.CopyBlock, CopyBlock);
         RemoveCommands(commands.Building.LockBlock, LockBlock);
+        RemoveCommands("resetproperties", ResetProperties);
     }
     private static void RemoveCommands(string commands, Action<CCSPlayerController?> action)
     {
@@ -155,7 +158,7 @@ public static class Commands
                 });
             }
 
-            MenuManager.OpenChatMenu(player, BuildersMenu);
+            MenuManagerOld.OpenChatMenu(player, BuildersMenu);
 
             return;
         }
@@ -222,10 +225,9 @@ public static class Commands
             return;
         }
 
-        foreach (var property in typeof(BlockModels).GetProperties())
+        var blockModels = Files.Models.Props;
+        foreach (var model in blockModels.GetAllBlocks())
         {
-            var model = (BlockModel)property.GetValue(Files.Models.Props)!;
-
             if (string.Equals(model.Title, selectType, StringComparison.OrdinalIgnoreCase))
             {
                 playerData[player.Slot].BlockType = model.Title;
@@ -472,5 +474,33 @@ public static class Commands
             return;
 
         Blocks.ChangeProperties(player, type, input);
+    }
+
+    public static void ResetProperties(CCSPlayerController? player)
+    {
+        if (player == null || !AllowedCommand(player))
+            return;
+
+        if (!Utils.HasPermission(player))
+        {
+            Utils.PrintToChat(player, $"{ChatColors.Red}You don't have permission to reset properties");
+            return;
+        }
+
+        foreach (var block in Blocks.Props.Values)
+        {
+            if (Files.PropsData.Properties.BlockProperties.TryGetValue(block.Type.Split('.')[0], out var defaultProperties))
+            {
+                block.Properties = new BlockData_Properties
+                {
+                    Cooldown = defaultProperties.Cooldown,
+                    Value = defaultProperties.Value,
+                    Duration = defaultProperties.Duration,
+                    OnTop = defaultProperties.OnTop,
+                };
+            }
+            else Utils.PrintToChatAll($"{ChatColors.Red}Failed to find {ChatColors.White}{block.Type} {ChatColors.Red}default properties");
+        }
+        Utils.PrintToChatAll($"{ChatColors.Red}All placed blocks properties have been reset!");
     }
 }
