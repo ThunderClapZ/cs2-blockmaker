@@ -29,7 +29,14 @@ public static class Utils
 
     public static bool HasPermission(CCSPlayerController player)
     {
-        return string.IsNullOrEmpty(config.Commands.Admin.Permission) || AdminManager.PlayerHasPermissions(player, config.Commands.Admin.Permission);
+        foreach (string perm in config.Commands.Admin.Permission)
+        {
+            if (perm.StartsWith("@") && AdminManager.PlayerHasPermissions(player, perm))
+                return true;
+            if (perm.StartsWith("#") && AdminManager.PlayerInGroup(player, perm))
+                return true;
+        }
+        return false;
     }
 
     public static void Log(string message)
@@ -189,20 +196,47 @@ public static class Utils
     public static void DrawBeamsAroundBlock(CCSPlayerController player, CBaseProp block, Color color)
     {
         var pos = block.AbsOrigin!;
+        var rotation = block.AbsRotation!;
 
-        var max = block.Collision!.Maxs * GetSize(Blocks.Props[block].Size);
+        float scale = Blocks.Props.ContainsKey(block) ? Utils.GetSize(Blocks.Props[block].Size) : 1;
 
-        var corners = new Vector[]
+        var max = block.Collision!.Maxs * scale;
+        var min = block.Collision!.Mins * scale;
+
+        Vector forward = new Vector(
+            (float)Math.Cos(rotation.Y * Math.PI / 180) * (float)Math.Cos(rotation.X * Math.PI / 180),
+            (float)Math.Sin(rotation.Y * Math.PI / 180) * (float)Math.Cos(rotation.X * Math.PI / 180),
+            (float)-Math.Sin(rotation.X * Math.PI / 180)
+        );
+        Vector right = new Vector(
+            (float)Math.Cos((rotation.Y + 90) * Math.PI / 180),
+            (float)Math.Sin((rotation.Y + 90) * Math.PI / 180),
+            0
+        );
+        Vector up = VectorUtils.Cross(forward, right);
+
+        Vector[] localCorners =
         {
-            pos + new Vector(-max.X, -max.Y, -max.Z),
-            pos + new Vector(max.X, -max.Y, -max.Z),
-            pos + new Vector(max.X, max.Y, -max.Z),
-            pos + new Vector(-max.X, max.Y, -max.Z),
-            pos + new Vector(-max.X, -max.Y, max.Z),
-            pos + new Vector(max.X, -max.Y, max.Z),
-            pos + new Vector(max.X, max.Y, max.Z),
-            pos + new Vector(-max.X, max.Y, max.Z)
+            new Vector(min.X, min.Y, min.Z), // Bottom-back-left
+            new Vector(max.X, min.Y, min.Z), // Bottom-back-right
+            new Vector(max.X, max.Y, min.Z), // Bottom-front-right
+            new Vector(min.X, max.Y, min.Z), // Bottom-front-left
+            new Vector(min.X, min.Y, max.Z), // Top-back-left
+            new Vector(max.X, min.Y, max.Z), // Top-back-right
+            new Vector(max.X, max.Y, max.Z), // Top-front-right
+            new Vector(min.X, max.Y, max.Z)  // Top-front-left
         };
+
+        Vector[] corners = new Vector[8];
+        for (int i = 0; i < localCorners.Length; i++)
+        {
+            Vector localCorner = localCorners[i];
+            corners[i] =
+                pos +
+                forward * localCorner.X +
+                right * localCorner.Y +
+                up * localCorner.Z;
+        }
 
         var beams = new List<Vector[]>
         {
@@ -211,28 +245,30 @@ public static class Utils
             new[] {corners[0], corners[4]}, new[] {corners[1], corners[5]}, new[] {corners[2], corners[6]}, new[] {corners[3], corners[7]}
         };
 
+        // Update existing
         if (Blocks.PlayerHolds[player].beams.Count > 0)
         {
-            int beamcount = 0;
-            foreach (var oldbeam in Blocks.PlayerHolds[player].beams)
-            {                
-                oldbeam.EndPos.X = beams[beamcount][1].X;
-                oldbeam.EndPos.Y = beams[beamcount][1].Y;
-                oldbeam.EndPos.Z = beams[beamcount][1].Z;
+            int beamCount = 0;
+            foreach (var oldBeam in Blocks.PlayerHolds[player].beams)
+            {
+                oldBeam.EndPos.X = beams[beamCount][1].X;
+                oldBeam.EndPos.Y = beams[beamCount][1].Y;
+                oldBeam.EndPos.Z = beams[beamCount][1].Z;
 
-                oldbeam.DispatchSpawn();
+                oldBeam.DispatchSpawn();
 
-                oldbeam.Teleport(beams[beamcount][0], block.AbsRotation);
+                oldBeam.Teleport(beams[beamCount][0], block.AbsRotation);
 
-                beamcount++;
+                beamCount++;
             }
             return;
         }
 
+        // Create new
         foreach (var beam in beams)
         {
-            var newbeam = DrawBeam(beam[0], beam[1], color);
-            Blocks.PlayerHolds[player].beams.Add(newbeam);
+            var newBeam = DrawBeam(beam[0], beam[1], color);
+            Blocks.PlayerHolds[player].beams.Add(newBeam);
         }
     }
 }

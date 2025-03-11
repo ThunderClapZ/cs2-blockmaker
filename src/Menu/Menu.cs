@@ -6,32 +6,9 @@ public partial class Menu
 
     public static void Open(CCSPlayerController player)
     {
-        switch (Instance.Config.Settings.Menu.ToLower())
-        {
-            case "chat":
-            case "text":
-                Chat.Open(player);
-                break;
-            case "html":
-            case "center":
-            case "centerhtml":
-            case "hud":
-                HTML.Open(player);
-                break;
-            case "wasd":
-            case "wasdmenu":
-                WASD.Open(player);
-                break;
-            case "screen":
-            case "screenmenu":
-                Screen.Open(player);
-                break;
-            case "menumanager":
-                MenuManagerAPI.Open(player);
-                break;
-            default:
-                HTML.Open(player);
-                break;
-        }
+        if (Instance.Config.Settings.ScreenMenu)
+            Screen.Open(player);
+
+        else MenuManager.Open(player);
     }
 }

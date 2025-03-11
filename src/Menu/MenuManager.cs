@@ -7,13 +7,13 @@ using MenuManager;
 
 public static partial class Menu
 {
-    public static class MenuManagerAPI
+    public static class MenuManager
     {
-        public static IMenuApi MenuAPI = new PluginCapability<IMenuApi>("menu:nfcore").Get()!;
+        public static IMenuApi API = new PluginCapability<IMenuApi>("menu:nfcore").Get()!;
 
         public static void Open(CCSPlayerController player)
         {
-            var Menu = MenuAPI.GetMenu("Block Maker");
+            var Menu = API.GetMenu("Block Maker");
 
             Menu.AddMenuOption($"Block Commands", (player, option) =>
             {
@@ -37,7 +37,7 @@ public static partial class Menu
 
         static void Menu_Commands(CCSPlayerController player)
         {
-            var Menu = MenuAPI.GetMenu("Block Commands");
+            var Menu = API.GetMenu("Block Commands");
 
             Menu.AddMenuOption("Create", (player, option) =>
             {
@@ -63,11 +63,6 @@ public static partial class Menu
                 PositionMenuOptions(player, options, false);
             });
 
-            Menu.AddMenuOption("Convert", (player, option) =>
-            {
-                Commands.ConvertBlock(player);
-            });
-
             Menu.AddMenuOption("Copy", (player, option) =>
             {
                 Commands.CopyBlock(player);
@@ -78,7 +73,12 @@ public static partial class Menu
                 Commands.LockBlock(player);
             });
 
-            Menu.Open(player);;
+            Menu.AddMenuOption("Convert", (player, option) =>
+            {
+                Commands.ConvertBlock(player);
+            });
+
+            Menu.Open(player);
         }
 
         static void PositionMenuOptions(CCSPlayerController player, string[] options, bool rotate)
@@ -88,7 +88,7 @@ public static partial class Menu
             float value = rotate ? playerData.RotationValue : playerData.PositionValue;
             string title = $"{(rotate ? "Rotate" : "Move")} Block ({value} Units)";
 
-           var Menu = MenuAPI.GetMenu(title);
+            var Menu = API.GetMenu(title);
 
             Menu.AddMenuOption($"Select Units", (player, option) =>
             {
@@ -106,7 +106,7 @@ public static partial class Menu
                 });
             }
 
-            Menu.Open(player);;
+            Menu.Open(player);
         }
 
         /* Menu_Commands */
@@ -117,7 +117,7 @@ public static partial class Menu
         {
             var playerData = Instance.playerData[player.Slot];
 
-           var Menu = MenuAPI.GetMenu("Block Settings");
+            var Menu = API.GetMenu("Block Settings");
 
             Menu.AddMenuOption($"Type: {playerData.BlockType}", (player, option) =>
             {
@@ -126,16 +126,47 @@ public static partial class Menu
 
             Menu.AddMenuOption($"Size: {playerData.BlockSize}", (player, option) =>
             {
-                string[] sizeValues = Instance.Config.Settings.Building.BlockSizes.Select(b => b.Title).ToArray();
+                var sizeValues = Instance.Config.Settings.Building.BlockSizes.ToArray();
+                int currentIndex = Array.FindIndex(sizeValues, s => s.Title == playerData.BlockSize);
+                int nextIndex = (currentIndex + 1) % sizeValues.Length;
+                playerData.BlockSize = sizeValues[nextIndex].Title;
 
-                SizeMenuOptions(player, sizeValues);
+                Menu_BlockSettings(player);
+            });
+
+            Menu.AddMenuOption($"Pole: {(playerData.BlockPole ? "ON" : "OFF")}", (player, option) =>
+            {
+                Commands.Pole(player);
+
+                Menu_BlockSettings(player);
             });
 
             Menu.AddMenuOption($"Team: {playerData.BlockTeam}", (player, option) =>
             {
                 string[] teamValues = { "Both", "T", "CT" };
+                int currentIndex = Array.IndexOf(teamValues, playerData.BlockTeam);
+                int nextIndex = (currentIndex + 1) % teamValues.Length;
+                playerData.BlockTeam = teamValues[nextIndex];
+                Commands.TeamBlock(player, teamValues[nextIndex]);
 
-                TeamMenuOptions(player, teamValues);
+                Menu_BlockSettings(player);
+            });
+
+            Menu.AddMenuOption($"Properties", (player, option) =>
+            {
+                var entity = player.GetBlockAimTarget();
+
+                if (entity?.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+                {
+                    Utils.PrintToChat(player, "Could not find a block to edit properties");
+                    Menu_BlockSettings(player);
+                    return;
+                }
+
+                playerData.ChatInput = "";
+                playerData.PropertyEntity.Clear();
+
+                PropertiesMenuOptions(player, entity);
             });
 
             Menu.AddMenuOption($"Transparency: {playerData.BlockTransparency}", (player, option) =>
@@ -148,35 +179,28 @@ public static partial class Menu
                 ColorMenuOptions(player);
             });
 
-            Menu.AddMenuOption($"Properties", (player, option) =>
-            {
-                PropertiesMenuOptions(player);
-            });
-
-            Menu.Open(player);;
+            Menu.Open(player);
         }
 
         static void TypeMenuOptions(CCSPlayerController player)
         {
             var playerData = Instance.playerData[player.Slot];
 
-           var Menu = MenuAPI.GetMenu($"Select Type ({playerData.BlockType})");
+            var Menu = API.GetMenu($"Select Type ({playerData.BlockType})");
 
             var blockmodels = Files.Models.Props;
 
-            foreach (var property in typeof(BlockModels).GetProperties())
+            foreach (var block in blockmodels.GetAllBlocks())
             {
-                var block = (BlockModel)property.GetValue(blockmodels)!;
-
                 string blockName = block.Title;
 
                 Menu.AddMenuOption(blockName, (player, option) =>
                 {
-                    if (block.Title == blockmodels.Pistol.Title ||
-                        block.Title == blockmodels.Sniper.Title ||
-                        block.Title == blockmodels.Rifle.Title ||
-                        block.Title == blockmodels.SMG.Title ||
-                        block.Title == blockmodels.ShotgunHeavy.Title
+                    if (blockName == blockmodels.Pistol.Title ||
+                        blockName == blockmodels.Sniper.Title ||
+                        blockName == blockmodels.Rifle.Title ||
+                        blockName == blockmodels.SMG.Title ||
+                        blockName == blockmodels.ShotgunHeavy.Title
                     )
                     {
                         GunTypeMenu(player, block.Title);
@@ -197,14 +221,14 @@ public static partial class Menu
                 Menu_BlockSettings(player);
             });
 
-            Menu.Open(player);;
+            Menu.Open(player);
         }
 
         static void GunTypeMenu(CCSPlayerController player, string gunType)
         {
             var playerData = Instance.playerData[player.Slot];
 
-           var Menu = MenuAPI.GetMenu($"Select {gunType}");
+            var Menu = API.GetMenu($"Select {gunType}");
 
             if (WeaponList.Categories.ContainsKey(gunType))
             {
@@ -218,10 +242,9 @@ public static partial class Menu
                     {
                         Menu.AddMenuOption(weapon.Name, (player, option) =>
                         {
-                            foreach (var property in typeof(BlockModels).GetProperties())
+                            var blockModels = Files.Models.Props;
+                            foreach (var model in blockModels.GetAllBlocks())
                             {
-                                var model = (BlockModel)property.GetValue(Files.Models.Props)!;
-
                                 if (string.Equals(model.Title, gunType, StringComparison.OrdinalIgnoreCase))
                                 {
                                     playerData.BlockType = $"{model.Title}.{weapon.Name}";
@@ -236,65 +259,14 @@ public static partial class Menu
                 }
             }
 
-            Menu.Open(player);;
-        }
-
-        static void SizeMenuOptions(CCSPlayerController player, string[] sizeValues)
-        {
-            var playerData = Instance.playerData[player.Slot];
-
-            var Menu = MenuAPI.GetMenu($"Select Size ({playerData.BlockSize})");
-
-            Menu.AddMenuOption($"Pole: {(playerData.BlockPole ? "ON" : "OFF")}", (player, option) =>
-            {
-                Commands.Pole(player);
-
-                SizeMenuOptions(player, sizeValues);
-            });
-
-            foreach (string sizeValue in sizeValues)
-            {
-                Menu.AddMenuOption(sizeValue, (player, option) =>
-                {
-                    playerData.BlockSize = sizeValue;
-
-                    Utils.PrintToChat(player, $"Selected Size: {ChatColors.White}{sizeValue}");
-
-                    Menu_BlockSettings(player);
-                });
-            }
-
-            Menu.Open(player);;
-        }
-
-        static void TeamMenuOptions(CCSPlayerController player, string[] teamValues)
-        {
-            var playerData = Instance.playerData[player.Slot];
-
-           var Menu = MenuAPI.GetMenu($"Select Team ({playerData.BlockTeam})");
-
-            foreach (string teamValue in teamValues)
-            {
-                Menu.AddMenuOption(teamValue, (player, option) =>
-                {
-                    playerData.BlockTeam = teamValue;
-
-                    Utils.PrintToChat(player, $"Selected Team: {ChatColors.White}{teamValue}");
-
-                    Commands.TeamBlock(player, teamValue);
-
-                    Menu_BlockSettings(player);
-                });
-            }
-
-            Menu.Open(player);;
+            Menu.Open(player);
         }
 
         static void TransparencyMenuOptions(CCSPlayerController player)
         {
             var playerData = Instance.playerData[player.Slot];
 
-           var Menu = MenuAPI.GetMenu($"Select Transparency ({playerData.BlockTransparency})");
+            var Menu = API.GetMenu($"Select Transparency ({playerData.BlockTransparency})");
 
             foreach (var value in Utils.AlphaMapping.Keys)
             {
@@ -310,14 +282,14 @@ public static partial class Menu
                 });
             }
 
-            Menu.Open(player);;
+            Menu.Open(player);
         }
 
         static void ColorMenuOptions(CCSPlayerController player)
         {
             var playerData = Instance.playerData[player.Slot];
 
-           var Menu = MenuAPI.GetMenu($"Select Color ({playerData.BlockColor})");
+            var Menu = API.GetMenu($"Select Color ({playerData.BlockColor})");
 
             foreach (var color in Utils.ColorMapping.Keys)
             {
@@ -329,28 +301,16 @@ public static partial class Menu
                 });
             }
 
-            Menu.Open(player);;
+            Menu.Open(player);
         }
 
-        static void PropertiesMenuOptions(CCSPlayerController player)
+        static void PropertiesMenuOptions(CCSPlayerController player, CBaseEntity entity)
         {
             var playerData = Instance.playerData[player.Slot];
 
-            var entity = player.GetBlockAimTarget();
-
-            if (entity?.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
-            {
-                Utils.PrintToChat(player, "Could not find a block to edit properties");
-                Menu_BlockSettings(player);
-                return;
-            }
-
             if (Blocks.Props.TryGetValue(entity, out var block))
             {
-               var Menu = MenuAPI.GetMenu($"Properties ({block.Type})");
-
-                playerData.ChatInput = "";
-                playerData.PropertyEntity.Clear();
+                var Menu = API.GetMenu($"Properties ({block.Type})");
 
                 var properties = block.Properties;
 
@@ -360,11 +320,11 @@ public static partial class Menu
                 PropertyMenuOption(Menu, "Value", properties.Value, player, entity);
                 PropertyMenuOption(Menu, "Cooldown", properties.Cooldown, player, entity);
 
-                Menu.Open(player);;
+                Menu.Open(player);
             }
         }
 
-        static void PropertyMenuOption(IMenu Menu, string property, float value, CCSPlayerController player, CBaseProp entity)
+        static void PropertyMenuOption(IMenu Menu, string property, float value, CCSPlayerController player, CBaseEntity entity)
         {
             var playerData = Instance.playerData[player.Slot];
 
@@ -386,12 +346,12 @@ public static partial class Menu
                     if (property == "Reset" || property == "OnTop")
                     {
                         Commands.Properties(player, property, property);
-                        Menu_BlockSettings(player);
+                        PropertiesMenuOptions(player, entity);
                     }
                     else
                     {
                         Utils.PrintToChat(player, $"Write your desired number in the chat");
-                        Menu_BlockSettings(player);
+                        PropertiesMenuOptions(player, entity);
                     }
                 });
             }
@@ -405,7 +365,7 @@ public static partial class Menu
         {
             var playerData = Instance.playerData[player.Slot];
 
-           var Menu = MenuAPI.GetMenu("Build Settings");
+            var Menu = API.GetMenu("Build Settings");
 
             Menu.AddMenuOption("Build Mode: " + (Instance.buildMode ? "ON" : "OFF"), (player, option) =>
             {
@@ -433,6 +393,11 @@ public static partial class Menu
                 GridMenuOptions(player);
             });
 
+            Menu.AddMenuOption($"Snap Settings", (player, option) =>
+            {
+                SnapMenuOptions(player);
+            });
+
             Menu.AddMenuOption("Save Blocks", (player, option) =>
             {
                 Commands.SaveBlocks(player);
@@ -442,7 +407,7 @@ public static partial class Menu
 
             Menu.AddMenuOption("Clear Blocks", (player, option) =>
             {
-                var ConfirmMenu = MenuAPI.GetMenu("Confirm");
+                var ConfirmMenu = API.GetMenu("Confirm");
 
                 ConfirmMenu.AddMenuOption("NO - keep blocks", (player, option) =>
                 {
@@ -461,9 +426,17 @@ public static partial class Menu
 
             Menu.AddMenuOption("Manage Builders", (player, option) =>
             {
-                var BuildersMenu = MenuAPI.GetMenu("Manage Builders");
+                var BuildersMenu = API.GetMenu("Manage Builders");
 
-                foreach (var target in Utilities.GetPlayers().Where(x => x != player))
+                var targets = Utilities.GetPlayers().Where(x => x != player);
+                if (targets.Count() <= 0)
+                {
+                    Utils.PrintToChat(player, $"{ChatColors.Red}No players available");
+                    Menu.Open(player);
+                    return;
+                }
+
+                foreach (var target in targets)
                 {
                     BuildersMenu.AddMenuOption(target.PlayerName, (player, option) =>
                     {
@@ -474,14 +447,14 @@ public static partial class Menu
                 BuildersMenu.Open(player);
             });
 
-            Menu.Open(player);;
+            Menu.Open(player);
         }
 
         static void GridMenuOptions(CCSPlayerController player)
         {
             var playerData = Instance.playerData[player.Slot];
 
-            var Menu = MenuAPI.GetMenu($"Grid Options ({playerData.GridValue} Units)");
+            var Menu = API.GetMenu($"Grid Options ({playerData.GridValue} Units)");
 
             Menu.AddMenuOption($"Select Units", (player, option) =>
             {
@@ -498,14 +471,31 @@ public static partial class Menu
                 GridMenuOptions(player);
             });
 
+            Menu.Open(player);
+        }
+
+        static void SnapMenuOptions(CCSPlayerController player)
+        {
+            var playerData = Instance.playerData[player.Slot];
+
+            var Menu = API.GetMenu($"Snap Options ({playerData.SnapValue} Units)");
+
+            Menu.AddMenuOption($"Select Units", (player, option) =>
+            {
+                playerData.ChatInput = "Snap";
+
+                Utils.PrintToChat(player, $"Write your desired number in the chat");
+                SnapMenuOptions(player);
+            });
+
             Menu.AddMenuOption($"Snap: " + (playerData.Snapping ? "ON" : "OFF"), (player, option) =>
             {
                 Commands.Snapping(player);
 
-                GridMenuOptions(player);
+                SnapMenuOptions(player);
             });
 
-            Menu.Open(player);;
+            Menu.Open(player);
         }
 
         /* Menu_Settings */

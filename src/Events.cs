@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
+using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 public partial class Plugin
 {
@@ -52,21 +53,22 @@ public partial class Plugin
         Transmit.Unload();
     }
 
+    public Timer? AutoSaveTimer;
     void OnMapStart(string mapname)
     {
         Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Server.MapName);
         Directory.CreateDirectory(Files.mapsFolder);
 
-        if (Config.Settings.Building.AutoSave)
+        if (Config.Settings.Building.AutoSave.Enable)
         {
-            AddTimer(Config.Settings.Building.SaveTime, () => {
+            AutoSaveTimer?.Kill();
+            AutoSaveTimer = AddTimer(Config.Settings.Building.AutoSave.Timer, () => {
                 if (!buildMode) return;
-                Utils.PrintToChatAll("Auto-Saving Blocks");
-                Files.PropsData.Save();
+                Files.PropsData.Save(true);
             }, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
         }
 
-        if (Config.Settings.Building.BuildModeConfig)
+        if (Config.Settings.Building.BuildMode.Config)
         {
             string[] commands =
                 {
@@ -94,8 +96,8 @@ public partial class Plugin
 
         manifest.AddResource(Config.Sounds.SoundEvents);
 
-        manifest.AddResource(Config.Settings.Teleports.EntryModel);
-        manifest.AddResource(Config.Settings.Teleports.ExitModel);
+        manifest.AddResource(Config.Settings.Teleports.Entry.Model);
+        manifest.AddResource(Config.Settings.Teleports.Exit.Model);
 
         manifest.AddResource(Config.Settings.Blocks.CamouflageT);
         manifest.AddResource(Config.Settings.Blocks.CamouflageCT);
@@ -110,10 +112,10 @@ public partial class Plugin
         if (player == null || player.NotValid())
             return HookResult.Continue;
 
-        playerData[player.Slot] = new PlayerData();
-
         if (buildMode)
         {
+            playerData[player.Slot] = new PlayerData { BlockType = Files.Models.Props.Platform.Title };
+
             Files.Builders.Load();
 
             if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
@@ -133,7 +135,7 @@ public partial class Plugin
 
     HookResult EventRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
-        if (buildMode && Config.Settings.Building.AutoSave)
+        if (buildMode && Config.Settings.Building.AutoSave.Enable)
             Files.PropsData.Save();
 
         return HookResult.Continue;
@@ -177,7 +179,7 @@ public partial class Plugin
             {
                 var input = info.ArgString.Replace("\"", "");
 
-                if (!float.TryParse(input, out float number) || number <= 0)
+                if (!float.TryParse(input, out float number) || (number <= 0 && type != "Snap"))
                 {
                     Utils.PrintToChat(player, $"{ChatColors.Red}Invalid input value: {ChatColors.White}{input}");
                     return HookResult.Handled;
@@ -188,6 +190,10 @@ public partial class Plugin
                     case "Grid":
                         pData.GridValue = number;
                         Utils.PrintToChat(player, $"Grid Value: {ChatColors.White}{number}");
+                        break;
+                    case "Snap":
+                        pData.SnapValue = number;
+                        Utils.PrintToChat(player, $"Snap Value: {ChatColors.White}{number}");
                         break;
                     case "Rotation":
                         pData.RotationValue = number;
@@ -244,9 +250,7 @@ public partial class Plugin
                         pawn.AbsVelocity
                     );
 
-                    var sound = Config.Sounds.Blocks.Teleport;
-
-                    player.EmitSound(sound.Event, sound.Volume);
+                    player.EmitSound(Config.Sounds.Blocks.Teleport);
                 }
 
                 return HookResult.Continue;

@@ -17,7 +17,12 @@ public partial class Blocks
         }
 
         foreach (var timer in Plugin.Instance.Timers)
-            timer.Kill();
+        {
+            if (timer == instance.AutoSaveTimer)
+                continue;
+
+            timer?.Kill();
+        }
 
         Props.Clear();
         Triggers.Clear();
@@ -78,10 +83,7 @@ public partial class Blocks
                 }
 
                 if (config.Sounds.Building.Enabled)
-                {
-                    var sound = config.Sounds.Building.Delete;
-                    player.EmitSound(sound.Event, sound.Volume);
-                }
+                    player.EmitSound(config.Sounds.Building.Delete);
 
                 Utils.PrintToChat(player, $"Deleted -" +
                     $" type: {ChatColors.White}{block.Type}{ChatColors.Grey}," +
@@ -127,10 +129,7 @@ public partial class Blocks
                 Teleports.Remove(teleports);
 
                 if (config.Sounds.Building.Enabled)
-                {
-                    var sound = config.Sounds.Building.Delete;
-                    player.EmitSound(sound.Event, sound.Volume);
-                }
+                    player.EmitSound(config.Sounds.Building.Delete);
 
                 Utils.PrintToChat(player, $"Deleted teleport pair");
             }
@@ -208,10 +207,7 @@ public partial class Blocks
             else block.Entity.Teleport(pos);
 
             if (config.Sounds.Building.Enabled)
-            {
-                var sound = config.Sounds.Building.Rotate;
-                player.EmitSound(sound.Event, sound.Volume);
-            }
+                player.EmitSound(config.Sounds.Building.Rotate);
 
             string text = $"{ChatColors.White}{input} {(string.Equals(input, "reset", StringComparison.OrdinalIgnoreCase) ? $"" : $"by {value} Units")}";
 
@@ -279,10 +275,7 @@ public partial class Blocks
             CreateBlock(block.Type, block.Pole, block.Size, entity.AbsOrigin!, entity.AbsRotation!, block.Color, block.Transparency, block.Team, block.Properties);
 
             if (config.Sounds.Building.Enabled)
-            {
-                var sound = config.Sounds.Building.Create;
-                player.EmitSound(sound.Event, sound.Volume);
-            }
+                player.EmitSound(config.Sounds.Building.Create);
 
             Utils.PrintToChat(player, $"Copied -" +
                 $" type: {ChatColors.White}{playerData.BlockType}{ChatColors.Grey}," +

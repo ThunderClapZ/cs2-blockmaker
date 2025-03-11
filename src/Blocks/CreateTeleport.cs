@@ -61,11 +61,11 @@ public partial class Blocks
 
         var config = instance.Config.Settings.Teleports;
 
-        var entryModel = config.EntryModel;
-        var exitModel = config.ExitModel;
+        var entryModel = config.Entry.Model;
+        var exitModel = config.Exit.Model;
 
-        var entryColor = config.EntryColor;
-        var exitColor = config.ExitColor;
+        var entryColor = config.Entry.Color;
+        var exitColor = config.Exit.Color;
 
         if (teleport != null && teleport.IsValid && teleport.Entity != null)
         {

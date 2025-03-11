@@ -10,29 +10,42 @@ public class Config : BasePluginConfig
 public class Config_Settings
 {
     public string Prefix { get; set; } = "{purple}BlockMaker {grey}|";
-    public string Menu { get; set; } = "html";
+    public bool ScreenMenu { get; set; } = false;
 
     public class Settings_Building
     {
-        public bool BuildMode { get; set; } = true;
-        public bool BuildModeConfig { get; set; } = false;
-        public bool AutoSave { get; set; } = false;
-        public int SaveTime { get; set; } = 300;
-        public string BlockGrabColor { get; set; } = "255,255,255,128";
-
-        public List<BlockSize> BlockSizes { get; set; }
-        public Settings_Building()
+        public class Settings_BuildMode
         {
-            BlockSizes = new List<BlockSize>
-            {
-                new BlockSize("Small", 0.5f),
-                new BlockSize("Normal", 1.0f),
-                new BlockSize("Large", 2.0f),
-                new BlockSize("X-Large", 3.0f)
-            };
-        }
+            public bool Enable { get; set; } = true;
+            public bool Config { get; set; } = false;
+        };
+        public Settings_BuildMode BuildMode { get; set; } = new();
+
+        public class Settings_AutoSave
+        {
+            public bool Enable { get; set; } = true;
+            public float Timer { get; set; } = 300;
+        };
+        public Settings_AutoSave AutoSave { get; set; } = new();
+
+        public class Settings_BlockGrab
+        {
+            public bool Render { get; set; } = true;
+            public string RenderColor { get; set; } = "255,255,255,128";
+            public bool Beams { get; set; }  = true;
+            public string BeamsColor { get; set; } = "255,255,255,64";
+        };
+        public Settings_BlockGrab Grab { get; set; } = new();
+
+        public List<BlockSize> BlockSizes { get; set; } = new List<BlockSize>
+        {
+            new BlockSize("Small", 0.5f),
+            new BlockSize("Normal", 1.0f),
+            new BlockSize("Large", 2.0f),
+            new BlockSize("X-Large", 3.0f)
+        };
     }
-    public Settings_Building Building { get; set; } = new Settings_Building();
+    public Settings_Building Building { get; set; } = new();
 
     public class Settings_Blocks
     {
@@ -41,83 +54,88 @@ public class Config_Settings
         public string CamouflageCT { get; set; } = "characters/models/tm_leet/tm_leet_variantb.vmdl";
         public string FireParticle { get; set; } = "particles/burning_fx/env_fire_medium.vpcf";
     }
-    public Settings_Blocks Blocks { get; set; } = new Settings_Blocks();
+    public Settings_Blocks Blocks { get; set; } = new();
 
     public class Settings_Teleports
     {
         public bool ForceAngles { get; set; } = false;
-        public string EntryModel { get; set; } = "models/blockmaker/teleport/model.vmdl";
-        public string EntryColor { get; set; } = "0,255,0,255";
-        public string ExitModel { get; set; } = "models/blockmaker/teleport/model.vmdl";
-        public string ExitColor { get; set; } = "255,0,0,255";
+
+        public class Settings_TeleportEntry
+        {
+            public string Model { get; set; } = "models/blockmaker/teleport/model.vmdl";
+            public string Color { get; set; } = "0,255,0,255";
+        }
+        public Settings_TeleportEntry Entry { get; set; } = new();
+
+        public class Settings_TeleportExit
+        {
+            public string Model { get; set; } = "models/blockmaker/teleport/model.vmdl";
+            public string Color { get; set; } = "255,0,0,255";
+        }
+        public Settings_TeleportExit Exit { get; set; } = new();
     }
-    public Settings_Teleports Teleports { get; set; } = new Settings_Teleports();
+    public Settings_Teleports Teleports { get; set; } = new();
 }
 
 public class Config_Commands
 {
     public class Commands_Admin
     {
-        public string Permission { get; set; } = "@css/root";
-        public string BuildMode { get; set; } = "buildmode";
-        public string ManageBuilder { get; set; } = "builder,builders";
+        public List<string> Permission { get; set; } = [ "@css/root" ];
+        public List<string> BuildMode { get; set; } = [ "buildmode" ];
+        public List<string> ManageBuilder { get; set; } = [ "builder", "builders" ];
     }
-    public Commands_Admin Admin { get; set; } = new Commands_Admin();
+    public Commands_Admin Admin { get; set; } = new();
 
     public class Commands_Building
     {
-        public string BuildMenu { get; set; } = "bm,buildmenu";
-        public string CreateBlock { get; set; } = "create";
-        public string DeleteBlock { get; set; } = "delete";
-        public string RotateBlock { get; set; } = "rotate";
-        public string PositionBlock { get; set; } = "position";
-        public string BlockType { get; set; } = "type";
-        public string BlockColor { get; set; } = "color";
-        public string CopyBlock { get; set; } = "copy";
-        public string ConvertBlock { get; set; } = "convert";
-        public string LockBlock { get; set; } = "lock";
-        public string SaveBlocks { get; set; } = "save";
-        public string Snapping { get; set; } = "snap";
-        public string Grid { get; set; } = "grid";
-        public string Noclip { get; set; } = "nc";
-        public string Godmode { get; set; } = "godmode";
-        public string TestBlock { get; set; } = "testblock";
+        public List<string> BuildMenu { get; set; } = [ "bm", "buildmenu" ];
+        public List<string> CreateBlock { get; set; } = [ "create" ];
+        public List<string> DeleteBlock { get; set; } = [ "delete" ];
+        public List<string> RotateBlock { get; set; } = [ "rotate" ];
+        public List<string> PositionBlock { get; set; } = [ "position" ];
+        public List<string> BlockType { get; set; } = [ "type"];
+        public List<string> BlockColor { get; set; } = [ "color" ];
+        public List<string> CopyBlock { get; set; } = [ "copy" ];
+        public List<string> ConvertBlock { get; set; } = [ "convert" ];
+        public List<string> LockBlock { get; set; } = [ "lock" ];
+        public List<string> SaveBlocks { get; set; } = [ "save" ];
+        public List<string> Snapping { get; set; } = [ "snap" ];
+        public List<string> Grid { get; set; } = [ "grid" ];
+        public List<string> Noclip { get; set; } = [ "nc" ];
+        public List<string> Godmode { get; set; } = [ "godmode" ];
+        public List<string> TestBlock { get; set; } = [ "testblock" ];
+        public List<string> ResetProperties { get; set; } = ["resetproperties"];
     }
-    public Commands_Building Building { get; set; } = new Commands_Building();
+    public Commands_Building Building { get; set; } = new();
 }
 
 public class Config_Sounds
 {
     public string SoundEvents { get; set; } = "soundevents/blockmaker.vsndevts";
 
-    public class Sound
-    {
-        public string Event { get; set; } = "";
-        public float Volume { get; set; } = 1.0f;
-    }
-
     public class Sounds_Blocks
     {
-        public Sound Speed { get; set; } = new Sound { Event = "bm_speed", Volume = 1.0f };
-        public Sound Camouflage { get; set; } = new Sound { Event = "bm_camouflage", Volume = 1.0f };
-        public Sound Damage { get; set; } = new Sound { Event = "bm_damage", Volume = 1.0f };
-        public Sound Fire { get; set; } = new Sound { Event = "bm_fire", Volume = 1.0f };
-        public Sound Health { get; set; } = new Sound { Event = "bm_health", Volume = 1.0f };
-        public Sound Invincibility { get; set; } = new Sound { Event = "bm_invincibility", Volume = 1.0f };
-        public Sound Nuke { get; set; } = new Sound { Event = "bm_nuke", Volume = 1.0f };
-        public Sound Stealth { get; set; } = new Sound { Event = "bm_stealth", Volume = 1.0f };
-        public Sound Teleport { get; set; } = new Sound { Event = "bm_teleport", Volume = 1.0f };
+        public string Speed { get; set; } = "bm_speed";
+        public string Camouflage { get; set; } = "bm_camouflage";
+        public string Damage { get; set; } = "bm_damage";
+        public string Fire { get; set; } = "bm_fire";
+        public string Health { get; set; } = "bm_health";
+        public string Invincibility { get; set; } = "bm_invincibility";
+        public string Nuke { get; set; } = "bm_nuke";
+        public string Stealth { get; set; } = "bm_stealth";
+        public string Teleport { get; set; } = "bm_teleport";
     }
-    public Sounds_Blocks Blocks { get; set; } = new Sounds_Blocks();
+    public Sounds_Blocks Blocks { get; set; } = new();
 
     public class Sounds_Building
     {
         public bool Enabled { get; set; } = true;
-        public Sound Create { get; set; } = new Sound { Event = "bm_create", Volume = 1.0f };
-        public Sound Delete { get; set; } = new Sound { Event = "bm_delete", Volume = 1.0f };
-        public Sound Place { get; set; } = new Sound { Event = "bm_place", Volume = 1.0f };
-        public Sound Rotate { get; set; } = new Sound { Event = "bm_rotate", Volume = 1.0f };
-        public Sound Save { get; set; } = new Sound { Event = "bm_save", Volume = 1.0f };
+        public string Create { get; set; } = "bm_create";
+        public string Delete { get; set; } = "bm_delete";
+        public string Place { get; set; } =  "bm_place";
+        public string Rotate { get; set; } = "bm_rotate";
+        public string Save { get; set; } = "bm_save";
     }
-    public Sounds_Building Building { get; set; } = new Sounds_Building();
+    public Sounds_Building Building { get; set; } = new();
 }

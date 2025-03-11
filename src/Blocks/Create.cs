@@ -39,10 +39,7 @@ public partial class Blocks
             );
 
             if (config.Sounds.Building.Enabled)
-            {
-                var sound = config.Sounds.Building.Create;
-                player.EmitSound(sound.Event, sound.Volume);
-            }
+                player.EmitSound(config.Sounds.Building.Create);
 
             Utils.PrintToChat(player, $"Created -" +
                 $" type: {ChatColors.White}{playerData.BlockType}{ChatColors.Grey}," +
@@ -86,12 +83,15 @@ public partial class Blocks
             Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
 
             string model = Utils.GetModelFromSelectedBlock(type, pole);
-
             block.SetModel(model);
+
             block.DispatchSpawn();
             block.AcceptInput("DisableMotion");
             block.AcceptInput("SetScale", block, block, Utils.GetSize(size).ToString());
             block.Teleport(position, rotation);
+
+            block.Glow.GlowColorOverride = Color.Aqua;
+            block.Glow.GlowType = 0;
 
             CreateTrigger(block, size);
 

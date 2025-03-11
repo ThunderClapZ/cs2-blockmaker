@@ -35,7 +35,8 @@ public partial class Blocks
                     continue;
                 }
 
-                //Utils.DrawBeamsAroundBlock(player, playerHolds.block, Color.Aqua);
+                if (config.Settings.Building.Grab.Beams)
+                    Utils.DrawBeamsAroundBlock(player, playerHolds.block, Utils.ParseColor(config.Settings.Building.Grab.BeamsColor));
 
                 if (player.Buttons.HasFlag(PlayerButtons.Use))
                     DistanceRepeat(player, playerHolds.block);
@@ -52,21 +53,18 @@ public partial class Blocks
 
                         block.Entity.Render = Color.FromArgb(alpha, color.R, color.G, color.B);
                         Utilities.SetStateChanged(block.Entity, "CBaseModelEntity", "m_clrRender");
+                    }
 
-                        foreach (var beam in playerHolds.beams)
-                        {
-                            if (beam != null && beam.IsValid)
-                                beam.Remove();
-                        }
+                    foreach (var beam in playerHolds.beams)
+                    {
+                        if (beam != null && beam.IsValid)
+                            beam.Remove();
                     }
 
                     PlayerHolds.Remove(player);
 
                     if (config.Sounds.Building.Enabled)
-                    {
-                        var sound = config.Sounds.Building.Place;
-                        player.EmitSound(sound.Event, sound.Volume);
-                    }
+                        player.EmitSound(config.Sounds.Building.Place);
                 }
             }
         }
@@ -105,11 +103,11 @@ public partial class Blocks
                     return;
                 }
 
-                int distance = (int)VectorUtils.CalculateDistance(block.AbsOrigin!, pawn.AbsOrigin);
+                int distance = (int)VectorUtils.CalculateDistance(block.AbsOrigin!, position);
 
                 if (Props.ContainsKey(block))
                 {
-                    block.Render = Utils.ParseColor(config.Settings.Building.BlockGrabColor);
+                    block.Render = Utils.ParseColor(config.Settings.Building.Grab.RenderColor);
                     Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
                 }
 
@@ -123,7 +121,16 @@ public partial class Blocks
         var playerHolds = PlayerHolds[player];
         var playerData = instance.playerData[player.Slot];
 
-        var (position, rotation) = VectorUtils.GetEndXYZ(player, block, playerHolds.distance, playerData.Grid, playerData.GridValue, playerData.Snapping);
+        var (position, rotation) =
+            VectorUtils.GetEndXYZ(
+                player,
+                block,
+                playerHolds.distance,
+                playerData.Grid,
+                playerData.GridValue,
+                playerData.Snapping,
+                playerData.SnapValue
+            );
 
         block.Teleport(position, rotation);
 

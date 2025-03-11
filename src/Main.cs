@@ -5,7 +5,7 @@ using CounterStrikeSharp.API.Core.Translations;
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Block Maker";
-    public override string ModuleVersion => "0.1.7";
+    public override string ModuleVersion => "0.1.8";
     public override string ModuleAuthor => "exkludera";
 
     public static Plugin Instance = new();
@@ -56,6 +56,6 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
         Config = config;
         Config.Settings.Prefix = StringExtensions.ReplaceColorTags(config.Settings.Prefix);
 
-        buildMode = config.Settings.Building.BuildMode;
+        buildMode = config.Settings.Building.BuildMode.Enable;
     }
 }

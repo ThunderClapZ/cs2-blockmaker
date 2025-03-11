@@ -83,7 +83,6 @@ public partial class Blocks
                 return;
             }
 
-
             if (blockActions.TryGetValue(type, out var action))
                 action(player, block);
 
@@ -113,6 +112,7 @@ public partial class Blocks
         string steamId64 = player.AuthorizedSteamID?.SteamId64.ToString() ?? "0";
         string userId = player.UserId?.ToString() ?? "-1";
         string slot = player.Slot.ToString();
+        string value = settings.Value.ToString();
 
         foreach (string command in customBlock.Command)
         {
@@ -128,7 +128,8 @@ public partial class Blocks
                 .Replace("{STEAMID3}", steamId3)
                 .Replace("{STEAMID64}", steamId64)
                 .Replace("{USERID}", userId)
-                .Replace("{SLOT}", slot);
+                .Replace("{SLOT}", slot)
+                .Replace("{VALUE}", value);
 
             Server.ExecuteCommand(replacedcommand);
             Utils.Log($"(CustomBlock: {customBlock.Title}) executed command: {replacedcommand}");
@@ -269,7 +270,6 @@ public partial class Blocks
     {
         var block = data.Entity;
         var settings = data.Properties;
-        var sound = sounds.Fire;
         var fire = Utilities.CreateEntityByName<CParticleSystem>("info_particle_system")!;
 
         fire.EffectName = "particles/burning_fx/env_fire_medium.vpcf";
@@ -279,7 +279,7 @@ public partial class Blocks
 
         var damagetimer = instance.AddTimer(1.0f, () =>
         {
-            player.EmitSound(sound.Event, sound.Volume);
+            player.EmitSound(sounds.Fire);
             instance.AddTimer(0.33f, () => player.Health((int)-settings.Value));
         }, TimerFlags.REPEAT);
 
@@ -373,10 +373,9 @@ public partial class Blocks
         var velocity = player.PlayerPawn.Value!.VelocityModifier;
         var title = blockModels.Speed.Title;
         var settings = data.Properties;
-        var sound = sounds.Speed;
 
         player.SetVelocity(settings.Value);
-        player.EmitSound(sound.Event, sound.Volume);
+        player.EmitSound(sounds.Speed);
         ActivatedMessage(player, title);
 
         instance.AddTimer(settings.Duration, () =>
@@ -446,7 +445,7 @@ public partial class Blocks
 
         Utils.PrintToChatAll($"{ChatColors.LightPurple}{player.PlayerName} {ChatColors.Grey}has nuked the {teamName} team");
 
-        Utils.PlaySoundAll(sounds.Nuke.Event, sounds.Nuke.Volume);
+        Utils.PlaySoundAll(sounds.Nuke);
 
         nuked = true;
     }
@@ -463,7 +462,7 @@ public partial class Blocks
 
         HiddenPlayers.Add(player);
 
-        player.EmitSound(sounds.Stealth.Event, sounds.Stealth.Volume);
+        player.EmitSound(sounds.Stealth);
         player.ColorScreen(Color.FromArgb(150, 75, 75, 75), settings.Duration / 2, settings.Duration, EntityExtends.FadeFlags.FADE_OUT);
         ActivatedMessage(player, title);
 
@@ -484,14 +483,13 @@ public partial class Blocks
         var block = data.Entity;
         var settings = data.Properties;
         var title = blockModels.Invincibility.Title;
-        var sound = sounds.Invincibility;
         var render = pawn.Render;
 
         pawn.TakesDamage = false;
         pawn.Render = Color.FromArgb(255, 200, 0, 255);
         Utilities.SetStateChanged(pawn, "CBaseModelEntity", "m_clrRender");
 
-        player.EmitSound(sound.Event, sound.Volume);
+        player.EmitSound(sounds.Invincibility);
         player.ColorScreen(Color.FromArgb(50, 255, 0, 255), settings.Duration / 2, settings.Duration, EntityExtends.FadeFlags.FADE_OUT);
         ActivatedMessage(player, title);
 
@@ -514,7 +512,6 @@ public partial class Blocks
 
         var block = data.Entity;
         var settings = data.Properties;
-        var sound = sounds.Camouflage;
         var title = blockModels.Camouflage.Title;
 
         var model = pawn.CBodyComponent?.SceneNode?.GetSkeletonInstance().ModelState.ModelName!;
@@ -522,7 +519,7 @@ public partial class Blocks
         if (player.IsT()) player.SetModel(config.Settings.Blocks.CamouflageT);
         else if (player.IsCT()) player.SetModel(config.Settings.Blocks.CamouflageCT);
 
-        player.EmitSound(sounds.Camouflage.Event, sounds.Camouflage.Volume);
+        player.EmitSound(sounds.Camouflage);
         player.ColorScreen(Color.FromArgb(50, 0, 255, 0), settings.Duration / 2, settings.Duration, EntityExtends.FadeFlags.FADE_OUT);
         ActivatedMessage(player, title);
 

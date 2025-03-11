@@ -12,8 +12,10 @@ public class PlayerData
     public string BlockTransparency = "100%";
     public bool Grid = false;
     public float GridValue = 32f;
-    public float RotationValue = 30f;
+    public float SnapValue = 0f;
+    public float RotationValue = 90f;
     public float PositionValue = 8f;
+    public string MoveAngle = "X+";
     public bool Snapping = false;
     public bool Noclip = false;
     public bool Godmode = false;
@@ -25,7 +27,7 @@ public class BuildingData
 {
     public CBaseProp block = null!;
     public Vector offset = new();
-    public int distance;
+    public int distance = 0;
     public List<CBeam> beams = new();
     public bool lockedmessage = false;
 }

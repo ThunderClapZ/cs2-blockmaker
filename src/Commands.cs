@@ -1,10 +1,8 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
-using CounterStrikeSharp.API.Modules.Menu;
 using CounterStrikeSharp.API.Modules.Utils;
 using System.Drawing;
-using MenuManagerOld = CounterStrikeSharp.API.Modules.Menu.MenuManager;
 
 public static class Commands
 {
@@ -33,16 +31,16 @@ public static class Commands
         AddCommands(commands.Building.ConvertBlock, ConvertBlock);
         AddCommands(commands.Building.CopyBlock, CopyBlock);
         AddCommands(commands.Building.LockBlock, LockBlock);
-        AddCommands("resetproperties", ResetProperties);
+        AddCommands(commands.Building.ResetProperties, ResetProperties);
     }
-    private static void AddCommands(string commands, Action<CCSPlayerController?> action)
+    private static void AddCommands(List<string> commands, Action<CCSPlayerController?> action)
     {
-        foreach (var cmd in commands.Split(','))
+        foreach (var cmd in commands)
             Instance.AddCommand($"css_{cmd}", "", (player, command) => action(player));
     }
-    private static void AddCommands(string commands, Action<CCSPlayerController?, string> action)
+    private static void AddCommands(List<string> commands, Action<CCSPlayerController?, string> action)
     {
-        foreach (var cmd in commands.Split(','))
+        foreach (var cmd in commands)
             Instance.AddCommand($"css_{cmd}", "", (player, command) => action(player, command.ArgByIndex(1)));
     }
 
@@ -66,16 +64,16 @@ public static class Commands
         RemoveCommands(commands.Building.ConvertBlock, ConvertBlock);
         RemoveCommands(commands.Building.CopyBlock, CopyBlock);
         RemoveCommands(commands.Building.LockBlock, LockBlock);
-        RemoveCommands("resetproperties", ResetProperties);
+        RemoveCommands(commands.Building.ResetProperties, ResetProperties);
     }
-    private static void RemoveCommands(string commands, Action<CCSPlayerController?> action)
+    private static void RemoveCommands(List<string> commands, Action<CCSPlayerController?> action)
     {
-        foreach (var cmd in commands.Split(','))
+        foreach (var cmd in commands)
             Instance.RemoveCommand($"css_{cmd}", (player, command) => action(player));
     }
-    private static void RemoveCommands(string commands, Action<CCSPlayerController?, string> action)
+    private static void RemoveCommands(List<string> commands, Action<CCSPlayerController?, string> action)
     {
-        foreach (var cmd in commands.Split(','))
+        foreach (var cmd in commands)
             Instance.RemoveCommand($"css_{cmd}", (player, command) => action(player, command.ArgByIndex(1)));
     }
 
@@ -146,27 +144,10 @@ public static class Commands
             return;
         }
 
-        if (string.IsNullOrEmpty(input.ToString()))
-        {
-            ChatMenu BuildersMenu = new("Manage Builders");
-
-            foreach (var target in Utilities.GetPlayers())
-            {
-                BuildersMenu.AddMenuOption(target.PlayerName, (player, menuOption) =>
-                {
-                    ManageBuilder(player, target.SteamID.ToString());
-                });
-            }
-
-            MenuManagerOld.OpenChatMenu(player, BuildersMenu);
-
-            return;
-        }
-
         var targetPlayer = Utilities.GetPlayers()
             .FirstOrDefault(target => target.SteamID.ToString() == input);
 
-        if (targetPlayer == null)
+        if (string.IsNullOrEmpty(input) || targetPlayer == null)
         {
             Utils.PrintToChat(player, $"{ChatColors.Red}Player not found");
             return;
@@ -389,9 +370,7 @@ public static class Commands
 
         Blocks.Delete(player, true);
 
-        var sound = config.Sounds.Building.Delete;
-
-        Utils.PlaySoundAll(sound.Event, sound.Volume);
+        Utils.PlaySoundAll(config.Sounds.Building.Delete);
         Utils.PrintToChatAll($"{ChatColors.Red}Blocks cleared by {ChatColors.LightPurple}{player.PlayerName}");
     }
 

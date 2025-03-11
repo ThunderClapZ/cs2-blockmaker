@@ -186,8 +186,8 @@ public static class EntityExtends
         player.ColorScreen(Color.FromArgb(100, 255, 0, 0), 0.25f, 0.5f, FadeFlags.FADE_OUT);
 
         var sounds = Plugin.Instance.Config.Sounds.Blocks;
-        if (hp > 0) player.EmitSound(sounds.Health.Event, sounds.Health.Volume);
-        else if (hp < 0) player.EmitSound(sounds.Damage.Event, sounds.Damage.Volume);
+        if (hp > 0) player.EmitSound(sounds.Health);
+        else if (hp < 0) player.EmitSound(sounds.Damage);
 
         if (pawn.Health <= 0)
             pawn.CommitSuicide(true, true);

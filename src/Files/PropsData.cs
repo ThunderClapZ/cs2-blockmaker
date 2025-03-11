@@ -8,8 +8,14 @@ public static partial class Files
 {
     public static class PropsData
     {
-        public static void Save()
+        public static void Save(bool autosave = false)
         {
+            if (Blocks.Props.Count <= 0)
+            {
+                Utils.Log($"No blocks to save on {Server.MapName}");
+                return;
+            }
+
             var blocksPath = Path.Combine(mapsFolder, "blocks.json");
             var teleportsPath = Path.Combine(mapsFolder, "teleports.json");
 
@@ -82,15 +88,12 @@ public static partial class Files
                 }
 
                 if (Plugin.Instance.Config.Sounds.Building.Enabled)
-                {
-                    var sound = Plugin.Instance.Config.Sounds.Building.Save;
-                    Utils.PlaySoundAll(sound.Event, sound.Volume);
-                }
+                    Utils.PlaySoundAll(Plugin.Instance.Config.Sounds.Building.Save);
 
                 int blocks = Utils.GetPlacedBlocksCount();
                 var s = blocks == 1 ? "" : "s";
 
-                Utils.PrintToChatAll($"Saved {ChatColors.White}{blocks} {ChatColors.Grey}block{s} on {ChatColors.White}{Server.MapName}");
+                Utils.PrintToChatAll($"{(autosave ? "Auto-" : "")}Saved {ChatColors.White}{blocks} {ChatColors.Grey}block{s} on {ChatColors.White}{Server.MapName}");
             }
             catch (Exception ex)
             {
