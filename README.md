@@ -89,7 +89,8 @@
     "Admin": {
       "Permission": [ "@css/root" ],
       "BuildMode": [ "buildmode" ],
-      "ManageBuilder": [ "builder", "builders" ]
+      "ManageBuilder": [ "builder", "builders" ],
+      "ResetProperties": [ "resetproperties" ]
     },
     "Building": {
       "BuildMenu": [ "bm", "buildmenu" ],
@@ -107,8 +108,7 @@
       "Grid": [ "grid" ],
       "Noclip": [ "nc" ],
       "Godmode": [ "godmode" ],
-      "TestBlock": [ "testblock" ],
-      "ResetProperties": [ "resetproperties" ]
+      "TestBlock": [ "testblock" ]
     }
   },
   "Sounds": {
