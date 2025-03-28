@@ -179,17 +179,19 @@ public partial class Blocks
 
         instance.AddTimer(duration, () =>
         {
-            block.Collision.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DEBRIS;
+            block.Collision.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
+            block.Collision.CollisionAttribute.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_DISSOLVING;
             block.CollisionRulesChanged();
 
             var clr = Utils.GetColor(data.Color);
             int alpha = Utils.GetAlpha(data.Transparency);
-            block.Render = Color.FromArgb(alpha / 3, clr.R, clr.G, clr.B);
+            block.Render = Color.FromArgb(alpha / 2, clr.R, clr.G, clr.B);
             Utilities.SetStateChanged(block, "CBaseModelEntity", "m_clrRender");
 
             instance.AddTimer(cooldown, () =>
             {
                 block.Collision.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_NONE;
+                block.Collision.CollisionAttribute.CollisionGroup = (byte)CollisionGroup.COLLISION_GROUP_NONE;
                 block.CollisionRulesChanged();
 
                 block.Render = render;

@@ -271,13 +271,13 @@ public partial class Plugin
                     var playerMaxs = pawn.Collision.Maxs * 2;
                     var blockMaxs = block.Collision.Maxs * Utils.GetSize(blockData.Size) * 2;
 
-                    if (!VectorUtils.IsWithinBounds(block.AbsOrigin!, pawn.AbsOrigin!, blockMaxs, playerMaxs))
+                    if (!VectorUtils.IsTopOnly(block.AbsOrigin!, pawn.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
                         return HookResult.Continue;
                 }
 
                 if (blockData.Team == "T" && player.Team == CsTeam.Terrorist ||
                     blockData.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
-                    blockData.Team == "Both"
+                    blockData.Team == "Both" || string.IsNullOrEmpty(blockData.Team)
                 )
                 {
                     Blocks.Actions(player, block);
@@ -312,7 +312,14 @@ public partial class Plugin
             var blockMaxs = block.Collision!.Maxs * Utils.GetSize(blocktarget.Value.Size) * 2;
 
             if (VectorUtils.IsWithinBounds(block.AbsOrigin, player.AbsOrigin, blockMaxs, playerMaxs))
-                return HookResult.Handled;
+            {
+                if (blocktarget.Value.Properties.OnTop)
+                {
+                    if (!VectorUtils.IsTopOnly(block.AbsOrigin!, player.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
+                        return HookResult.Handled;
+                }
+                else return HookResult.Handled;
+            }
         }
 
         return HookResult.Continue;

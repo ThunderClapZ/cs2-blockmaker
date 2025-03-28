@@ -243,7 +243,7 @@ public partial class Blocks
 
             var playerData = instance.playerData[player.Slot];
 
-            CreateBlock(playerData.BlockType, playerData.BlockPole, playerData.BlockSize, entity.AbsOrigin!, entity.AbsRotation!, playerData.BlockColor, playerData.BlockTransparency, playerData.BlockTeam);
+            CreateBlock(player, playerData.BlockType, playerData.BlockPole, playerData.BlockSize, entity.AbsOrigin!, entity.AbsRotation!, playerData.BlockColor, playerData.BlockTransparency, playerData.BlockTeam);
 
             Utils.PrintToChat(player, $"Converted -" +
                 $" type: {ChatColors.White}{playerData.BlockType}{ChatColors.Grey}," +
@@ -272,7 +272,7 @@ public partial class Blocks
         {
             var playerData = instance.playerData[player.Slot];
 
-            CreateBlock(block.Type, block.Pole, block.Size, entity.AbsOrigin!, entity.AbsRotation!, block.Color, block.Transparency, block.Team, block.Properties);
+            CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!, entity.AbsRotation!, block.Color, block.Transparency, block.Team, block.Properties);
 
             if (config.Sounds.Building.Enabled)
                 player.EmitSound(config.Sounds.Building.Create);
@@ -351,7 +351,7 @@ public partial class Blocks
             return;
         }
 
-        if ((!float.TryParse(input, out float number) || number <= 0) && input != "Reset" && input != "OnTop")
+        if ((!float.TryParse(input, out float number) || number <= 0) && input != "Reset" && input != "OnTop" && input != "Locked")
         {
             Utils.PrintToChat(player, $"{ChatColors.Red}Invalid input value: {ChatColors.White}{input}");
             return;
@@ -372,12 +372,18 @@ public partial class Blocks
                         Value = defaultProperties.Value,
                         Duration = defaultProperties.Duration,
                         OnTop = defaultProperties.OnTop,
+                        Locked = defaultProperties.Locked,
+                        Builder = properties.Builder,
                     };
                     Utils.PrintToChat(player, $"{ChatColors.White}{blocktype} {ChatColors.Grey}properties has been reset");
                     break;
                 case "OnTop":
                     properties.OnTop = !properties.OnTop;
                     Utils.PrintToChat(player, $"Changed {ChatColors.White}{blocktype} {ChatColors.Grey}{type} to {ChatColors.White}{(properties.OnTop ? "Enabled" : "Disabled")}{ChatColors.Grey}");
+                    break;
+                case "Locked":
+                    properties.Locked = !properties.Locked;
+                    Utils.PrintToChat(player, $"Changed {ChatColors.White}{blocktype} {ChatColors.Grey}{type} to {ChatColors.White}{(properties.Locked ? "Enabled" : "Disabled")}{ChatColors.Grey}");
                     break;
                 case "Duration":
                     properties.Duration = number;

@@ -103,10 +103,10 @@ public static class VectorUtils
         Vector position = block.AbsOrigin!;
         QAngle rotation = closestBlock.AbsRotation!;
 
-        float scale = Blocks.Props.ContainsKey(closestBlock) ? Utils.GetSize(Blocks.Props[closestBlock].Size) : 1;
-
-        Vector mins = closestBlock.Collision.Mins * scale * 2;
-        Vector maxs = closestBlock.Collision.Maxs * scale * 2;
+        float blockScale = Blocks.Props.ContainsKey(block) ? Utils.GetSize(Blocks.Props[block].Size) : 1;
+        float closestBlockScale = Blocks.Props.ContainsKey(closestBlock) ? Utils.GetSize(Blocks.Props[closestBlock].Size) : 1;
+        Vector blockDimensions = (block.Collision.Maxs - block.Collision.Mins) * blockScale;
+        Vector closestBlockDimensions = (closestBlock.Collision.Maxs - closestBlock.Collision.Mins) * closestBlockScale;
 
         // Get the forward, right, and up vectors based on the closest block's rotation
         Vector forward = new Vector(
@@ -121,58 +121,63 @@ public static class VectorUtils
         );
         Vector up = Cross(forward, right);
 
-        Vector[] localFaceCenters =
+        // Calculate face directions
+        Vector[] faceDirections =
         {
-            new Vector(mins.X, 0, 0),   // -X face
-            new Vector(maxs.X, 0, 0),   // +X face
-            new Vector(0, mins.Y, 0),   // -Y face
-            new Vector(0, maxs.Y, 0),   // +Y face
-            new Vector(0, 0, mins.Z),   // -Z face
-            new Vector(0, 0, maxs.Z)    // +Z face
+            -forward,  // -X face
+            forward,   // +X face
+            -right,    // -Y face
+            right,     // +Y face
+            -up,       // -Z face
+            up         // +Z face
         };
 
-        // Transform the face centers to world space using the rotation
-        Vector[] faceCenters = new Vector[6];
-        for (int i = 0; i < localFaceCenters.Length; i++)
+        // Calculate face centers for the closest block (edge positions)
+        Vector[] closestBlockFaceCenters = new Vector[6];
+        Vector[] blockFaceOffsets = new Vector[6];
+
+        for (int i = 0; i < 6; i++)
         {
-            Vector localCenter = localFaceCenters[i];
-            faceCenters[i] =
-                closestBlock.AbsOrigin! +
-                forward * localCenter.X +
-                right * localCenter.Y +
-                up * localCenter.Z;
+            int axis = i / 2; // 0=X, 1=Y, 2=Z
+            bool isMinFace = i % 2 == 0; // Even indices are min faces (-X, -Y, -Z)
+
+            // Calculate closest block's face center (at its edge)
+            Vector closestBlockFaceCenter = closestBlock.AbsOrigin!;
+            if (axis == 0) // X axis
+                closestBlockFaceCenter += faceDirections[i] * closestBlockDimensions.X * 0.5f;
+            else if (axis == 1) // Y axis
+                closestBlockFaceCenter += faceDirections[i] * closestBlockDimensions.Y * 0.5f;
+            else // Z axis
+                closestBlockFaceCenter += faceDirections[i] * closestBlockDimensions.Z * 0.5f;
+
+            closestBlockFaceCenters[i] = closestBlockFaceCenter;
+
+            // Calculate our block's offset (placing our edge against their edge)
+            if (axis == 0) // X axis
+                blockFaceOffsets[i] = faceDirections[i] * blockDimensions.X * 0.5f;
+            else if (axis == 1) // Y axis
+                blockFaceOffsets[i] = faceDirections[i] * blockDimensions.Y * 0.5f;
+            else // Z axis
+                blockFaceOffsets[i] = faceDirections[i] * blockDimensions.Z * 0.5f;
         }
 
         float closestDistance = float.MaxValue;
         int closestFace = -1;
 
-        for (int i = 0; i < faceCenters.Length; i++)
+        for (int i = 0; i < closestBlockFaceCenters.Length; i++)
         {
-            float distance = CalculateDistance(playerEyePos, faceCenters[i]);
+            float distance = CalculateDistance(playerEyePos, closestBlockFaceCenters[i]);
             if (distance < closestDistance)
             {
                 closestDistance = distance;
                 closestFace = i;
-                position = faceCenters[i];
+                position = closestBlockFaceCenters[i] + blockFaceOffsets[i];
             }
         }
 
-        if (closestFace != -1)
-        {
-            Vector snapDirection = Vector.Zero;
-
-            switch (closestFace)
-            {
-                case 0: snapDirection = -forward; break;// -X face
-                case 1: snapDirection = forward; break; // +X face
-                case 2: snapDirection = -right; break;  // -Y face
-                case 3: snapDirection = right; break;   // +Y face
-                case 4: snapDirection = -up; break;     // -Z face
-                case 5: snapDirection = up; break;      // +Z face
-            }
-
-            position += snapDirection * snapValue;
-        }
+        // Apply additional snap value if needed (for gap between blocks)
+        if (closestFace != -1 && snapValue != 0)
+            position += faceDirections[closestFace] * snapValue;
 
         return (position, rotation);
     }
@@ -184,6 +189,11 @@ public static class VectorUtils
             a.Z * b.X - a.X * b.Z,
             a.X * b.Y - a.Y * b.X
         );
+    }
+
+    public static float Dot(Vector a, Vector b)
+    {
+        return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
     }
 
     public static float CalculateDistance(Vector a, Vector b)
@@ -199,6 +209,54 @@ public static class VectorUtils
 
         return overlapX && overlapY && overlapZ;
     }
+
+    public static bool IsTopOnly(Vector entityPosition, Vector playerPosition, Vector entitySize, Vector playerSize, QAngle entityRotation)
+    {
+        Vector forward = new Vector(
+            (float)Math.Cos(entityRotation.Y * Math.PI / 180) * (float)Math.Cos(entityRotation.X * Math.PI / 180),
+            (float)Math.Sin(entityRotation.Y * Math.PI / 180) * (float)Math.Cos(entityRotation.X * Math.PI / 180),
+            (float)-Math.Sin(entityRotation.X * Math.PI / 180)
+        );
+        Vector right = new Vector(
+            (float)Math.Cos((entityRotation.Y + 90) * Math.PI / 180),
+            (float)Math.Sin((entityRotation.Y + 90) * Math.PI / 180),
+            0
+        );
+        Vector up = Cross(forward, right);
+
+        Vector[] faceDirections =
+        {
+            -forward,  // -X face
+            forward,   // +X face
+            -right,    // -Y face
+            right,     // +Y face
+            -up,       // -Z face
+            up         // +Z face (top face)
+        };
+
+        // The "top" face is the +Z face (index 5)
+        Vector topFaceDirection = faceDirections[5]; // 'up' vector
+
+        // Calculate the block's top face center (block center + half height upward)
+        Vector topFaceCenter = entityPosition + topFaceDirection * (entitySize.Z / 2); // entitySize.Z = 8, so +4 units up
+
+        // Player position relative to the top face center
+        Vector relativePos = playerPosition - topFaceCenter;
+
+        // Project relative position onto the block's local axes
+        float localX = Dot(relativePos, right);   // Along right vector (local X)
+        float localY = Dot(relativePos, forward); // Along forward vector (local Y)
+        float localZ = Dot(relativePos, up);      // Along up vector (local Z)
+
+        float triggerThreshold = 2.0f;
+
+        bool overlapX = Math.Abs(localX) <= entitySize.X;
+        bool overlapY = Math.Abs(localY) <= entitySize.Y;
+        bool onTop = localZ >= 0 && localZ <= (playerSize.Z + triggerThreshold);
+
+        return overlapX && overlapY && onTop;
+    }
+
 
     public class VectorDTO
     {

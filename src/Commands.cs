@@ -15,6 +15,7 @@ public static class Commands
     {
         AddCommands(commands.Admin.BuildMode, BuildMode);
         AddCommands(commands.Admin.ManageBuilder, ManageBuilder);
+        AddCommands(commands.Admin.ResetProperties, ResetProperties);
         AddCommands(commands.Building.BuildMenu, BuildMenu);
         AddCommands(commands.Building.BlockType, BlockType);
         AddCommands(commands.Building.BlockColor, BlockColor);
@@ -31,7 +32,6 @@ public static class Commands
         AddCommands(commands.Building.ConvertBlock, ConvertBlock);
         AddCommands(commands.Building.CopyBlock, CopyBlock);
         AddCommands(commands.Building.LockBlock, LockBlock);
-        AddCommands(commands.Building.ResetProperties, ResetProperties);
     }
     private static void AddCommands(List<string> commands, Action<CCSPlayerController?> action)
     {
@@ -48,6 +48,7 @@ public static class Commands
     {
         RemoveCommands(commands.Admin.BuildMode, BuildMode);
         RemoveCommands(commands.Admin.ManageBuilder, ManageBuilder);
+        RemoveCommands(commands.Admin.ResetProperties, ResetProperties);
         RemoveCommands(commands.Building.BuildMenu, BuildMenu);
         RemoveCommands(commands.Building.BlockType, BlockType);
         RemoveCommands(commands.Building.BlockColor, BlockColor);
@@ -64,7 +65,6 @@ public static class Commands
         RemoveCommands(commands.Building.ConvertBlock, ConvertBlock);
         RemoveCommands(commands.Building.CopyBlock, CopyBlock);
         RemoveCommands(commands.Building.LockBlock, LockBlock);
-        RemoveCommands(commands.Building.ResetProperties, ResetProperties);
     }
     private static void RemoveCommands(List<string> commands, Action<CCSPlayerController?> action)
     {
@@ -185,7 +185,7 @@ public static class Commands
         if (!Utils.BuildMode(player))
             return;
 
-        Menu.Open(player);
+        Menu.Open(player, "Block Maker");
     }
 
     public static void BlockType(CCSPlayerController? player, string selectType)
@@ -476,6 +476,8 @@ public static class Commands
                     Value = defaultProperties.Value,
                     Duration = defaultProperties.Duration,
                     OnTop = defaultProperties.OnTop,
+                    Locked = defaultProperties.Locked,
+                    Builder = block.Properties.Builder,
                 };
             }
             else Utils.PrintToChatAll($"{ChatColors.Red}Failed to find {ChatColors.White}{block.Type} {ChatColors.Red}default properties");

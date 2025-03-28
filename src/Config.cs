@@ -10,7 +10,7 @@ public class Config : BasePluginConfig
 public class Config_Settings
 {
     public string Prefix { get; set; } = "{purple}BlockMaker {grey}|";
-    public bool ScreenMenu { get; set; } = false;
+    public string MenuType { get; set; } = "CenterHtmlMenu";
 
     public class Settings_Building
     {
@@ -84,6 +84,7 @@ public class Config_Commands
         public List<string> Permission { get; set; } = [ "@css/root" ];
         public List<string> BuildMode { get; set; } = [ "buildmode" ];
         public List<string> ManageBuilder { get; set; } = [ "builder", "builders" ];
+        public List<string> ResetProperties { get; set; } = ["resetproperties"];
     }
     public Commands_Admin Admin { get; set; } = new();
 
@@ -105,7 +106,6 @@ public class Config_Commands
         public List<string> Noclip { get; set; } = [ "nc" ];
         public List<string> Godmode { get; set; } = [ "godmode" ];
         public List<string> TestBlock { get; set; } = [ "testblock" ];
-        public List<string> ResetProperties { get; set; } = ["resetproperties"];
     }
     public Commands_Building Building { get; set; } = new();
 }

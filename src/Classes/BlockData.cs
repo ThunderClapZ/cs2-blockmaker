@@ -8,6 +8,7 @@ public class BlockData_Properties
     public float Duration { get; set; } = 0;
     public bool OnTop { get; set; } = true;
     public bool Locked { get; set; } = false;
+    public string Builder { get; set; } = "";
 }
 
 public class BlockData

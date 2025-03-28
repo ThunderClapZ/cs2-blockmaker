@@ -54,10 +54,13 @@ public static class Utils
         Server.PrintToChatAll($" {config.Settings.Prefix} {message}");
     }
 
-    public static void PlaySoundAll(string sound, float volume = 1)
+    public static void PlaySoundAll(string sound)
     {
         foreach (var player in Utilities.GetPlayers())
-            player.EmitSound(sound, volume);
+        {
+            RecipientFilter filter = [player];
+            player.EmitSound(sound, filter);
+        }
     }
 
     public static bool IsValidJson(string filePath)

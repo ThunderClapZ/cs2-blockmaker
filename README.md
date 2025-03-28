@@ -24,10 +24,7 @@
 - [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp)
 - [MultiAddonManager](https://github.com/Source2ZE/MultiAddonManager)
 - [Block Maker Addon](https://steamcommunity.com/sharedfiles/filedetails/?id=3430295154)
-- [MenuManagerCS2](https://github.com/NickFox007/MenuManagerCS2)
-- [PlayerSettings](https://github.com/NickFox007/PlayerSettingsCS2) (required by MenuManagerCS2)
-- [AnyBaseLibCS2](https://github.com/NickFox007/AnyBaseLibCS2) (required by PlayerSettings)
-- [CS2ScreenMenuAPI](https://github.com/ipsvn/ChaseMod) (optional for screen menu)
+- [CS2MenuManager](https://github.com/schwarper/CS2MenuManager)
 - [ChaseMod](https://github.com/ipsvn/ChaseMod) (optional for gameplay)
 
 <br>
@@ -47,7 +44,7 @@
 {
   "Settings": {
     "Prefix": "{purple}BlockMaker {grey}|",
-    "ScreenMenu": false,
+    "MenuType": "CenterHtmlMenu",
     "Building": {
       "BuildMode": {
         "Enable": true,

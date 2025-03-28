@@ -117,6 +117,7 @@ public static partial class Files
                     foreach (var blockData in blocksList)
                     {
                         Blocks.CreateBlock(
+                            null,
                             blockData.Type,
                             blockData.Pole,
                             blockData.Size,
@@ -183,7 +184,7 @@ public static partial class Files
                 { Models.Props.Death.Title, new BlockData_Properties { OnTop = false } },
                 { Models.Props.Honey.Title, new BlockData_Properties { Value = 0.3f } },
                 { Models.Props.Platform.Title, new BlockData_Properties() },
-                { Models.Props.NoFallDmg.Title, new BlockData_Properties() },
+                { Models.Props.NoFallDmg.Title, new BlockData_Properties { OnTop = false } },
                 { Models.Props.Ice.Title, new BlockData_Properties() },
                 { Models.Props.Nuke.Title, new BlockData_Properties() },
                 { Models.Props.Glass.Title, new BlockData_Properties() },

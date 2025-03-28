@@ -57,17 +57,6 @@ public static class EntityExtends
             player.GiveNamedItem(weaponName);
     }
 
-    private static MemoryFunctionVoid<CBaseEntity, string, int, float, float> CBaseEntity_EmitSoundParamsFunc = new(GameData.GetSignature("CBaseEntity_EmitSoundParams"));
-    public static void EmitSound(this CBaseEntity entity, string soundEventName, float volume = 1f, int pitch = 1, float delay = 1f)
-    {
-        if (entity is null
-        || entity.IsValid is not true
-        || string.IsNullOrEmpty(soundEventName) is true
-        || CBaseEntity_EmitSoundParamsFunc is null) return;
-
-        CBaseEntity_EmitSoundParamsFunc.Invoke(entity, soundEventName, pitch, volume, delay);
-    }
-
     public static CCSPlayerPawn? Pawn(this CCSPlayerController? player)
     {
         if (!player.IsLegal() && !player.IsAlive())

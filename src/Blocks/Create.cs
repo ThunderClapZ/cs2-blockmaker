@@ -28,6 +28,7 @@ public partial class Blocks
         try
         {
             CreateBlock(
+                player,
                 playerData.BlockType,
                 playerData.BlockPole,
                 playerData.BlockSize,
@@ -57,6 +58,7 @@ public partial class Blocks
 
     public static Dictionary<CBaseEntity, BlockData> Props = new();
     public static void CreateBlock(
+        CCSPlayerController? player,
         string type,
         bool pole,
         string size,
@@ -107,6 +109,7 @@ public partial class Blocks
                         OnTop = defaultProperties.OnTop,
                         Locked = defaultProperties.Locked,
                     };
+                    if (player != null) properties.Builder = $"{player.PlayerName} - {DateTime.Now:dd/MMMM/yyyy HH:mm}";
                 }
                 else properties = new BlockData_Properties();
             }
@@ -119,6 +122,7 @@ public partial class Blocks
                     Duration = properties.Duration,
                     OnTop = properties.OnTop,
                     Locked = properties.Locked,
+                    Builder = properties.Builder,
                 };
             }
 

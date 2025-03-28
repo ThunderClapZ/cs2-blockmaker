@@ -7,8 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="CounterStrikeSharp.API" Version="1.0.305" />
-        <Reference Include="API/CS2ScreenMenuAPI.dll" />
-        <Reference Include="API/MenuManagerApi.dll" />
+        <PackageReference Include="CounterStrikeSharp.API" Version="1.0.314" />
+        <Reference Include="API/CS2MenuManager.dll" />
     </ItemGroup>
 </Project>
