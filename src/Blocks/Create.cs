@@ -87,10 +87,10 @@ public partial class Blocks
             string model = Utils.GetModelFromSelectedBlock(type, pole);
             block.SetModel(model);
 
+            block.Teleport(position, rotation);
             block.DispatchSpawn();
             block.AcceptInput("DisableMotion");
             block.AcceptInput("SetScale", block, block, Utils.GetSize(size).ToString());
-            block.Teleport(position, rotation);
 
             block.Glow.GlowColorOverride = Color.Aqua;
             block.Glow.GlowType = 0;

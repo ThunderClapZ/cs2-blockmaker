@@ -315,7 +315,7 @@ public partial class Plugin
             {
                 if (blocktarget.Value.Properties.OnTop)
                 {
-                    if (!VectorUtils.IsTopOnly(block.AbsOrigin!, player.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
+                    if (VectorUtils.IsTopOnly(block.AbsOrigin!, player.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
                         return HookResult.Handled;
                 }
                 else return HookResult.Handled;

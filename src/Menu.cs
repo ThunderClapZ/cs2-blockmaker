@@ -1,24 +1,30 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
+using CS2MenuManager.API.Class;
 using CS2MenuManager.API.Interface;
 
 public partial class Menu
 {
     private static Plugin Instance = Plugin.Instance;
 
+    public static IMenu Create(string title, string menuType, IMenu? prevMenu = null)
+    {
+        IMenu menu = MenuManager.MenuByType(menuType, title, Instance);
+
+        if (prevMenu != null)
+            menu.PrevMenu = prevMenu;
+
+        menu.ExitButton = true;
+
+        return menu;
+    }
+
     public static void Open(CCSPlayerController player, string title)
     {
-        if (!MenuAPI.MenuTypes.TryGetValue(Instance.Config.Settings.MenuType, out Type? menuType) || menuType == null)
-        {
-            throw new InvalidOperationException(
-                "Invalid menu type configured. Please use one of the following valid menu types:\n" +
-                string.Join(" ,", MenuAPI.MenuTypes.Keys) + "\n" +
-                $"Configured menu type: '{Instance.Config.Settings.MenuType}'"
-            );
-        }
+        string menuType = Instance.Config.Settings.MenuType;
 
-        IMenu Menu = MenuAPI.Create(title, menuType);
+        IMenu Menu = Create(title, menuType);
 
         Menu.AddItem($"Block Commands", (player, option) =>
         {
@@ -40,9 +46,9 @@ public partial class Menu
 
     /* Menu_Commands */
 
-    static void Menu_Commands(CCSPlayerController player, Type menuType, IMenu Parent)
+    static void Menu_Commands(CCSPlayerController player, string menuType, IMenu Parent)
     {
-        IMenu Menu = MenuAPI.Create("Block Commands", menuType, Parent);
+        IMenu Menu = Create("Block Commands", menuType, Parent);
 
         Menu.AddItem("Create", (player, option) =>
         {
@@ -85,14 +91,14 @@ public partial class Menu
         Menu.Display(player, 0);
     }
 
-    static void PositionMenuOptions(CCSPlayerController player, Type menuType, IMenu Parent, string[] options, bool rotate)
+    static void PositionMenuOptions(CCSPlayerController player, string menuType, IMenu Parent, string[] options, bool rotate)
     {
         var playerData = Instance.playerData[player.Slot];
 
         float value = rotate ? playerData.RotationValue : playerData.PositionValue;
         string title = $"{(rotate ? "Rotate" : "Move")} Block ({value} Units)";
 
-        IMenu Menu = MenuAPI.Create(title, menuType, Parent);
+        IMenu Menu = Create(title, menuType, Parent);
 
         Menu.AddItem($"Select Units", (player, option) =>
         {
@@ -118,11 +124,11 @@ public partial class Menu
 
     /* Menu_BlockSettings */
     
-    static void Menu_BlockSettings(CCSPlayerController player, Type menuType, IMenu Parent)
+    static void Menu_BlockSettings(CCSPlayerController player, string menuType, IMenu Parent)
     {
         var playerData = Instance.playerData[player.Slot];
 
-        IMenu Menu = MenuAPI.Create("Block Settings", menuType, Parent);
+        IMenu Menu = Create("Block Settings", menuType, Parent);
 
         Menu.AddItem($"Type: {playerData.BlockType}", (player, option) =>
         {
@@ -187,11 +193,11 @@ public partial class Menu
         Menu.Display(player, 0);
     }
 
-    static void TypeMenuOptions(CCSPlayerController player, Type menuType, IMenu Parent)
+    static void TypeMenuOptions(CCSPlayerController player, string menuType, IMenu Parent)
     {
         var playerData = Instance.playerData[player.Slot];
 
-        IMenu Menu = MenuAPI.Create($"Select Type ({playerData.BlockType})", menuType, Parent);
+        IMenu Menu = Create($"Select string ({playerData.BlockType})", menuType, Parent);
 
         var blockmodels = Files.Models.Props;
 
@@ -229,11 +235,11 @@ public partial class Menu
         Menu.Display(player, 0);
     }
 
-    static void GunTypeMenu(CCSPlayerController player, Type menuType, IMenu Parent, string gunType)
+    static void GunTypeMenu(CCSPlayerController player, string menuType, IMenu Parent, string gunType)
     {
         var playerData = Instance.playerData[player.Slot];
 
-        IMenu Menu = MenuAPI.Create($"Select {gunType}", menuType, Parent);
+        IMenu Menu = Create($"Select {gunType}", menuType, Parent);
 
         if (WeaponList.Categories.ContainsKey(gunType))
         {
@@ -267,11 +273,11 @@ public partial class Menu
         Menu.Display(player, 0);
     }
 
-    static void TransparencyMenuOptions(CCSPlayerController player, Type menuType, IMenu Parent)
+    static void TransparencyMenuOptions(CCSPlayerController player, string menuType, IMenu Parent)
     {
         var playerData = Instance.playerData[player.Slot];
 
-        IMenu Menu = MenuAPI.Create($"Select Transparency ({playerData.BlockTransparency})", menuType, Parent);
+        IMenu Menu = Create($"Select Transparency ({playerData.BlockTransparency})", menuType, Parent);
 
         foreach (var value in Utils.AlphaMapping.Keys)
         {
@@ -290,11 +296,11 @@ public partial class Menu
         Menu.Display(player, 0);
     }
 
-    static void ColorMenuOptions(CCSPlayerController player, Type menuType, IMenu Parent)
+    static void ColorMenuOptions(CCSPlayerController player, string menuType, IMenu Parent)
     {
         var playerData = Instance.playerData[player.Slot];
 
-        IMenu Menu = MenuAPI.Create($"Select Color ({playerData.BlockColor})", menuType, Parent);
+        IMenu Menu = Create($"Select Color ({playerData.BlockColor})", menuType, Parent);
 
         foreach (var color in Utils.ColorMapping.Keys)
         {
@@ -309,13 +315,13 @@ public partial class Menu
         Menu.Display(player, 0);
     }
 
-    static void PropertiesMenuOptions(CCSPlayerController player, Type menuType, IMenu Parent, CBaseEntity entity)
+    static void PropertiesMenuOptions(CCSPlayerController player, string menuType, IMenu Parent, CBaseEntity entity)
     {
         var playerData = Instance.playerData[player.Slot];
 
         if (Blocks.Props.TryGetValue(entity, out var block))
         {
-            IMenu Menu = MenuAPI.Create($"Properties ({block.Type})", menuType, Parent);
+            IMenu Menu = Create($"Properties ({block.Type})", menuType, Parent);
             var properties = block.Properties;
 
             if (!string.IsNullOrEmpty(properties.Builder))
@@ -345,7 +351,7 @@ public partial class Menu
         }
     }
 
-    static void PropertyMenuOption(IMenu Menu, Type menuType, IMenu Parent, string property, float value, CCSPlayerController player, CBaseEntity entity)
+    static void PropertyMenuOption(IMenu Menu, string menuType, IMenu Parent, string property, float value, CCSPlayerController player, CBaseEntity entity)
     {
         var playerData = Instance.playerData[player.Slot];
 
@@ -387,11 +393,11 @@ public partial class Menu
 
     /* Menu_Settings */
     
-    static void Menu_BuildSettings(CCSPlayerController player, Type menuType, IMenu Parent)
+    static void Menu_BuildSettings(CCSPlayerController player, string menuType, IMenu Parent)
     {
         var playerData = Instance.playerData[player.Slot];
 
-        IMenu Menu = MenuAPI.Create($"Build Settings", menuType, Parent);
+        IMenu Menu = Create($"Build Settings", menuType, Parent);
 
         Menu.AddItem("Build Mode: " + (Instance.buildMode ? "ON" : "OFF"), (player, option) =>
         {
@@ -433,7 +439,7 @@ public partial class Menu
 
         Menu.AddItem("Clear Blocks", (player, option) =>
         {
-            IMenu ConfirmMenu = MenuAPI.Create($"Confirm", menuType, Menu);
+            IMenu ConfirmMenu = Create($"Confirm", menuType, Menu);
 
             ConfirmMenu.AddItem("NO - keep blocks", (player, option) =>
             {
@@ -452,7 +458,7 @@ public partial class Menu
 
         Menu.AddItem("Manage Builders", (player, option) =>
         {
-            IMenu BuildersMenu = MenuAPI.Create($"Manage Builders", menuType, Menu);
+            IMenu BuildersMenu = Create($"Manage Builders", menuType, Menu);
 
             var targets = Utilities.GetPlayers().Where(x => x != player);
             if (targets.Count() <= 0)
@@ -476,11 +482,11 @@ public partial class Menu
         Menu.Display(player, 0);
     }
 
-    static void GridMenuOptions(CCSPlayerController player, Type menuType, IMenu Parent)
+    static void GridMenuOptions(CCSPlayerController player, string menuType, IMenu Parent)
     {
         var playerData = Instance.playerData[player.Slot];
 
-        IMenu Menu = MenuAPI.Create($"Grid Options ({playerData.GridValue} Units)", menuType, Parent);
+        IMenu Menu = Create($"Grid Options ({playerData.GridValue} Units)", menuType, Parent);
 
         Menu.AddItem($"Select Units", (player, option) =>
         {
@@ -500,11 +506,11 @@ public partial class Menu
         Menu.Display(player, 0);
     }
 
-    static void SnapMenuOptions(CCSPlayerController player, Type menuType, IMenu Parent)
+    static void SnapMenuOptions(CCSPlayerController player, string menuType, IMenu Parent)
     {
         var playerData = Instance.playerData[player.Slot];
 
-        IMenu Menu = MenuAPI.Create($"Snap Options ({playerData.SnapValue} Units)", menuType, Parent);
+        IMenu Menu = Create($"Snap Options ({playerData.SnapValue} Units)", menuType, Parent);
 
         Menu.AddItem($"Select Units", (player, option) =>
         {
