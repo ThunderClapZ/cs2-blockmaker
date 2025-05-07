@@ -96,10 +96,10 @@ public partial class Plugin
             Config.Settings.Blocks.CamouflageT,
             Config.Settings.Blocks.CamouflageCT,
             Config.Settings.Blocks.FireParticle,
-            Config.Settings.Building.Lights.Model,
+            Config.Settings.Lights.Model,
         ];
 
-        foreach (var effect in Config.Settings.Building.Effects)
+        foreach (var effect in Config.Settings.Blocks.Effects)
             resources.Add(effect.Particle);
 
         foreach (var model in Files.Models.Props.GetAllBlocks())
@@ -256,7 +256,7 @@ public partial class Plugin
                         return HookResult.Continue;
             }
 
-            var teleport = Blocks.Teleports.Where(pair => pair.Entry.Entity == block || pair.Exit.Entity == block).First();
+            var teleport = Blocks.Teleports.Where(pair => pair.Entry.Entity == block || pair.Exit.Entity == block).FirstOrDefault();
 
             if (teleport != null)
             {

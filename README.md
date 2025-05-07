@@ -62,37 +62,24 @@
         "RenderColor": "255,255,255,128",
         "Beams": true,
         "BeamsColor": "255,255,255,255"
-      },
-      "BlockSizes": [
-        { "Title": "Small", "Size": 0.5 },
-        { "Title": "Normal", "Size": 1 },
-        { "Title": "Large", "Size": 2 },
-        { "Title": "X-Large", "Size": 3 }
-      ],
-      "Effects": [
-        {
-          "Title": "Fire",
-          "Particle": "particles/burning_fx/env_fire_small.vpcf"
-        },
-        {
-          "Title": "Smoke",
-          "Particle": "particles/burning_fx/smoke_gib_01.vpcf"
-        },
-        {
-          "Title": "Money",
-          "Particle": "particles/money_fx/moneybag_trail.vpcf"
-        }
-      ],
-      "Lights": {
-        "Model": "models/generic/interior_lamp_kit_01/ilk01_lamp_01_bulb.vmdl",
-        "HideModel": true
       }
     },
     "Blocks": {
       "DisableShadows": true,
       "CamouflageT": "characters/models/ctm_fbi/ctm_fbi.vmdl",
       "CamouflageCT": "characters/models/tm_leet/tm_leet_variantb.vmdl",
-      "FireParticle": "particles/burning_fx/env_fire_medium.vpcf"
+      "FireParticle": "particles/burning_fx/env_fire_medium.vpcf",
+      "Sizes": [
+        { "Title": "Small", "Size": 0.5 },
+        { "Title": "Normal", "Size": 1 },
+        { "Title": "Large", "Size": 2 },
+        { "Title": "X-Large", "Size": 3 }
+      ],
+      "Effects": [
+        { "Title": "Fire", "Particle": "particles/burning_fx/env_fire_small.vpcf" },
+        { "Title": "Smoke", "Particle": "particles/burning_fx/smoke_gib_01.vpcf" },
+        { "Title": "Money", "Particle": "particles/money_fx/moneybag_trail.vpcf" }
+      ]
     },
     "Teleports": {
       "ForceAngles": false,
@@ -104,6 +91,10 @@
         "Model": "models/blockmaker/teleport/model.vmdl",
         "Color": "255,0,0,255"
       }
+    },
+    "Lights": {
+      "Model": "models/generic/interior_lamp_kit_01/ilk01_lamp_01_bulb.vmdl",
+      "HideModel": true
     }
   },
   "Commands": {

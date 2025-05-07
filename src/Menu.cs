@@ -149,7 +149,7 @@ public partial class Menu
 
         Menu.AddItem($"Size: {BuilderData.BlockSize}", (player, option) =>
         {
-            var sizeValues = Instance.Config.Settings.Building.BlockSizes.ToArray();
+            var sizeValues = Instance.Config.Settings.Blocks.Sizes.ToArray();
             int currentIndex = Array.FindIndex(sizeValues, s => s.Title == BuilderData.BlockSize);
             int nextIndex = (currentIndex + 1) % sizeValues.Length;
             BuilderData.BlockSize = sizeValues[nextIndex].Title;
@@ -322,7 +322,7 @@ public partial class Menu
             Menu_BlockSettings(player, menuType, Parent);
         });
 
-        foreach (var value in Instance.Config.Settings.Building.Effects)
+        foreach (var value in Instance.Config.Settings.Blocks.Effects)
         {
             Menu.AddItem(value.Title, (player, option) =>
             {

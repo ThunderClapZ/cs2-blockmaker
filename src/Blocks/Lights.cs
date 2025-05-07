@@ -40,8 +40,8 @@ public partial class Blocks
                 entity.Entity.Name = "blockmaker_light_entity";
                 entity.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
 
-                if (!config.Settings.Building.Lights.HideModel || instance.buildMode)
-                    entity.SetModel(config.Settings.Building.Lights.Model);
+                if (!config.Settings.Lights.HideModel || instance.buildMode)
+                    entity.SetModel(config.Settings.Lights.Model);
 
                 else entity.Render = Color.Transparent;
 

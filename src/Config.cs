@@ -35,8 +35,16 @@ public class Config_Settings
             public string BeamsColor { get; set; } = "255,255,255,255";
         };
         public Settings_BlockGrab Grab { get; set; } = new();
+    }
+    public Settings_Building Building { get; set; } = new();
 
-        public List<BlockSize> BlockSizes { get; set; } = new()
+    public class Settings_Blocks
+    {
+        public bool DisableShadows { get; set; } = true;
+        public string CamouflageT { get; set; } = "characters/models/ctm_fbi/ctm_fbi.vmdl";
+        public string CamouflageCT { get; set; } = "characters/models/tm_leet/tm_leet_variantb.vmdl";
+        public string FireParticle { get; set; } = "particles/burning_fx/env_fire_medium.vpcf";
+        public List<BlockSize> Sizes { get; set; } = new()
         {
             new("Small", 0.5f),
             new("Normal", 1.0f),
@@ -50,22 +58,6 @@ public class Config_Settings
             new("Smoke", "particles/burning_fx/smoke_gib_01.vpcf"),
             new("Money", "particles/money_fx/moneybag_trail.vpcf"),
         };
-
-        public class Settings_Lights
-        {
-            public string Model { get; set; } = "models/generic/interior_lamp_kit_01/ilk01_lamp_01_bulb.vmdl";
-            public bool HideModel { get; set; } = true;
-        };
-        public Settings_Lights Lights { get; set; } = new();
-    }
-    public Settings_Building Building { get; set; } = new();
-
-    public class Settings_Blocks
-    {
-        public bool DisableShadows { get; set; } = true;
-        public string CamouflageT { get; set; } = "characters/models/ctm_fbi/ctm_fbi.vmdl";
-        public string CamouflageCT { get; set; } = "characters/models/tm_leet/tm_leet_variantb.vmdl";
-        public string FireParticle { get; set; } = "particles/burning_fx/env_fire_medium.vpcf";
     }
     public Settings_Blocks Blocks { get; set; } = new();
 
@@ -88,6 +80,13 @@ public class Config_Settings
         public Settings_TeleportExit Exit { get; set; } = new();
     }
     public Settings_Teleports Teleports { get; set; } = new();
+
+    public class Settings_Lights
+    {
+        public string Model { get; set; } = "models/generic/interior_lamp_kit_01/ilk01_lamp_01_bulb.vmdl";
+        public bool HideModel { get; set; } = true;
+    };
+    public Settings_Lights Lights { get; set; } = new();
 }
 
 public class Config_Commands

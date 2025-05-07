@@ -182,10 +182,10 @@ public static class Utils
 
     public static float GetSize(string input)
     {
-        var blockSize = config.Settings.Building.BlockSizes
+        var blockSize = config.Settings.Blocks.Sizes
             .FirstOrDefault(bs => bs.Title.Equals(input, StringComparison.OrdinalIgnoreCase));
 
-        return blockSize?.Size ?? config.Settings.Building.BlockSizes.First(bs => bs.Size == 1.0f).Size;
+        return blockSize?.Size ?? config.Settings.Blocks.Sizes.First(bs => bs.Size == 1.0f).Size;
     }
 
     public static CBeam DrawBeam(Vector startPos, Vector endPos, Color color, float width = 0.25f)
