@@ -22,6 +22,7 @@ public class BlockData
         string color = "None",
         string transparency = "100%",
         string team = "Both",
+        string effect = "None",
         BlockData_Properties properties = null!
 
     )
@@ -33,6 +34,7 @@ public class BlockData
         Team = team;
         Color = color;
         Transparency = transparency;
+        Effect = effect;
         Properties = properties;
     }
 
@@ -43,6 +45,7 @@ public class BlockData
     public string Team { get; set; }
     public string Color { get; set; }
     public string Transparency { get; set; }
+    public string Effect { get; set; }
     public BlockData_Properties Properties { get; set; }
 }
 
@@ -54,6 +57,7 @@ public class SaveBlockData
     public string Team { get; set; } = "";
     public string Color { get; set; } = "";
     public string Transparency { get; set; } = "";
+    public string Effect { get; set; } = "";
     public BlockData_Properties Properties { get; set; } = new BlockData_Properties();
     public VectorUtils.VectorDTO Position { get; set; } = new VectorUtils.VectorDTO(Vector.Zero);
     public VectorUtils.QAngleDTO Rotation { get; set; } = new VectorUtils.QAngleDTO(QAngle.Zero);

@@ -10,7 +10,7 @@ public partial class Blocks
     private static Dictionary<CCSPlayerController, bool> isNextTeleport = new();
     public static void CreateTeleport(CCSPlayerController player)
     {
-        var playerData = instance.playerData[player.Slot];
+        var BuilderData = instance.BuilderData[player.Slot];
         var playerPawn = player.PlayerPawn.Value!;
         var position = new Vector(playerPawn.AbsOrigin!.X, playerPawn.AbsOrigin.Y, playerPawn.AbsOrigin.Z + playerPawn.Collision.Maxs.Z / 2);
         var rotation = playerPawn.AbsRotation!;
@@ -21,7 +21,7 @@ public partial class Blocks
         try
         {
             string teleportType = isNextTeleport[player] ? "Exit" : "Entry";
-            var teleportData = CreateTeleportEntity(position, rotation, teleportType, playerData.BlockColor, playerData.BlockTransparency, playerData.BlockTeam);
+            var teleportData = CreateTeleportEntity(position, rotation, teleportType, BuilderData.BlockColor, BuilderData.BlockTransparency, BuilderData.BlockTeam);
 
             if (teleportData != null)
             {

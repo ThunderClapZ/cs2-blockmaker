@@ -1,53 +1,52 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
+using CS2TraceRay.Class;
+using CS2TraceRay.Enum;
 using System.Drawing;
 
 public partial class Blocks
 {
     public static void Create(CCSPlayerController player)
     {
-        var playerData = instance.playerData[player.Slot];
-
-        if (playerData.BlockType == "Teleport")
-        {
-            CreateTeleport(player);
-            return;
-        }
-
         var pawn = player.Pawn()!;
         Vector position = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
 
-        var hitPoint = RayTrace.TraceShape(position, pawn.EyeAngles!);
-        if (hitPoint == null)
+        CGameTrace? trace = TraceRay.TraceShape(player.GetEyePosition()!, pawn.EyeAngles, TraceMask.MaskShot, player);
+        if (trace == null || !trace.HasValue || trace.Value.Position.Length() == 0)
         {
             Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a valid location to create block");
             return;
         }
 
+        var endPos = trace.Value.Position;
+        var BuilderData = instance.BuilderData[player.Slot];
+
         try
         {
             CreateBlock(
                 player,
-                playerData.BlockType,
-                playerData.BlockPole,
-                playerData.BlockSize,
-                hitPoint,
+                BuilderData.BlockType,
+                BuilderData.BlockPole,
+                BuilderData.BlockSize,
+                new(endPos.X, endPos.Y, endPos.Z),
                 null!,
-                playerData.BlockColor,
-                playerData.BlockTransparency,
-                playerData.BlockTeam
+                BuilderData.BlockColor,
+                BuilderData.BlockTransparency,
+                BuilderData.BlockTeam,
+                BuilderData.BlockEffect?.Particle ?? "None"
             );
 
             if (config.Sounds.Building.Enabled)
                 player.EmitSound(config.Sounds.Building.Create);
 
             Utils.PrintToChat(player, $"Created -" +
-                $" type: {ChatColors.White}{playerData.BlockType}{ChatColors.Grey}," +
-                $" size: {ChatColors.White}{playerData.BlockSize}{ChatColors.Grey}," +
-                $" color: {ChatColors.White}{playerData.BlockColor}{ChatColors.Grey}," +
-                $" team: {ChatColors.White}{playerData.BlockTeam}{ChatColors.Grey}," +
-                $" transparency: {ChatColors.White}{playerData.BlockTransparency}");
+                $" type: {ChatColors.White}{BuilderData.BlockType}{ChatColors.Grey}," +
+                $" size: {ChatColors.White}{BuilderData.BlockSize}{ChatColors.Grey}," +
+                $" color: {ChatColors.White}{BuilderData.BlockColor}{ChatColors.Grey}," +
+                $" team: {ChatColors.White}{BuilderData.BlockTeam}{ChatColors.Grey}," +
+                $" transparency: {ChatColors.White}{BuilderData.BlockTransparency},"
+            );
         }
         catch
         {
@@ -67,6 +66,7 @@ public partial class Blocks
         string color = "None",
         string transparency = "100%",
         string team = "Both",
+        string effect = "None",
         BlockData_Properties? properties = null
     )
     {
@@ -92,8 +92,8 @@ public partial class Blocks
             block.AcceptInput("DisableMotion");
             block.AcceptInput("SetScale", block, block, Utils.GetSize(size).ToString());
 
-            block.Glow.GlowColorOverride = Color.Aqua;
-            block.Glow.GlowType = 0;
+            if (!string.IsNullOrEmpty(effect) && effect != "None")
+                CreateParticle(block, effect, size);
 
             CreateTrigger(block, size);
 
@@ -126,7 +126,7 @@ public partial class Blocks
                 };
             }
 
-            Props[block] = new BlockData(block, type, pole, size, color, transparency, team, properties);
+            Props[block] = new BlockData(block, type, pole, size, color, transparency, team, effect, properties);
         }
     }
 
@@ -137,13 +137,13 @@ public partial class Blocks
 
         if (trigger != null && trigger.IsValid && trigger.Entity != null)
         {
-            trigger.Entity.Name = block.Entity!.Name + "_trigger";
             trigger.Spawnflags = 1;
+            trigger.Entity.Name = block.Entity!.Name + "_trigger";
             trigger.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
 
-            trigger.DispatchSpawn();
-            trigger.AcceptInput("SetScale", trigger, trigger, Utils.GetSize(size).ToString());
             trigger.Teleport(block.AbsOrigin, block.AbsRotation);
+            trigger.AcceptInput("SetScale", trigger, trigger, Utils.GetSize(size).ToString());
+            trigger.DispatchSpawn();
 
             block.AcceptInput("SetParent", trigger, block, "!activator");
 

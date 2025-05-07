@@ -13,9 +13,12 @@ public static class Utils
 
     public static bool BuildMode(CCSPlayerController player)
     {
-        if (instance.buildMode && (instance.playerData[player.Slot].Builder || HasPermission(player)))
+        bool isBuilder = instance.BuilderData.TryGetValue(player.Slot, out var BuilderData);
+
+        if (instance.buildMode && (isBuilder || HasPermission(player)))
             return true;
-        else if (!instance.buildMode && (instance.playerData[player.Slot].Builder || HasPermission(player)))
+
+        else if (!instance.buildMode && (isBuilder || HasPermission(player)))
         {
             PrintToChat(player, $"{ChatColors.Red}Build Mode is disabled");
             return false;
@@ -29,6 +32,9 @@ public static class Utils
 
     public static bool HasPermission(CCSPlayerController player)
     {
+        if (config.Commands.Admin.Permission.Count == 0)
+            return true;
+
         foreach (string perm in config.Commands.Admin.Permission)
         {
             if (perm.StartsWith("@") && AdminManager.PlayerHasPermissions(player, perm))
@@ -140,6 +146,7 @@ public static class Utils
     public static readonly Dictionary<string, Color> ColorMapping = new(StringComparer.OrdinalIgnoreCase)
     {
         { "None", Color.White },
+        { "White", Color.White },
         { "Red", Color.Red },
         { "Green", Color.Green },
         { "Blue", Color.Blue },
@@ -181,7 +188,7 @@ public static class Utils
         return blockSize?.Size ?? config.Settings.Building.BlockSizes.First(bs => bs.Size == 1.0f).Size;
     }
 
-    public static CBeam DrawBeam(Vector startPos, Vector endPos, Color color, float width = 0.5f)
+    public static CBeam DrawBeam(Vector startPos, Vector endPos, Color color, float width = 0.25f)
     {
         var beam = Utilities.CreateEntityByName<CBeam>("beam")!;
 

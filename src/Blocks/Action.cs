@@ -561,7 +561,7 @@ public partial class Blocks
 
     public static void Test(CCSPlayerController player)
     {
-        var block = player.GetBlockAimTarget();
+        var block = player.GetBlockAim();
 
         if (block == null)
         {

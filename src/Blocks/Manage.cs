@@ -5,9 +5,9 @@ using System.Drawing;
 
 public partial class Blocks
 {
-    public static void Clear()
+    private static void RemoveEntities()
     {
-        foreach (var entity in Utilities.GetAllEntities().Where(x => x.DesignerName == "prop_physics_override" || x.DesignerName == "trigger_multiple") )
+        foreach (var entity in Utilities.GetAllEntities().Where(x => x.DesignerName == "prop_physics_override" || x.DesignerName == "trigger_multiple" || x.DesignerName == "light_dynamic"))
         {
             if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
                 continue;
@@ -15,6 +15,11 @@ public partial class Blocks
             if (entity.Entity.Name.StartsWith("blockmaker"))
                 entity.Remove();
         }
+    }
+
+    public static void Clear()
+    {
+        RemoveEntities();
 
         foreach (var timer in Plugin.Instance.Timers)
         {
@@ -29,6 +34,8 @@ public partial class Blocks
 
         Teleports.Clear();
         isNextTeleport.Clear();
+
+        Lights.Clear();
 
         PlayerCooldowns.Clear();
         CooldownsTimers.Clear();
@@ -45,24 +52,19 @@ public partial class Blocks
     {
         if (all)
         {
-            foreach (var rest in Utilities.GetAllEntities().Where(r => r.DesignerName == "prop_physics_override" || r.DesignerName == "trigger_multiple"))
-            {
-                if (rest == null || !rest.IsValid || rest.Entity == null)
-                    continue;
-
-                if (!string.IsNullOrEmpty(rest.Entity.Name) && rest.Entity.Name.StartsWith("blockmaker"))
-                    rest.Remove();
-            }
+            RemoveEntities();
 
             Props.Clear();
             Triggers.Clear();
 
             Teleports.Clear();
             isNextTeleport.Clear();
+
+            Lights.Clear();
         }
         else
         {
-            var entity = player.GetBlockAimTarget();
+            var entity = player.GetBlockAim();
 
             if (entity == null)
             {
@@ -90,57 +92,19 @@ public partial class Blocks
                     $" size: {ChatColors.White}{block.Size}{ChatColors.Grey}," +
                     $" color: {ChatColors.White}{block.Color}{ChatColors.Grey}," +
                     $" team: {ChatColors.White}{block.Team}{ChatColors.Grey}," +
-                    $" transparency: {ChatColors.White}{block.Transparency}"
+                    $" transparency: {ChatColors.White}{block.Transparency},"
                 );
 
                 return;
-            }
-
-            var teleports = Teleports.FirstOrDefault(pair => pair.Entry.Entity == entity || pair.Exit.Entity == entity);
-
-            if (teleports != null)
-            {
-                var entryEntity = teleports.Entry.Entity;
-                if (entryEntity != null && entryEntity.IsValid)
-                {
-                    entryEntity.Remove();
-
-                    var entryTrigger = Triggers.FirstOrDefault(kvp => kvp.Value == entryEntity).Key;
-                    if (entryTrigger != null)
-                    {
-                        entryTrigger.Remove();
-                        Triggers.Remove(entryTrigger);
-                    }
-                }
-
-                var exitEntity = teleports.Exit.Entity;
-                if (exitEntity != null && exitEntity.IsValid)
-                {
-                    exitEntity.Remove();
-
-                    var exitTrigger = Triggers.FirstOrDefault(kvp => kvp.Value == exitEntity).Key;
-                    if (exitTrigger != null)
-                    {
-                        exitTrigger.Remove();
-                        Triggers.Remove(exitTrigger);
-                    }
-                }
-
-                Teleports.Remove(teleports);
-
-                if (config.Sounds.Building.Enabled)
-                    player.EmitSound(config.Sounds.Building.Delete);
-
-                Utils.PrintToChat(player, $"Deleted teleport pair");
             }
         }
     }
 
     public static void Position(CCSPlayerController player, string input, bool rotate)
     {
-        var entity = player.GetBlockAimTarget();
+        var entity = player.GetBlockAim();
 
-        float value = rotate ? instance.playerData[player.Slot].RotationValue : instance.playerData[player.Slot].PositionValue;
+        float value = rotate ? instance.BuilderData[player.Slot].RotationValue : instance.BuilderData[player.Slot].PositionValue;
 
         if (entity == null)
         {
@@ -218,7 +182,7 @@ public partial class Blocks
 
     public static void Convert(CCSPlayerController player)
     {
-        var entity = player.GetBlockAimTarget();
+        var entity = player.GetBlockAim();
 
         if (entity == null)
         {
@@ -241,23 +205,23 @@ public partial class Blocks
                 Triggers.Remove(trigger);
             }
 
-            var playerData = instance.playerData[player.Slot];
+            var BuilderData = instance.BuilderData[player.Slot];
 
-            CreateBlock(player, playerData.BlockType, playerData.BlockPole, playerData.BlockSize, entity.AbsOrigin!, entity.AbsRotation!, playerData.BlockColor, playerData.BlockTransparency, playerData.BlockTeam);
+            CreateBlock(player, BuilderData.BlockType, BuilderData.BlockPole, BuilderData.BlockSize, entity.AbsOrigin!, entity.AbsRotation!, BuilderData.BlockColor, BuilderData.BlockTransparency, BuilderData.BlockTeam, BuilderData.BlockEffect?.Particle ?? "");
 
             Utils.PrintToChat(player, $"Converted -" +
-                $" type: {ChatColors.White}{playerData.BlockType}{ChatColors.Grey}," +
-                $" size: {ChatColors.White}{playerData.BlockSize}{ChatColors.Grey}," +
-                $" color: {ChatColors.White}{playerData.BlockColor}{ChatColors.Grey}," +
-                $" team: {ChatColors.White}{playerData.BlockTeam}{ChatColors.Grey}," +
-                $" transparency: {ChatColors.White}{playerData.BlockTransparency}"
+                $" type: {ChatColors.White}{BuilderData.BlockType}{ChatColors.Grey}," +
+                $" size: {ChatColors.White}{BuilderData.BlockSize}{ChatColors.Grey}," +
+                $" color: {ChatColors.White}{BuilderData.BlockColor}{ChatColors.Grey}," +
+                $" team: {ChatColors.White}{BuilderData.BlockTeam}{ChatColors.Grey}," +
+                $" transparency: {ChatColors.White}{BuilderData.BlockTransparency},"
             );
         }
     }
 
     public static void Copy(CCSPlayerController player)
     {
-        var entity = player.GetBlockAimTarget();
+        var entity = player.GetBlockAim();
 
         if (entity == null)
         {
@@ -270,26 +234,26 @@ public partial class Blocks
 
         if (Props.TryGetValue(entity, out var block))
         {
-            var playerData = instance.playerData[player.Slot];
+            var BuilderData = instance.BuilderData[player.Slot];
 
-            CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!, entity.AbsRotation!, block.Color, block.Transparency, block.Team, block.Properties);
+            CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!, entity.AbsRotation!, block.Color, block.Transparency, block.Team, block.Effect, block.Properties);
 
             if (config.Sounds.Building.Enabled)
                 player.EmitSound(config.Sounds.Building.Create);
 
             Utils.PrintToChat(player, $"Copied -" +
-                $" type: {ChatColors.White}{playerData.BlockType}{ChatColors.Grey}," +
-                $" size: {ChatColors.White}{playerData.BlockSize}{ChatColors.Grey}," +
-                $" color: {ChatColors.White}{playerData.BlockColor}{ChatColors.Grey}," +
-                $" team: {ChatColors.White}{playerData.BlockTeam}{ChatColors.Grey}," +
-                $" transparency: {ChatColors.White}{playerData.BlockTransparency}"
+                $" type: {ChatColors.White}{BuilderData.BlockType}{ChatColors.Grey}," +
+                $" size: {ChatColors.White}{BuilderData.BlockSize}{ChatColors.Grey}," +
+                $" color: {ChatColors.White}{BuilderData.BlockColor}{ChatColors.Grey}," +
+                $" team: {ChatColors.White}{BuilderData.BlockTeam}{ChatColors.Grey}," +
+                $" transparency: {ChatColors.White}{BuilderData.BlockTransparency}"
             );
         }
     }
 
     public static void Lock(CCSPlayerController player)
     {
-        var entity = player.GetBlockAimTarget();
+        var entity = player.GetBlockAim();
 
         if (entity == null)
         {
@@ -316,7 +280,7 @@ public partial class Blocks
 
     public static void RenderColor(CCSPlayerController player)
     {
-        var entity = player.GetBlockAimTarget();
+        var entity = player.GetBlockAim();
 
         if (entity == null)
             return;
@@ -326,7 +290,7 @@ public partial class Blocks
 
         if (Props.TryGetValue(entity, out var block))
         {
-            var color = instance.playerData[player.Slot].BlockColor;
+            var color = instance.BuilderData[player.Slot].BlockColor;
 
             var clr = Utils.GetColor(color);
             int alpha = Utils.GetAlpha(block.Transparency);
@@ -341,12 +305,12 @@ public partial class Blocks
 
     public static void ChangeProperties(CCSPlayerController player, string type, string input)
     {
-        var playerData = instance.playerData[player.Slot];
+        var BuilderData = instance.BuilderData[player.Slot];
 
-        if (!playerData.PropertyEntity.TryGetValue(type, out var entity) || entity == null)
+        if (!BuilderData.PropertyEntity.TryGetValue(type, out var entity) || entity == null)
         {
-            playerData.ChatInput = "";
-            playerData.PropertyEntity.Clear();
+            BuilderData.ChatInput = "";
+            BuilderData.PropertyEntity.Clear();
             Utils.PrintToChat(player, $"{ChatColors.Red}No entity found for {type}");
             return;
         }
@@ -403,7 +367,7 @@ public partial class Blocks
             }
         }
 
-        playerData.ChatInput = "";
-        playerData.PropertyEntity.Remove(type);
+        BuilderData.ChatInput = "";
+        BuilderData.PropertyEntity.Remove(type);
     }
 }

@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 public static class Transmit
 {
     private static Plugin Instance = Plugin.Instance;
-    private static Dictionary<int, PlayerData> playerData = Instance.playerData;
+    private static Dictionary<int, BuilderData> BuilderData = Instance.BuilderData;
 
     private static readonly MemoryFunctionVoid<CCSPlayerPawn, CSPlayerState> StateTransition = new(GameData.GetSignature("StateTransition"));
     private static readonly INetworkServerService networkServerService = new();
@@ -36,7 +36,7 @@ public static class Transmit
     {
         foreach ((CCheckTransmitInfo info, CCSPlayerController? player) in infoList)
         {
-            if (player == null || !playerData.ContainsKey(player.Slot))
+            if (player == null || !BuilderData.ContainsKey(player.Slot))
                 continue;
 
             foreach (var hidden in Blocks.HiddenPlayers)

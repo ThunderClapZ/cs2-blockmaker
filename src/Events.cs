@@ -70,11 +70,11 @@ public partial class Plugin
 
         if (Config.Settings.Building.BuildMode.Config)
         {
-            string[] commands =
-                {
-                    "sv_cheats 1", "mp_join_grace_time 3600", "mp_timelimit 60",
-                    "mp_roundtime 60", "mp_freezetime 0", "mp_warmuptime 0", "mp_maxrounds 99"
-                };
+            List<string> commands =
+            [
+                "sv_cheats 1", "mp_join_grace_time 3600", "mp_timelimit 60",
+                "mp_roundtime 60", "mp_freezetime 0", "mp_warmuptime 0", "mp_maxrounds 99"
+            ];
 
             foreach (string command in commands)
                 Server.ExecuteCommand(command);
@@ -88,21 +88,31 @@ public partial class Plugin
 
     void OnServerPrecacheResources(ResourceManifest manifest)
     {
+        List<string> resources =
+        [
+            Config.Sounds.SoundEvents,
+            Config.Settings.Teleports.Entry.Model,
+            Config.Settings.Teleports.Exit.Model,
+            Config.Settings.Blocks.CamouflageT,
+            Config.Settings.Blocks.CamouflageCT,
+            Config.Settings.Blocks.FireParticle,
+            Config.Settings.Building.Lights.Model,
+        ];
+
+        foreach (var effect in Config.Settings.Building.Effects)
+            resources.Add(effect.Particle);
+
         foreach (var model in Files.Models.Props.GetAllBlocks())
         {
-            manifest.AddResource(model.Block);
-            manifest.AddResource(model.Pole);
+            resources.Add(model.Block);
+            resources.Add(model.Pole);
         }
 
-        manifest.AddResource(Config.Sounds.SoundEvents);
-
-        manifest.AddResource(Config.Settings.Teleports.Entry.Model);
-        manifest.AddResource(Config.Settings.Teleports.Exit.Model);
-
-        manifest.AddResource(Config.Settings.Blocks.CamouflageT);
-        manifest.AddResource(Config.Settings.Blocks.CamouflageCT);
-
-        manifest.AddResource(Config.Settings.Blocks.FireParticle);
+        foreach (var resource in resources)
+        {
+            if (!string.IsNullOrEmpty(resource))
+                manifest.AddResource(resource);
+        }
     }
 
     HookResult EventPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
@@ -114,12 +124,10 @@ public partial class Plugin
 
         if (buildMode)
         {
-            playerData[player.Slot] = new PlayerData { BlockType = Files.Models.Props.Platform.Title };
-
             Files.Builders.Load();
 
             if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
-                playerData[player.Slot].Builder = true;
+                BuilderData[player.Slot] = new BuilderData { BlockType = Files.Models.Props.Platform.Title };
         }
 
         return HookResult.Continue;
@@ -170,9 +178,9 @@ public partial class Plugin
         if (player == null || player.NotValid())
             return HookResult.Continue;
 
-        if (playerData.ContainsKey(player.Slot))
+        if (BuilderData.ContainsKey(player.Slot))
         {
-            var pData = playerData[player.Slot];
+            var pData = BuilderData[player.Slot];
             var type = pData.ChatInput;
 
             if (!string.IsNullOrEmpty(type))
@@ -187,6 +195,14 @@ public partial class Plugin
 
                 switch (type)
                 {
+                    case "LightBrightness":
+                        pData.LightBrightness = number.ToString();
+                        Utils.PrintToChat(player, $"LightBrightness Value: {ChatColors.White}{number}");
+                        break;
+                    case "LightDistance":
+                        pData.LightDistance = number.ToString();
+                        Utils.PrintToChat(player, $"LightDistance Value: {ChatColors.White}{number}");
+                        break;
                     case "Grid":
                         pData.GridValue = number;
                         Utils.PrintToChat(player, $"Grid Value: {ChatColors.White}{number}");
@@ -220,20 +236,27 @@ public partial class Plugin
 
     HookResult trigger_multiple(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
-        if (activator.DesignerName != "player")
-            return HookResult.Continue;
-
-        var pawn = activator.As<CCSPlayerPawn>();
-        if (pawn == null || !pawn.IsValid)
-            return HookResult.Continue;
-
-        var player = pawn.OriginalController?.Value?.As<CCSPlayerController>();
-        if (player == null || player.IsBot)
-            return HookResult.Continue;
-
         if (Blocks.Triggers.TryGetValue(caller, out CBaseProp? block))
         {
-            var teleport = Blocks.Teleports.FirstOrDefault(pair => pair.Entry.Entity == block || pair.Exit.Entity == block);
+            if (activator.DesignerName != "player")
+                return HookResult.Continue;
+
+            var pawn = activator.As<CCSPlayerPawn>();
+            if (pawn == null || !pawn.IsValid)
+                return HookResult.Continue;
+
+            var player = pawn.OriginalController?.Value?.As<CCSPlayerController>();
+            if (player == null || player.IsBot)
+                return HookResult.Continue;
+
+            if (buildMode)
+            {
+                foreach (var kvp in Blocks.PlayerHolds)
+                    if (kvp.Value.block == block)
+                        return HookResult.Continue;
+            }
+
+            var teleport = Blocks.Teleports.Where(pair => pair.Entry.Entity == block || pair.Exit.Entity == block).First();
 
             if (teleport != null)
             {
@@ -250,38 +273,29 @@ public partial class Plugin
                         pawn.AbsVelocity
                     );
 
-                    player.EmitSound(Config.Sounds.Blocks.Teleport);
+                    pawn.EmitSound(Config.Sounds.Blocks.Teleport);
                 }
 
                 return HookResult.Continue;
             }
-            else
+
+            var blockData = Blocks.Props[block];
+
+            if (blockData.Properties.OnTop)
             {
-                if (buildMode)
-                {
-                    foreach (var kvp in Blocks.PlayerHolds)
-                        if (kvp.Value.block == block)
-                            return HookResult.Continue;
-                }
+                var playerMaxs = pawn.Collision.Maxs * 2;
+                var blockMaxs = block.Collision.Maxs * Utils.GetSize(blockData.Size) * 2;
 
-                var blockData = Blocks.Props[block];
+                if (!VectorUtils.IsTopOnly(block.AbsOrigin!, pawn.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
+                    return HookResult.Continue;
+            }
 
-                if (blockData.Properties.OnTop)
-                {
-                    var playerMaxs = pawn.Collision.Maxs * 2;
-                    var blockMaxs = block.Collision.Maxs * Utils.GetSize(blockData.Size) * 2;
-
-                    if (!VectorUtils.IsTopOnly(block.AbsOrigin!, pawn.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
-                        return HookResult.Continue;
-                }
-
-                if (blockData.Team == "T" && player.Team == CsTeam.Terrorist ||
-                    blockData.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
-                    blockData.Team == "Both" || string.IsNullOrEmpty(blockData.Team)
-                )
-                {
-                    Blocks.Actions(player, block);
-                }
+            if (blockData.Team == "T" && player.Team == CsTeam.Terrorist ||
+                blockData.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
+                blockData.Team == "Both" || string.IsNullOrEmpty(blockData.Team)
+            )
+            {
+                Blocks.Actions(player, block);
             }
         }
 
@@ -290,10 +304,10 @@ public partial class Plugin
 
     HookResult OnTakeDamage(DynamicHook hook)
     {
-        var entity = hook.GetParam<CEntityInstance>(0);
+        var pawn = hook.GetParam<CCSPlayerPawn>(0);
         var info = hook.GetParam<CTakeDamageInfo>(1);
 
-        if (entity.DesignerName == "player" && info.Attacker.Value?.DesignerName == "player")
+        if (pawn.DesignerName == "player" && info.Attacker.Value?.DesignerName == "player")
             return HookResult.Continue;
 
         var props = Files.Models.Props;
@@ -302,20 +316,19 @@ public partial class Plugin
 
         foreach (var blocktarget in Blocks.Props.Where(x => x.Value.Type.Equals(NoFallDmg) || x.Value.Type.Equals(Trampoline)))
         {
-            var player = entity.As<CCSPlayerPawn>();
             var block = blocktarget.Key;
 
-            if (player.AbsOrigin == null || block.AbsOrigin == null)
+            if (pawn.AbsOrigin == null || block.AbsOrigin == null)
                 return HookResult.Continue;
 
-            var playerMaxs = player.Collision.Maxs * 2;
+            var playerMaxs = pawn.Collision.Maxs * 2;
             var blockMaxs = block.Collision!.Maxs * Utils.GetSize(blocktarget.Value.Size) * 2;
 
-            if (VectorUtils.IsWithinBounds(block.AbsOrigin, player.AbsOrigin, blockMaxs, playerMaxs))
+            if (VectorUtils.IsWithinBounds(block.AbsOrigin, pawn.AbsOrigin, blockMaxs, playerMaxs))
             {
                 if (blocktarget.Value.Properties.OnTop)
                 {
-                    if (VectorUtils.IsTopOnly(block.AbsOrigin!, player.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
+                    if (VectorUtils.IsTopOnly(block.AbsOrigin!, pawn.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
                         return HookResult.Handled;
                 }
                 else return HookResult.Handled;

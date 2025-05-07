@@ -1,6 +1,8 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
+using CS2TraceRay.Class;
+using CS2TraceRay.Enum;
 using System.Data;
 using System.Drawing;
 
@@ -16,8 +18,7 @@ public partial class Blocks
         foreach (var player in Utilities.GetPlayers().Where(p =>
             p.IsLegal() &&
             p.IsAlive() &&
-            instance.playerData.ContainsKey(p.Slot) &&
-            instance.playerData[p.Slot].Builder)
+            instance.BuilderData.ContainsKey(p.Slot))
         )
         {
             if (!PlayerHolds.ContainsKey(player))
@@ -72,13 +73,14 @@ public partial class Blocks
 
     private static void GrabBlock(CCSPlayerController player)
     {
-        var block = player.GetBlockAimTarget();
+        var block = player.GetBlockAim();
 
         if (block != null)
         {
             var teleports = Teleports.FirstOrDefault(pair => pair.Entry.Entity == block || pair.Exit.Entity == block);
+            var lights = Lights.ContainsKey(block);
 
-            if (!Props.ContainsKey(block) && teleports == null)
+            if (!Props.ContainsKey(block) && teleports == null && !lights)
             {
                 Utils.PrintToChat(player, $"{ChatColors.Red}Block not found in UsedBlocks");
                 return;
@@ -88,16 +90,20 @@ public partial class Blocks
 
             Vector position = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
 
-            var hitPoint = RayTrace.TraceShape(position, pawn.EyeAngles!);
+            CGameTrace? trace = TraceRay.TraceShape(player.GetEyePosition()!, pawn.EyeAngles, TraceMask.MaskShot, player);
+            if (trace == null || !trace.HasValue || trace.Value.Position.Length() == 0)
+                return;
+
+            var endPos = trace.Value.Position;
 
             string size = "1";
 
             if (Props.ContainsKey(block))
                 size = Props[block].Size;
 
-            if (block != null && hitPoint != null)
+            if (block != null)
             {
-                if (VectorUtils.CalculateDistance(block.AbsOrigin!, hitPoint) > (block.Collision.Maxs.X * 2 * Utils.GetSize(size)))
+                if (VectorUtils.CalculateDistance(block.AbsOrigin!, new(endPos.X, endPos.Y, endPos.Z)) > (block.Collision.Maxs.X * 2 * Utils.GetSize(size)))
                 {
                     //Utils.PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
                     return;
@@ -112,6 +118,7 @@ public partial class Blocks
                 }
 
                 PlayerHolds.Add(player, new BuildingData() { block = block, distance = distance });
+                return;
             }
         }
     }
@@ -119,17 +126,17 @@ public partial class Blocks
     private static void DistanceRepeat(CCSPlayerController player, CBaseProp block)
     {
         var playerHolds = PlayerHolds[player];
-        var playerData = instance.playerData[player.Slot];
+        var BuilderData = instance.BuilderData[player.Slot];
 
         var (position, rotation) =
             VectorUtils.GetEndXYZ(
                 player,
                 block,
                 playerHolds.distance,
-                playerData.Grid,
-                playerData.GridValue,
-                playerData.Snapping,
-                playerData.SnapValue
+                BuilderData.Grid,
+                BuilderData.GridValue,
+                BuilderData.Snapping,
+                BuilderData.SnapValue
             );
 
         block.Teleport(position, rotation);

@@ -18,11 +18,13 @@ public static partial class Files
 
             var blocksPath = Path.Combine(mapsFolder, "blocks.json");
             var teleportsPath = Path.Combine(mapsFolder, "teleports.json");
+            var lightsPath = Path.Combine(mapsFolder, "lights.json");
 
             try
             {
                 var blocksList = new List<SaveBlockData>();
                 var teleportsList = new List<TeleportPairDTO>();
+                var lightsList = new List<SaveLightData>();
 
                 // Save blocks
                 foreach (var prop in Blocks.Props)
@@ -40,6 +42,7 @@ public static partial class Files
                             Team = data.Team,
                             Color = data.Color,
                             Transparency = data.Transparency,
+                            Effect = data.Effect,
                             Properties = data.Properties,
                             Position = new VectorUtils.VectorDTO(block.AbsOrigin!),
                             Rotation = new VectorUtils.QAngleDTO(block.AbsRotation!)
@@ -70,8 +73,28 @@ public static partial class Files
                     }
                 }
 
+                // Save lights
+                foreach (var prop in Blocks.Lights)
+                {
+                    var entity = prop.Key;
+                    var data = prop.Value;
+
+                    if (entity != null && entity.IsValid)
+                    {
+                        lightsList.Add(new SaveLightData
+                        {
+                            Color = data.Color,
+                            Brightness = data.Brightness,
+                            Distance = data.Distance,
+                            Position = new VectorUtils.VectorDTO(entity.AbsOrigin!),
+                            Rotation = new VectorUtils.QAngleDTO(entity.AbsRotation!)
+                        });
+                    }
+                }
+
                 int blocksCount = blocksList.Count;
                 int teleportsCount = teleportsList.Count;
+                int lightsCount = lightsList.Count;
 
                 // Save blocks to blocks.json
                 if (blocksCount > 0)
@@ -85,6 +108,13 @@ public static partial class Files
                 {
                     string teleportsJson = JsonSerializer.Serialize(teleportsList, new JsonSerializerOptions { WriteIndented = true });
                     File.WriteAllText(teleportsPath, teleportsJson);
+                }
+
+                // Save lights to lights.json
+                if (lightsCount > 0)
+                {
+                    string lightsJson = JsonSerializer.Serialize(lightsList, new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(lightsPath, lightsJson);
                 }
 
                 if (Plugin.Instance.Config.Sounds.Building.Enabled)
@@ -105,6 +135,7 @@ public static partial class Files
         {
             var blocksPath = Path.Combine(mapsFolder, "blocks.json");
             var teleportsPath = Path.Combine(mapsFolder, "teleports.json");
+            var lightsPath = Path.Combine(mapsFolder, "lights.json");
 
             // spawn blocks
             if (File.Exists(blocksPath) && Utils.IsValidJson(blocksPath))
@@ -126,6 +157,7 @@ public static partial class Files
                             blockData.Color,
                             blockData.Transparency,
                             blockData.Team,
+                            blockData.Effect,
                             blockData.Properties
                         );
                     }
@@ -158,13 +190,34 @@ public static partial class Files
                     }
                 }
             }
+
+            // spawn lights
+            if (File.Exists(lightsPath) && Utils.IsValidJson(lightsPath))
+            {
+                var lightsJson = File.ReadAllText(lightsPath);
+                var lightsList = JsonSerializer.Deserialize<List<SaveLightData>>(lightsJson);
+
+                if (lightsList != null && lightsList.Count > 0)
+                {
+                    foreach (var lightData in lightsList)
+                    {
+                        Blocks.CreateLight(
+                            lightData.Color,
+                            lightData.Brightness,
+                            lightData.Distance,
+                            new Vector(lightData.Position.X, lightData.Position.Y, lightData.Position.Z),
+                            new QAngle(lightData.Rotation.Pitch, lightData.Rotation.Yaw, lightData.Rotation.Roll)
+                        );
+                    }
+                }
+            }
         }
 
         public static class Properties
         {
             public static readonly Dictionary<string, BlockData_Properties> BlockDefaultProperties = new Dictionary<string, BlockData_Properties>
             {
-                { Models.Props.Bhop.Title, new BlockData_Properties { Duration = 0.25f, Cooldown = 1.5f } },
+                { Models.Props.Bhop.Title, new BlockData_Properties { Duration = 0.25f, Cooldown = 1.0f } },
                 { Models.Props.Health.Title, new BlockData_Properties { Value = 8.0f, Cooldown = 0.75f } },
                 { Models.Props.Grenade.Title, new BlockData_Properties { Cooldown = 60.0f } },
                 { Models.Props.Gravity.Title, new BlockData_Properties { Duration = 4.0f, Value = 0.4f, Cooldown = 5.0f } },

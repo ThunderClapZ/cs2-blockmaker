@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 public static class VectorUtils
 {
-    public static CBaseProp? GetBlockAimTarget(this CCSPlayerController player)
+    public static CBaseProp? GetBlockAim(this CCSPlayerController player)
     {
         var GameRules = Utilities.FindAllEntitiesByDesignerName<CCSGameRulesProxy>("cs_gamerules").FirstOrDefault()?.GameRules;
 
@@ -213,13 +213,13 @@ public static class VectorUtils
     public static bool IsTopOnly(Vector entityPosition, Vector playerPosition, Vector entitySize, Vector playerSize, QAngle entityRotation)
     {
         Vector forward = new Vector(
-            (float)Math.Cos(entityRotation.Y * Math.PI / 180) * (float)Math.Cos(entityRotation.X * Math.PI / 180),
-            (float)Math.Sin(entityRotation.Y * Math.PI / 180) * (float)Math.Cos(entityRotation.X * Math.PI / 180),
-            (float)-Math.Sin(entityRotation.X * Math.PI / 180)
+            (float)(Math.Cos(entityRotation.Y * Math.PI / 180) * Math.Cos(entityRotation.X * Math.PI / 180)),
+            (float)(Math.Sin(entityRotation.Y * Math.PI / 180) * Math.Cos(entityRotation.X * Math.PI / 180)),
+            (float)(-Math.Sin(entityRotation.X * Math.PI / 180))
         );
         Vector right = new Vector(
-            (float)Math.Cos((entityRotation.Y + 90) * Math.PI / 180),
-            (float)Math.Sin((entityRotation.Y + 90) * Math.PI / 180),
+            (float)(Math.Cos((entityRotation.Y + 90) * Math.PI / 180)),
+            (float)(Math.Sin((entityRotation.Y + 90) * Math.PI / 180)),
             0
         );
         Vector up = Cross(forward, right);
@@ -231,32 +231,90 @@ public static class VectorUtils
             -right,    // -Y face
             right,     // +Y face
             -up,       // -Z face
-            up         // +Z face (top face)
+            up         // +Z face
         };
 
-        // The "top" face is the +Z face (index 5)
-        Vector topFaceDirection = faceDirections[5]; // 'up' vector
+        // Find the face with the most positive Z-component (most "upward")
+        int topFaceIndex = 0;
+        float maxZ = float.MinValue;
+        for (int i = 0; i < faceDirections.Length; i++)
+        {
+            if (faceDirections[i].Z > maxZ)
+            {
+                maxZ = faceDirections[i].Z;
+                topFaceIndex = i;
+            }
+        }
 
-        // Calculate the block's top face center (block center + half height upward)
-        Vector topFaceCenter = entityPosition + topFaceDirection * (entitySize.Z / 2); // entitySize.Z = 8, so +4 units up
+        Vector topFaceNormal = faceDirections[topFaceIndex];
+        Vector localX, localY, localZ;
+        float faceWidth, faceHeight, faceDepth;
+
+        // Map the face to its local coordinate system and dimensions
+        switch (topFaceIndex)
+        {
+            case 0: // -X face
+            case 1: // +X face
+                    // For +X face: faceWidth along Y (right), faceHeight along Z (up)
+                localX = up;    // Map Z-axis (up) to faceHeight
+                localY = right; // Map Y-axis (right) to faceWidth
+                localZ = topFaceNormal;
+                faceWidth = entitySize.Y;  // Y-axis (right)
+                faceHeight = entitySize.Z; // Z-axis (up)
+                faceDepth = entitySize.X;  // X-axis (forward)
+                break;
+            case 2: // -Y face
+            case 3: // +Y face
+                    // For +Y face: faceWidth along X (forward), faceHeight along Z (up)
+                localX = up;     // Map Z-axis (up) to faceHeight
+                localY = forward; // Map X-axis (forward) to faceWidth
+                localZ = topFaceNormal;
+                faceWidth = entitySize.X;  // X-axis (forward)
+                faceHeight = entitySize.Z; // Z-axis (up)
+                faceDepth = entitySize.Y;  // Y-axis (right)
+                break;
+            case 4: // -Z face
+            case 5: // +Z face
+            default:
+                // For +Z face: faceWidth along X (right), faceHeight along Y (forward)
+                localX = right;  // Map X-axis (right) to faceWidth
+                localY = forward; // Map Y-axis (forward) to faceHeight
+                localZ = topFaceNormal;
+                faceWidth = entitySize.X;  // X-axis (right)
+                faceHeight = entitySize.Y; // Y-axis (forward)
+                faceDepth = entitySize.Z;  // Z-axis (up)
+                break;
+        }
+
+        // Calculate the center of the top face
+        Vector topFaceCenter = entityPosition + topFaceNormal * (faceDepth / 2);
 
         // Player position relative to the top face center
         Vector relativePos = playerPosition - topFaceCenter;
 
         // Project relative position onto the block's local axes
-        float localX = Dot(relativePos, right);   // Along right vector (local X)
-        float localY = Dot(relativePos, forward); // Along forward vector (local Y)
-        float localZ = Dot(relativePos, up);      // Along up vector (local Z)
+        float localXProj = Dot(relativePos, localX); // Along local X (should map to faceHeight)
+        float localYProj = Dot(relativePos, localY); // Along local Y (should map to faceWidth)
+        float localZProj = Dot(relativePos, localZ); // Along local Z (normal)
 
+        // Boundary checks with dynamic tolerance based on player size
+        float boundaryToleranceX = playerSize.X / 2 + 2.0f; // Account for player's collision box width
+        float boundaryToleranceY = playerSize.Y / 2 + 2.0f; // Account for player's collision box height
         float triggerThreshold = 2.0f;
+        float zTolerance = 0.1f; // Small tolerance for Z-axis
+        bool overlapX = Math.Abs(localXProj) <= (faceHeight / 2) + boundaryToleranceX; // localXProj maps to faceHeight
+        bool overlapY = Math.Abs(localYProj) <= (faceWidth / 2) + boundaryToleranceY;  // localYProj maps to faceWidth
+        bool onTop = localZProj >= -zTolerance && localZProj <= (playerSize.Z + triggerThreshold);
 
-        bool overlapX = Math.Abs(localX) <= entitySize.X;
-        bool overlapY = Math.Abs(localY) <= entitySize.Y;
-        bool onTop = localZ >= 0 && localZ <= (playerSize.Z + triggerThreshold);
+        // Additional logging for debugging
+        /*Console.WriteLine($"entityPosition: {entityPosition}, playerPosition: {playerPosition}, entityRotation: {entityRotation}");
+        Console.WriteLine($"topFaceCenter: {topFaceCenter}, relativePos: {relativePos}");
+        Console.WriteLine($"entitySize: {entitySize}, playerSize: {playerSize}");
+        Console.WriteLine($"TopFace: {topFaceIndex}, localXProj: {localXProj}, localYProj: {localYProj}, localZProj: {localZProj}");
+        Console.WriteLine($"faceWidth: {faceWidth}, faceHeight: {faceHeight}, overlapX: {overlapX}, overlapY: {overlapY}, onTop: {onTop}");*/
 
         return overlapX && overlapY && onTop;
     }
-
 
     public class VectorDTO
     {

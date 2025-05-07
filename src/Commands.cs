@@ -9,7 +9,7 @@ public static class Commands
     private static Plugin Instance = Plugin.Instance;
     private static Config config = Instance.Config;
     private static Config_Commands commands = Instance.Config.Commands;
-    private static Dictionary<int, PlayerData> playerData = Instance.playerData;
+    private static Dictionary<int, BuilderData> BuilderData = Instance.BuilderData;
 
     public static void Load()
     {
@@ -114,16 +114,17 @@ public static class Commands
             Instance.buildMode = true;
             foreach (var target in Utilities.GetPlayers().Where(p => !p.IsBot))
             {
-                playerData[target.Slot] = new PlayerData();
-                Blocks.PlayerHolds[target] = new BuildingData();
-
                 if (Utils.HasPermission(target) || Files.Builders.steamids.Contains(target.SteamID.ToString()))
-                    playerData[target.Slot].Builder = true;
+                {
+                    BuilderData[player.Slot] = new BuilderData { BlockType = Files.Models.Props.Platform.Title };
+                    Blocks.PlayerHolds[target] = new BuildingData();
+                }
             }
         }
         else
         {
             Instance.buildMode = false;
+            BuilderData.Clear();
             Blocks.PlayerHolds.Clear();
         }
 
@@ -153,11 +154,15 @@ public static class Commands
             return;
         }
 
-        var builderStatus = playerData[targetPlayer.Slot].Builder;
-        playerData[targetPlayer.Slot].Builder = !builderStatus;
+        bool isBuilder = BuilderData.TryGetValue(targetPlayer.Slot, out var builderData);
 
-        var action = builderStatus ? "removed" : "granted";
-        var color = builderStatus ? ChatColors.Red : ChatColors.Green;
+        if (isBuilder)
+            BuilderData.Remove(targetPlayer.Slot);
+
+        else BuilderData[player.Slot] = new BuilderData { BlockType = Files.Models.Props.Platform.Title };
+
+        var action = isBuilder ? "removed" : "granted";
+        var color = isBuilder ? ChatColors.Red : ChatColors.Green;
 
         Utils.PrintToChat(targetPlayer, $"{ChatColors.LightPurple}{player.PlayerName} {color}{action} your access to Build");
         Utils.PrintToChat(player, $"{color}You {action} {ChatColors.LightPurple}{targetPlayer.PlayerName} {color}access to Build");
@@ -165,7 +170,7 @@ public static class Commands
         var builders = Files.Builders.steamids;
         string steamId = targetPlayer.SteamID.ToString();
 
-        if (builderStatus && builders.Contains(steamId))
+        if (isBuilder && builders.Contains(steamId))
             builders.Remove(steamId);
 
         else
@@ -201,7 +206,7 @@ public static class Commands
 
         if (string.Equals("Teleport", selectType, StringComparison.OrdinalIgnoreCase))
         {
-            playerData[player.Slot].BlockType = "Teleport";
+            BuilderData[player.Slot].BlockType = "Teleport";
             Utils.PrintToChat(player, $"Selected Type: {ChatColors.White}Teleport");
             return;
         }
@@ -211,7 +216,7 @@ public static class Commands
         {
             if (string.Equals(model.Title, selectType, StringComparison.OrdinalIgnoreCase))
             {
-                playerData[player.Slot].BlockType = model.Title;
+                BuilderData[player.Slot].BlockType = model.Title;
                 Utils.PrintToChat(player, $"Selected Type: {ChatColors.White}{model.Title}");
                 return;
             }
@@ -235,7 +240,7 @@ public static class Commands
         {
             if (string.Equals(color, selectColor, StringComparison.OrdinalIgnoreCase))
             {
-                playerData[player.Slot].BlockColor = color;
+                BuilderData[player.Slot].BlockColor = color;
                 Utils.PrintToChat(player, $"Selected Color: {ChatColors.White}{color}");
 
                 Blocks.RenderColor(player);
@@ -298,7 +303,7 @@ public static class Commands
         if (player == null || !AllowedCommand(player))
             return;
 
-        ToggleCommand(player, ref playerData[player.Slot].Snapping, "Block Snapping");
+        ToggleCommand(player, ref BuilderData[player.Slot].Snapping, "Block Snapping");
     }
 
     public static void Grid(CCSPlayerController? player, string grid)
@@ -308,11 +313,11 @@ public static class Commands
 
         if (string.IsNullOrEmpty(grid))
         {
-            ToggleCommand(player, ref playerData[player.Slot].Grid, "Block Grid");
+            ToggleCommand(player, ref BuilderData[player.Slot].Grid, "Block Grid");
             return;
         }
 
-        playerData[player.Slot].GridValue = float.Parse(grid);
+        BuilderData[player.Slot].GridValue = float.Parse(grid);
 
         Utils.PrintToChat(player, $"Selected Grid: {ChatColors.White}{grid} Units");
     }
@@ -325,16 +330,16 @@ public static class Commands
         if (!Utils.BuildMode(player))
             return;
 
-        ToggleCommand(player, ref playerData[player.Slot].Noclip, "Noclip");
+        ToggleCommand(player, ref BuilderData[player.Slot].Noclip, "Noclip");
 
-        if (playerData[player.Slot].Noclip)
+        if (BuilderData[player.Slot].Noclip)
         {
             player.Pawn.Value!.MoveType = MoveType_t.MOVETYPE_NOCLIP;
             Schema.SetSchemaValue(player.Pawn.Value!.Handle, "CBaseEntity", "m_nActualMoveType", 8); // noclip
             Utilities.SetStateChanged(player.Pawn.Value!, "CBaseEntity", "m_MoveType");
         }
 
-        else if (!playerData[player.Slot].Noclip)
+        else if (!BuilderData[player.Slot].Noclip)
         {
             player.Pawn.Value!.MoveType = MoveType_t.MOVETYPE_WALK;
             Schema.SetSchemaValue(player!.Pawn.Value!.Handle, "CBaseEntity", "m_nActualMoveType", 2); // walk
@@ -347,9 +352,9 @@ public static class Commands
         if (player == null || !AllowedCommand(player))
             return;
 
-        ToggleCommand(player, ref playerData[player.Slot].Godmode, "Godmode");
+        ToggleCommand(player, ref BuilderData[player.Slot].Godmode, "Godmode");
 
-        if (playerData[player.Slot].Godmode)
+        if (BuilderData[player.Slot].Godmode)
             player.Pawn()!.TakesDamage = false;
 
         else player.Pawn()!.TakesDamage = true;
@@ -390,7 +395,6 @@ public static class Commands
         Blocks.Copy(player);
     }
 
-
     public static void LockBlock(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
@@ -404,7 +408,7 @@ public static class Commands
         if (player == null || !AllowedCommand(player))
             return;
 
-        var entity = player.GetBlockAimTarget();
+        var entity = player.GetBlockAim();
 
         if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
@@ -422,12 +426,44 @@ public static class Commands
         }
     }
 
+    public static void EffectBlock(CCSPlayerController? player)
+    {
+        if (player == null || !AllowedCommand(player))
+            return;
+
+        var entity = player.GetBlockAim();
+
+        if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+            return;
+
+        if (Blocks.Props.TryGetValue(entity, out var block))
+        {
+            var BuilderData = Instance.BuilderData[player.Slot];
+            Blocks.Effect effect = BuilderData.BlockEffect;
+            Blocks.Props[entity].Effect = effect.Particle;
+
+            block.Entity.Remove();
+            Blocks.Props.Remove(block.Entity);
+
+            var trigger = Blocks.Triggers.FirstOrDefault(kvp => kvp.Value == block.Entity).Key;
+            if (trigger != null)
+            {
+                trigger.Remove();
+                Blocks.Triggers.Remove(trigger);
+            }
+
+            Blocks.CreateBlock(player, BuilderData.BlockType, BuilderData.BlockPole, BuilderData.BlockSize, entity.AbsOrigin!, entity.AbsRotation!, BuilderData.BlockColor, BuilderData.BlockTransparency, BuilderData.BlockTeam, BuilderData.BlockEffect?.Particle ?? "");
+
+            Utils.PrintToChat(player, $"Changed block effect to {ChatColors.White}{effect.Title}");
+        }
+    }
+
     public static void TeamBlock(CCSPlayerController? player, string team = "Both")
     {
         if (player == null || !AllowedCommand(player))
             return;
 
-        var entity = player.GetBlockAimTarget();
+        var entity = player.GetBlockAim();
 
         if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
@@ -444,7 +480,7 @@ public static class Commands
         if (player == null || !AllowedCommand(player))
             return;
 
-        ToggleCommand(player, ref playerData[player.Slot].BlockPole, "Pole");
+        ToggleCommand(player, ref BuilderData[player.Slot].BlockPole, "Pole");
     }
 
     public static void Properties(CCSPlayerController? player, string type, string input)

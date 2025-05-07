@@ -2,16 +2,15 @@
 
 public class Config : BasePluginConfig
 {
-    public Config_Settings Settings { get; set; } = new Config_Settings();
-    public Config_Commands Commands { get; set; } = new Config_Commands();
-    public Config_Sounds Sounds { get; set; } = new Config_Sounds();
+    public Config_Settings Settings { get; set; } = new();
+    public Config_Commands Commands { get; set; } = new();
+    public Config_Sounds Sounds { get; set; } = new();
 }
 
 public class Config_Settings
 {
     public string Prefix { get; set; } = "{purple}BlockMaker {grey}|";
     public string MenuType { get; set; } = "CenterHtmlMenu";
-
     public class Settings_Building
     {
         public class Settings_BuildMode
@@ -33,17 +32,31 @@ public class Config_Settings
             public bool Render { get; set; } = true;
             public string RenderColor { get; set; } = "255,255,255,128";
             public bool Beams { get; set; }  = true;
-            public string BeamsColor { get; set; } = "255,255,255,64";
+            public string BeamsColor { get; set; } = "255,255,255,255";
         };
         public Settings_BlockGrab Grab { get; set; } = new();
 
-        public List<BlockSize> BlockSizes { get; set; } = new List<BlockSize>
+        public List<BlockSize> BlockSizes { get; set; } = new()
         {
-            new BlockSize("Small", 0.5f),
-            new BlockSize("Normal", 1.0f),
-            new BlockSize("Large", 2.0f),
-            new BlockSize("X-Large", 3.0f)
+            new("Small", 0.5f),
+            new("Normal", 1.0f),
+            new("Large", 2.0f),
+            new("X-Large", 3.0f)
         };
+
+        public List<Blocks.Effect> Effects { get; set; } = new()
+        {
+            new("Fire", "particles/burning_fx/env_fire_small.vpcf"),
+            new("Smoke", "particles/burning_fx/smoke_gib_01.vpcf"),
+            new("Money", "particles/money_fx/moneybag_trail.vpcf"),
+        };
+
+        public class Settings_Lights
+        {
+            public string Model { get; set; } = "models/generic/interior_lamp_kit_01/ilk01_lamp_01_bulb.vmdl";
+            public bool HideModel { get; set; } = true;
+        };
+        public Settings_Lights Lights { get; set; } = new();
     }
     public Settings_Building Building { get; set; } = new();
 
