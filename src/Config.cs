@@ -112,11 +112,12 @@ public class Config_Commands
         public List<string> CopyBlock { get; set; } = [ "copy" ];
         public List<string> ConvertBlock { get; set; } = [ "convert" ];
         public List<string> LockBlock { get; set; } = [ "lock" ];
+        public List<string> LockAll { get; set; } = ["lockall"];
         public List<string> SaveBlocks { get; set; } = [ "save" ];
         public List<string> Snapping { get; set; } = [ "snap" ];
         public List<string> Grid { get; set; } = [ "grid" ];
         public List<string> Noclip { get; set; } = [ "nc" ];
-        public List<string> Godmode { get; set; } = [ "godmode" ];
+        public List<string> Godmode { get; set; } = [ "god" ];
         public List<string> TestBlock { get; set; } = [ "testblock" ];
     }
     public Commands_Building Building { get; set; } = new();

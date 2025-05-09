@@ -9,10 +9,7 @@ public partial class Blocks
 {
     public static void Create(CCSPlayerController player)
     {
-        var pawn = player.Pawn()!;
-        Vector position = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
-
-        CGameTrace? trace = TraceRay.TraceShape(player.GetEyePosition()!, pawn.EyeAngles, TraceMask.MaskShot, player);
+        CGameTrace? trace = TraceRay.TraceShape(player.GetEyePosition()!, player.PlayerPawn.Value?.EyeAngles!, TraceMask.MaskShot, player);
         if (trace == null || !trace.HasValue || trace.Value.Position.Length() == 0)
         {
             Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a valid location to create block");
@@ -55,7 +52,7 @@ public partial class Blocks
         }
     }
 
-    public static Dictionary<CBaseEntity, BlockData> Props = new();
+    public static Dictionary<CBaseEntity, Data> Entities = new();
     public static void CreateBlock(
         CCSPlayerController? player,
         string type,
@@ -67,7 +64,7 @@ public partial class Blocks
         string transparency = "100%",
         string team = "Both",
         string effect = "None",
-        BlockData_Properties? properties = null
+        Property? properties = null
     )
     {
         var block = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override");
@@ -78,7 +75,7 @@ public partial class Blocks
             block.EnableUseOutput = true;
             block.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
             block.ShadowStrength = config.Settings.Blocks.DisableShadows ? 0.0f : 1.0f;
-
+            
             var clr = Utils.GetColor(color);
             int alpha = Utils.GetAlpha(transparency);
             block.Render = Color.FromArgb(alpha, clr.R, clr.G, clr.B);
@@ -99,9 +96,9 @@ public partial class Blocks
 
             if (properties == null)
             {
-                if (Files.PropsData.Properties.BlockProperties.TryGetValue(type.Split('.')[0], out var defaultProperties))
+                if (Properties.BlockProperties.TryGetValue(type.Split('.')[0], out var defaultProperties))
                 {
-                    properties = new BlockData_Properties
+                    properties = new Property
                     {
                         Cooldown = defaultProperties.Cooldown,
                         Value = defaultProperties.Value,
@@ -111,11 +108,11 @@ public partial class Blocks
                     };
                     if (player != null) properties.Builder = $"{player.PlayerName} - {DateTime.Now:dd/MMMM/yyyy HH:mm}";
                 }
-                else properties = new BlockData_Properties();
+                else properties = new Property();
             }
             else
             {
-                properties = new BlockData_Properties
+                properties = new Property
                 {
                     Cooldown = properties.Cooldown,
                     Value = properties.Value,
@@ -126,7 +123,7 @@ public partial class Blocks
                 };
             }
 
-            Props[block] = new BlockData(block, type, pole, size, color, transparency, team, effect, properties);
+            Entities[block] = new Data(block, type, pole, size, color, transparency, team, effect, properties);
         }
     }
 
@@ -150,4 +147,60 @@ public partial class Blocks
             Triggers.Add(trigger, block);
         }
     }
+
+    public static void Delete(CCSPlayerController player, bool all = false)
+    {
+        if (all)
+        {
+            Utils.RemoveEntities();
+
+            Entities.Clear();
+            Triggers.Clear();
+
+            Teleports.Entities.Clear();
+            Teleports.isNext.Clear();
+
+            Lights.Entities.Clear();
+        }
+        else
+        {
+            var entity = player.GetBlockAim();
+
+            if (entity == null)
+            {
+                Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a block to delete");
+                return;
+            }
+
+            if (Entities.TryGetValue(entity, out var block))
+            {
+                if (Utils.BlockLocked(player, block))
+                    return;
+
+                block.Entity.Remove();
+                Entities.Remove(block.Entity);
+
+                var trigger = Triggers.FirstOrDefault(kvp => kvp.Value == block.Entity).Key;
+                if (trigger != null)
+                {
+                    trigger.Remove();
+                    Triggers.Remove(trigger);
+                }
+
+                if (config.Sounds.Building.Enabled)
+                    player.EmitSound(config.Sounds.Building.Delete);
+
+                Utils.PrintToChat(player, $"Deleted -" +
+                    $" type: {ChatColors.White}{block.Type}{ChatColors.Grey}," +
+                    $" size: {ChatColors.White}{block.Size}{ChatColors.Grey}," +
+                    $" color: {ChatColors.White}{block.Color}{ChatColors.Grey}," +
+                    $" team: {ChatColors.White}{block.Team}{ChatColors.Grey}," +
+                    $" transparency: {ChatColors.White}{block.Transparency},"
+                );
+
+                return;
+            }
+        }
+    }
+
 }

@@ -115,11 +115,12 @@
       "CopyBlock": ["copy"],
       "ConvertBlock": ["convert"],
       "LockBlock": ["lock"],
+      "LockAll": ["lockall"],
       "SaveBlocks": ["save"],
       "Snapping": ["snap"],
       "Grid": ["grid"],
       "Noclip": ["nc"],
-      "Godmode": ["godmode"],
+      "Godmode": ["god"],
       "TestBlock": ["testblock"]
     }
   },

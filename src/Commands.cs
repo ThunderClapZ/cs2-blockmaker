@@ -9,7 +9,7 @@ public static class Commands
     private static Plugin Instance = Plugin.Instance;
     private static Config config = Instance.Config;
     private static Config_Commands commands = Instance.Config.Commands;
-    private static Dictionary<int, BuilderData> BuilderData = Instance.BuilderData;
+    private static Dictionary<int, Building.BuilderData> BuilderData = Instance.BuilderData;
 
     public static void Load()
     {
@@ -32,6 +32,7 @@ public static class Commands
         AddCommands(commands.Building.ConvertBlock, ConvertBlock);
         AddCommands(commands.Building.CopyBlock, CopyBlock);
         AddCommands(commands.Building.LockBlock, LockBlock);
+        AddCommands(commands.Building.LockAll, LockAll);
     }
     private static void AddCommands(List<string> commands, Action<CCSPlayerController?> action)
     {
@@ -65,6 +66,7 @@ public static class Commands
         RemoveCommands(commands.Building.ConvertBlock, ConvertBlock);
         RemoveCommands(commands.Building.CopyBlock, CopyBlock);
         RemoveCommands(commands.Building.LockBlock, LockBlock);
+        RemoveCommands(commands.Building.LockAll, LockAll);
     }
     private static void RemoveCommands(List<string> commands, Action<CCSPlayerController?> action)
     {
@@ -116,8 +118,8 @@ public static class Commands
             {
                 if (Utils.HasPermission(target) || Files.Builders.steamids.Contains(target.SteamID.ToString()))
                 {
-                    BuilderData[player.Slot] = new BuilderData { BlockType = Files.Models.Props.Platform.Title };
-                    Blocks.PlayerHolds[target] = new BuildingData();
+                    BuilderData[player.Slot] = new Building.BuilderData { BlockType = Files.Models.Entities.Platform.Title };
+                    Building.PlayerHolds[target] = new Building.BuildData();
                 }
             }
         }
@@ -125,7 +127,7 @@ public static class Commands
         {
             Instance.buildMode = false;
             BuilderData.Clear();
-            Blocks.PlayerHolds.Clear();
+            Building.PlayerHolds.Clear();
         }
 
         string status = Instance.buildMode ? "Enabled" : "Disabled";
@@ -159,7 +161,7 @@ public static class Commands
         if (isBuilder)
             BuilderData.Remove(targetPlayer.Slot);
 
-        else BuilderData[player.Slot] = new BuilderData { BlockType = Files.Models.Props.Platform.Title };
+        else BuilderData[player.Slot] = new Building.BuilderData { BlockType = Files.Models.Entities.Platform.Title };
 
         var action = isBuilder ? "removed" : "granted";
         var color = isBuilder ? ChatColors.Red : ChatColors.Green;
@@ -211,7 +213,7 @@ public static class Commands
             return;
         }
 
-        var blockModels = Files.Models.Props;
+        var blockModels = Files.Models.Entities;
         foreach (var model in blockModels.GetAllBlocks())
         {
             if (string.Equals(model.Title, selectType, StringComparison.OrdinalIgnoreCase))
@@ -295,7 +297,7 @@ public static class Commands
             return;
         }
 
-        Files.PropsData.Save();
+        Files.EntitiesData.Save();
     }
 
     public static void Snapping(CCSPlayerController? player)
@@ -403,59 +405,28 @@ public static class Commands
         Blocks.Lock(player);
     }
 
-    public static void TransparenyBlock(CCSPlayerController? player, string transparency = "100%")
+    public static void LockAll(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
 
-        var entity = player.GetBlockAim();
+        Blocks.LockAll(player);
+    }
 
-        if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+    public static void TransparencyBlock(CCSPlayerController? player, string transparency = "100%")
+    {
+        if (player == null || !AllowedCommand(player))
             return;
 
-        if (Blocks.Props.TryGetValue(entity, out var block))
-        {
-            Blocks.Props[entity].Transparency = transparency;
-
-            var color = Utils.GetColor(block.Color);
-            int alpha = Utils.GetAlpha(transparency);
-            entity.Render = Color.FromArgb(alpha, color.R, color.G, color.B);
-            Utilities.SetStateChanged(entity, "CBaseModelEntity", "m_clrRender");
-
-            Utils.PrintToChat(player, $"Changed block transparency to {ChatColors.White}{transparency}");
-        }
+        Blocks.Transparency(player, transparency);
     }
 
     public static void EffectBlock(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
             return;
-
-        var entity = player.GetBlockAim();
-
-        if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
-            return;
-
-        if (Blocks.Props.TryGetValue(entity, out var block))
-        {
-            var BuilderData = Instance.BuilderData[player.Slot];
-            Blocks.Effect effect = BuilderData.BlockEffect;
-            Blocks.Props[entity].Effect = effect.Particle;
-
-            block.Entity.Remove();
-            Blocks.Props.Remove(block.Entity);
-
-            var trigger = Blocks.Triggers.FirstOrDefault(kvp => kvp.Value == block.Entity).Key;
-            if (trigger != null)
-            {
-                trigger.Remove();
-                Blocks.Triggers.Remove(trigger);
-            }
-
-            Blocks.CreateBlock(player, BuilderData.BlockType, BuilderData.BlockPole, BuilderData.BlockSize, entity.AbsOrigin!, entity.AbsRotation!, BuilderData.BlockColor, BuilderData.BlockTransparency, BuilderData.BlockTeam, BuilderData.BlockEffect?.Particle ?? "");
-
-            Utils.PrintToChat(player, $"Changed block effect to {ChatColors.White}{effect.Title}");
-        }
+        
+        Blocks.ChangeEffect(player);
     }
 
     public static void TeamBlock(CCSPlayerController? player, string team = "Both")
@@ -468,9 +439,12 @@ public static class Commands
         if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
 
-        if (Blocks.Props.TryGetValue(entity, out var block))
+        if (Blocks.Entities.TryGetValue(entity, out var block))
         {
-            Blocks.Props[entity].Team = team;
+            if (Utils.BlockLocked(player, block))
+                return;
+
+            Blocks.Entities[entity].Team = team;
             Utils.PrintToChat(player, $"Changed block team to {ChatColors.White}{team}");
         }
     }
@@ -491,6 +465,14 @@ public static class Commands
         Blocks.ChangeProperties(player, type, input);
     }
 
+    public static void LightSettings(CCSPlayerController? player, string type, string input)
+    {
+        if (player == null || !AllowedCommand(player))
+            return;
+
+        Lights.Settings(player, type, input);
+    }
+
     public static void ResetProperties(CCSPlayerController? player)
     {
         if (player == null || !AllowedCommand(player))
@@ -502,11 +484,11 @@ public static class Commands
             return;
         }
 
-        foreach (var block in Blocks.Props.Values)
+        foreach (var block in Blocks.Entities.Values)
         {
-            if (Files.PropsData.Properties.BlockProperties.TryGetValue(block.Type.Split('.')[0], out var defaultProperties))
+            if (Blocks.Properties.BlockProperties.TryGetValue(block.Type.Split('.')[0], out var defaultProperties))
             {
-                block.Properties = new BlockData_Properties
+                block.Properties = new Blocks.Property
                 {
                     Cooldown = defaultProperties.Cooldown,
                     Value = defaultProperties.Value,

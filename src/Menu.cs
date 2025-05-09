@@ -55,6 +55,8 @@ public partial class Menu
 
     static void Menu_Commands(CCSPlayerController player, string menuType, IMenu Parent)
     {
+        var BuilderData = Instance.BuilderData[player.Slot];
+
         IMenu Menu = Create("Block Menu", menuType, Parent);
 
         Menu.AddItem($"Settings", (player, option) =>
@@ -91,6 +93,12 @@ public partial class Menu
         Menu.AddItem("Copy", (player, option) =>
         {
             Commands.CopyBlock(player);
+            Menu_Commands(player, menuType, Parent);
+        });
+
+        Menu.AddItem("Lock", (player, option) =>
+        {
+            Commands.LockBlock(player);
             Menu_Commands(player, menuType, Parent);
         });
 
@@ -216,7 +224,7 @@ public partial class Menu
 
         IMenu Menu = Create($"Select Type ({BuilderData.BlockType})", menuType, Parent);
 
-        var blockmodels = Files.Models.Props;
+        var blockmodels = Files.Models.Entities;
 
         foreach (var block in blockmodels.GetAllBlocks())
         {
@@ -262,7 +270,7 @@ public partial class Menu
                 {
                     Menu.AddItem(weapon.Name, (player, option) =>
                     {
-                        var blockModels = Files.Models.Props;
+                        var blockModels = Files.Models.Entities;
                         foreach (var model in blockModels.GetAllBlocks())
                         {
                             if (string.Equals(model.Title, gunType, StringComparison.OrdinalIgnoreCase))
@@ -296,7 +304,7 @@ public partial class Menu
 
                 Utils.PrintToChat(player, $"Selected Transparency: {ChatColors.White}{value}");
 
-                Commands.TransparenyBlock(player, value);
+                Commands.TransparencyBlock(player, value);
 
                 Menu_BlockSettings(player, menuType, Parent);
             });
@@ -362,7 +370,7 @@ public partial class Menu
     {
         var BuilderData = Instance.BuilderData[player.Slot];
 
-        if (Blocks.Props.TryGetValue(entity, out var block))
+        if (Blocks.Entities.TryGetValue(entity, out var block))
         {
             IMenu Menu = Create($"Properties ({block.Type})", menuType, Parent);
             var properties = block.Properties;
@@ -382,6 +390,7 @@ public partial class Menu
                 Menu.AddItem("Builder Info", (player, option) =>
                 {
                     Utils.PrintToChat(player, $"{ChatColors.White}{block.Type} {ChatColors.Grey}created by player: {ChatColors.White}{name} {ChatColors.Grey}date: {ChatColors.White}{date}");
+                    PropertiesMenuOptions(player, menuType, Parent, entity);
                 });
             }
 
@@ -406,10 +415,10 @@ public partial class Menu
                 title = "";
 
             if (property == "OnTop")
-                title = Blocks.Props[entity].Properties.OnTop ? ": Enabled" : ": Disabled";
+                title = Blocks.Entities[entity].Properties.OnTop ? ": Enabled" : ": Disabled";
 
             if (property == "Locked")
-                title = Blocks.Props[entity].Properties.Locked ? ": Enabled" : ": Disabled";
+                title = Blocks.Entities[entity].Properties.Locked ? ": Enabled" : ": Disabled";
 
             Menu.AddItem($"{property}{title}", (player, option) =>
             {
@@ -444,66 +453,14 @@ public partial class Menu
 
         Menu.AddItem($"Create", (player, option) =>
         {
-            Blocks.CreateTeleport(player);
+            Teleports.Create(player);
 
             Menu_Teleports(player, menuType, Parent);
         });
 
         Menu.AddItem($"Delete", (player, option) =>
         {
-            var entity = player.GetBlockAim();
-            if (entity == null)
-            {
-                Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a teleport to delete");
-                Menu_Teleports(player, menuType, Parent);
-                return;
-            }
-
-            var teleports = Blocks.Teleports.First(pair => pair.Entry.Entity == entity || pair.Exit.Entity == entity);
-
-            if (teleports != null)
-            {
-                if (teleports.Entry == null || teleports.Exit == null)
-                {
-                    Utils.PrintToChat(player, $"{ChatColors.Red}Could not delete unfinished teleport pair");
-                    Menu_Teleports(player, menuType, Parent);
-                    return;
-                }
-
-                var entryEntity = teleports.Entry.Entity;
-                if (entryEntity != null && entryEntity.IsValid)
-                {
-                    entryEntity.Remove();
-
-                    var entryTrigger = Blocks.Triggers.Where(kvp => kvp.Value == entryEntity).First().Key;
-                    if (entryTrigger != null)
-                    {
-                        entryTrigger.Remove();
-                        Blocks.Triggers.Remove(entryTrigger);
-                    }
-                }
-
-                var exitEntity = teleports.Exit.Entity;
-                if (exitEntity != null && exitEntity.IsValid)
-                {
-                    exitEntity.Remove();
-
-                    var exitTrigger = Blocks.Triggers.Where(kvp => kvp.Value == exitEntity).First().Key;
-                    if (exitTrigger != null)
-                    {
-                        exitTrigger.Remove();
-                        Blocks.Triggers.Remove(exitTrigger);
-                    }
-                }
-
-                Blocks.Teleports.Remove(teleports);
-
-                if (Instance.Config.Sounds.Building.Enabled)
-                    player.EmitSound(Instance.Config.Sounds.Building.Delete);
-
-                Utils.PrintToChat(player, $"Deleted teleport pair");
-            }
-            else Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a teleport to delete");
+            Teleports.Delete(player);
 
             Menu_Teleports(player, menuType, Parent);
         });
@@ -522,44 +479,14 @@ public partial class Menu
 
         Menu.AddItem($"Create", (player, option) =>
         {
-            CGameTrace? trace = TraceRay.TraceShape(player.GetEyePosition()!, player.PlayerPawn.Value?.EyeAngles!, TraceMask.MaskShot, player);
-            if (trace == null || !trace.HasValue || trace.Value.Position.Length() == 0)
-            {
-                Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a valid location to create light");
-                Menu_Lights(player, menuType, Parent);
-                return;
-            }
-
-            var endPos = trace.Value.Position;
-
-            Blocks.CreateLight(BuilderData.LightColor, BuilderData.LightBrightness, BuilderData.LightDistance, new(endPos.X, endPos.Y, endPos.Z), player.AbsRotation);
-            Utils.PrintToChat(player, $"Created Light -" +
-                $" color: {ChatColors.White}{BuilderData.LightColor}{ChatColors.Grey}," +
-                $" brightness: {ChatColors.White}{BuilderData.LightBrightness}{ChatColors.Grey}," +
-                $" distance: {ChatColors.White}{BuilderData.LightDistance}"
-            );
+            Lights.Create(player);
 
             Menu_Lights(player, menuType, Parent);
         });
 
         Menu.AddItem($"Delete", (player, option) =>
         {
-            var entity = player.GetBlockAim();
-
-            if (entity != null && Blocks.Lights.TryGetValue(entity, out var light))
-            {
-                light.Entity.Remove();
-                Blocks.Lights.Remove(entity);
-                entity.Remove();
-
-                Utils.PrintToChat(player, $"Deleted Light -" +
-                    $" color: {ChatColors.White}{light.Color}{ChatColors.Grey}," +
-                    $" brightness: {ChatColors.White}{light.Brightness}{ChatColors.Grey}," +
-                    $" distance: {ChatColors.White}{light.Distance}"
-                );
-            }
-            else Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a light to delete");
-
+            Lights.Delete(player);
 
             Menu_Lights(player, menuType, Parent);
         });

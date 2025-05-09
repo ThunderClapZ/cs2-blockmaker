@@ -7,64 +7,67 @@ using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
-public partial class Plugin
+public static class Events
 {
-    void RegisterEvents()
+    private static Plugin Instance = Plugin.Instance;
+    private static Config Config = Instance.Config;
+
+    public static void Register()
     {
-        RegisterListener<Listeners.OnTick>(Blocks.OnTick);
-        RegisterListener<Listeners.OnMapStart>(OnMapStart);
-        RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
-        RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
+        Instance.RegisterListener<Listeners.OnTick>(Building.OnTick);
+        Instance.RegisterListener<Listeners.OnMapStart>(OnMapStart);
+        Instance.RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
+        Instance.RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
 
-        RegisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull);
-        RegisterEventHandler<EventRoundStart>(EventRoundStart);
-        RegisterEventHandler<EventRoundEnd>(EventRoundEnd);
-        RegisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
+        Instance.RegisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull);
+        Instance.RegisterEventHandler<EventRoundStart>(EventRoundStart);
+        Instance.RegisterEventHandler<EventRoundEnd>(EventRoundEnd);
+        Instance.RegisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
 
-        AddCommandListener("say", OnCommandSay, HookMode.Pre);
-        AddCommandListener("say_team", OnCommandSay, HookMode.Pre);
+        Instance.AddCommandListener("say", OnCommandSay, HookMode.Pre);
+        Instance.AddCommandListener("say_team", OnCommandSay, HookMode.Pre);
 
-        HookEntityOutput("trigger_multiple", "OnStartTouch", trigger_multiple, HookMode.Pre);
+        Instance.HookEntityOutput("trigger_multiple", "OnStartTouch", trigger_multiple, HookMode.Pre);
 
         VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Hook(OnTakeDamage, HookMode.Pre);
 
         Transmit.Load();
     }
 
-    void UnregisterEvents()
+    public static void Deregister()
     {
-        RemoveListener<Listeners.OnTick>(Blocks.OnTick);
-        RemoveListener<Listeners.OnMapStart>(OnMapStart);
-        RemoveListener<Listeners.OnMapEnd>(OnMapEnd);
-        RemoveListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
+        Instance.RemoveListener<Listeners.OnTick>(Building.OnTick);
+        Instance.RemoveListener<Listeners.OnMapStart>(OnMapStart);
+        Instance.RemoveListener<Listeners.OnMapEnd>(OnMapEnd);
+        Instance.RemoveListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
 
-        DeregisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull);
-        DeregisterEventHandler<EventRoundStart>(EventRoundStart);
-        DeregisterEventHandler<EventRoundEnd>(EventRoundEnd);
-        DeregisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
+        Instance.DeregisterEventHandler<EventPlayerConnectFull>(EventPlayerConnectFull);
+        Instance.DeregisterEventHandler<EventRoundStart>(EventRoundStart);
+        Instance.DeregisterEventHandler<EventRoundEnd>(EventRoundEnd);
+        Instance.DeregisterEventHandler<EventPlayerDeath>(EventPlayerDeath);
 
-        RemoveCommandListener("say", OnCommandSay, HookMode.Pre);
-        RemoveCommandListener("say_team", OnCommandSay, HookMode.Pre);
+        Instance.RemoveCommandListener("say", OnCommandSay, HookMode.Pre);
+        Instance.RemoveCommandListener("say_team", OnCommandSay, HookMode.Pre);
 
-        UnhookEntityOutput("trigger_multiple", "OnStartTouch", trigger_multiple, HookMode.Pre);
+        Instance.UnhookEntityOutput("trigger_multiple", "OnStartTouch", trigger_multiple, HookMode.Pre);
 
         VirtualFunctions.CBaseEntity_TakeDamageOldFunc.Unhook(OnTakeDamage, HookMode.Pre);
 
         Transmit.Unload();
     }
 
-    public Timer? AutoSaveTimer;
-    void OnMapStart(string mapname)
+    public static Timer? AutoSaveTimer;
+    private static void OnMapStart(string mapname)
     {
-        Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Server.MapName);
+        Files.mapsFolder = Path.Combine(Instance.ModuleDirectory, "maps", Server.MapName);
         Directory.CreateDirectory(Files.mapsFolder);
 
         if (Config.Settings.Building.AutoSave.Enable)
         {
             AutoSaveTimer?.Kill();
-            AutoSaveTimer = AddTimer(Config.Settings.Building.AutoSave.Timer, () => {
-                if (!buildMode) return;
-                Files.PropsData.Save(true);
+            AutoSaveTimer = Instance.AddTimer(Config.Settings.Building.AutoSave.Timer, () => {
+                if (!Instance.buildMode) return;
+                Files.EntitiesData.Save(true);
             }, TimerFlags.REPEAT | TimerFlags.STOP_ON_MAPCHANGE);
         }
 
@@ -81,12 +84,12 @@ public partial class Plugin
         }
     }
 
-    void OnMapEnd()
+    private static void OnMapEnd()
     {
-        Blocks.Clear();
+        Utils.Clear();
     }
 
-    void OnServerPrecacheResources(ResourceManifest manifest)
+    private static void OnServerPrecacheResources(ResourceManifest manifest)
     {
         List<string> resources =
         [
@@ -102,7 +105,7 @@ public partial class Plugin
         foreach (var effect in Config.Settings.Blocks.Effects)
             resources.Add(effect.Particle);
 
-        foreach (var model in Files.Models.Props.GetAllBlocks())
+        foreach (var model in Files.Models.Entities.GetAllBlocks())
         {
             resources.Add(model.Block);
             resources.Add(model.Pole);
@@ -115,41 +118,41 @@ public partial class Plugin
         }
     }
 
-    HookResult EventPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
+    private static HookResult EventPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
     {
         var player = @event.Userid;
 
         if (player == null || player.NotValid())
             return HookResult.Continue;
 
-        if (buildMode)
+        if (Instance.buildMode)
         {
             Files.Builders.Load();
 
             if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
-                BuilderData[player.Slot] = new BuilderData { BlockType = Files.Models.Props.Platform.Title };
+                Instance.BuilderData[player.Slot] = new Building.BuilderData { BlockType = Files.Models.Entities.Platform.Title };
         }
 
         return HookResult.Continue;
     }
 
-    HookResult EventRoundStart(EventRoundStart @event, GameEventInfo info)
+    private static HookResult EventRoundStart(EventRoundStart @event, GameEventInfo info)
     {
-        Blocks.Clear();
-        Files.PropsData.Load();
+        Utils.Clear();
+        Files.EntitiesData.Load();
 
         return HookResult.Continue;
     }
 
-    HookResult EventRoundEnd(EventRoundEnd @event, GameEventInfo info)
+    private static HookResult EventRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
-        if (buildMode && Config.Settings.Building.AutoSave.Enable)
-            Files.PropsData.Save();
+        if (Instance.buildMode && Config.Settings.Building.AutoSave.Enable)
+            Files.EntitiesData.Save();
 
         return HookResult.Continue;
     }
 
-    HookResult EventPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
+    private static HookResult EventPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
     {
         var player = @event.Userid;
 
@@ -173,14 +176,14 @@ public partial class Plugin
         return HookResult.Continue;
     }
 
-    HookResult OnCommandSay(CCSPlayerController? player, CommandInfo info)
+    private static HookResult OnCommandSay(CCSPlayerController? player, CommandInfo info)
     {
         if (player == null || player.NotValid())
             return HookResult.Continue;
 
-        if (BuilderData.ContainsKey(player.Slot))
+        if (Instance.BuilderData.ContainsKey(player.Slot))
         {
-            var pData = BuilderData[player.Slot];
+            var pData = Instance.BuilderData[player.Slot];
             var type = pData.ChatInput;
 
             if (!string.IsNullOrEmpty(type))
@@ -195,14 +198,6 @@ public partial class Plugin
 
                 switch (type)
                 {
-                    case "LightBrightness":
-                        pData.LightBrightness = number.ToString();
-                        Utils.PrintToChat(player, $"LightBrightness Value: {ChatColors.White}{number}");
-                        break;
-                    case "LightDistance":
-                        pData.LightDistance = number.ToString();
-                        Utils.PrintToChat(player, $"LightDistance Value: {ChatColors.White}{number}");
-                        break;
                     case "Grid":
                         pData.GridValue = number;
                         Utils.PrintToChat(player, $"Grid Value: {ChatColors.White}{number}");
@@ -219,6 +214,12 @@ public partial class Plugin
                         pData.PositionValue = number;
                         Utils.PrintToChat(player, $"Position Value: {ChatColors.White}{number}");
                         break;
+                    case "LightBrightness":
+                        Commands.LightSettings(player, type, input);
+                        break;
+                    case "LightDistance":
+                        Commands.LightSettings(player, type, input);
+                        break;
                     case "Reset":
                     default:
                         Commands.Properties(player, type, input);
@@ -234,7 +235,7 @@ public partial class Plugin
         return HookResult.Continue;
     }
 
-    HookResult trigger_multiple(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
+    private static HookResult trigger_multiple(CEntityIOOutput output, string name, CEntityInstance activator, CEntityInstance caller, CVariant value, float delay)
     {
         if (Blocks.Triggers.TryGetValue(caller, out CBaseProp? block))
         {
@@ -249,14 +250,14 @@ public partial class Plugin
             if (player == null || player.IsBot)
                 return HookResult.Continue;
 
-            if (buildMode)
+            if (Instance.buildMode)
             {
-                foreach (var kvp in Blocks.PlayerHolds)
-                    if (kvp.Value.block == block)
+                foreach (var kvp in Building.PlayerHolds)
+                    if (kvp.Value.Entity == block)
                         return HookResult.Continue;
             }
 
-            var teleport = Blocks.Teleports.Where(pair => pair.Entry.Entity == block || pair.Exit.Entity == block).FirstOrDefault();
+            var teleport = Teleports.Entities.Where(pair => pair.Entry.Entity == block || pair.Exit.Entity == block).FirstOrDefault();
 
             if (teleport != null)
             {
@@ -279,20 +280,20 @@ public partial class Plugin
                 return HookResult.Continue;
             }
 
-            var blockData = Blocks.Props[block];
+            var Data = Blocks.Entities[block];
 
-            if (blockData.Properties.OnTop)
+            if (Data.Properties.OnTop)
             {
                 var playerMaxs = pawn.Collision.Maxs * 2;
-                var blockMaxs = block.Collision.Maxs * Utils.GetSize(blockData.Size) * 2;
+                var blockMaxs = block.Collision.Maxs * Utils.GetSize(Data.Size) * 2;
 
                 if (!VectorUtils.IsTopOnly(block.AbsOrigin!, pawn.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
                     return HookResult.Continue;
             }
 
-            if (blockData.Team == "T" && player.Team == CsTeam.Terrorist ||
-                blockData.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
-                blockData.Team == "Both" || string.IsNullOrEmpty(blockData.Team)
+            if (Data.Team == "T" && player.Team == CsTeam.Terrorist ||
+                Data.Team == "CT" && player.Team == CsTeam.CounterTerrorist ||
+                Data.Team == "Both" || string.IsNullOrEmpty(Data.Team)
             )
             {
                 Blocks.Actions(player, block);
@@ -302,7 +303,7 @@ public partial class Plugin
         return HookResult.Continue;
     }
 
-    HookResult OnTakeDamage(DynamicHook hook)
+    private static HookResult OnTakeDamage(DynamicHook hook)
     {
         var pawn = hook.GetParam<CCSPlayerPawn>(0);
         var info = hook.GetParam<CTakeDamageInfo>(1);
@@ -310,11 +311,11 @@ public partial class Plugin
         if (pawn.DesignerName == "player" && info.Attacker.Value?.DesignerName == "player")
             return HookResult.Continue;
 
-        var props = Files.Models.Props;
-        string NoFallDmg = props.NoFallDmg.Title;
-        string Trampoline = props.Trampoline.Title;
+        var Entities = Files.Models.Entities;
+        string NoFallDmg = Entities.NoFallDmg.Title;
+        string Trampoline = Entities.Trampoline.Title;
 
-        foreach (var blocktarget in Blocks.Props.Where(x => x.Value.Type.Equals(NoFallDmg) || x.Value.Type.Equals(Trampoline)))
+        foreach (var blocktarget in Blocks.Entities.Where(x => x.Value.Type.Equals(NoFallDmg) || x.Value.Type.Equals(Trampoline)))
         {
             var block = blocktarget.Key;
 

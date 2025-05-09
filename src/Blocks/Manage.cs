@@ -5,101 +5,6 @@ using System.Drawing;
 
 public partial class Blocks
 {
-    private static void RemoveEntities()
-    {
-        foreach (var entity in Utilities.GetAllEntities().Where(x => x.DesignerName == "prop_physics_override" || x.DesignerName == "trigger_multiple" || x.DesignerName == "light_dynamic"))
-        {
-            if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
-                continue;
-
-            if (entity.Entity.Name.StartsWith("blockmaker"))
-                entity.Remove();
-        }
-    }
-
-    public static void Clear()
-    {
-        RemoveEntities();
-
-        foreach (var timer in Plugin.Instance.Timers)
-        {
-            if (timer == instance.AutoSaveTimer)
-                continue;
-
-            timer?.Kill();
-        }
-
-        Props.Clear();
-        Triggers.Clear();
-
-        Teleports.Clear();
-        isNextTeleport.Clear();
-
-        Lights.Clear();
-
-        PlayerCooldowns.Clear();
-        CooldownsTimers.Clear();
-        TempTimers.Clear();
-
-        PlayerHolds.Clear();
-
-        HiddenPlayers.Clear();
-
-        nuked = false;
-    }
-
-    public static void Delete(CCSPlayerController player, bool all = false)
-    {
-        if (all)
-        {
-            RemoveEntities();
-
-            Props.Clear();
-            Triggers.Clear();
-
-            Teleports.Clear();
-            isNextTeleport.Clear();
-
-            Lights.Clear();
-        }
-        else
-        {
-            var entity = player.GetBlockAim();
-
-            if (entity == null)
-            {
-                Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a block to delete");
-                return;
-            }
-
-            if (Props.TryGetValue(entity, out var block))
-            {
-                block.Entity.Remove();
-                Props.Remove(block.Entity);
-
-                var trigger = Triggers.FirstOrDefault(kvp => kvp.Value == block.Entity).Key;
-                if (trigger != null)
-                {
-                    trigger.Remove();
-                    Triggers.Remove(trigger);
-                }
-
-                if (config.Sounds.Building.Enabled)
-                    player.EmitSound(config.Sounds.Building.Delete);
-
-                Utils.PrintToChat(player, $"Deleted -" +
-                    $" type: {ChatColors.White}{block.Type}{ChatColors.Grey}," +
-                    $" size: {ChatColors.White}{block.Size}{ChatColors.Grey}," +
-                    $" color: {ChatColors.White}{block.Color}{ChatColors.Grey}," +
-                    $" team: {ChatColors.White}{block.Team}{ChatColors.Grey}," +
-                    $" transparency: {ChatColors.White}{block.Transparency},"
-                );
-
-                return;
-            }
-        }
-    }
-
     public static void Position(CCSPlayerController player, string input, bool rotate)
     {
         var entity = player.GetBlockAim();
@@ -112,8 +17,11 @@ public partial class Blocks
             return;
         }
 
-        if (Props.TryGetValue(entity, out var block))
+        if (Entities.TryGetValue(entity, out var block))
         {
+            if (Utils.BlockLocked(player, block))
+                return;
+
             if (string.IsNullOrEmpty(input))
             {
                 Utils.PrintToChat(player, $"{ChatColors.Red}Input option cannot be empty");
@@ -193,10 +101,13 @@ public partial class Blocks
         if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
 
-        if (Props.TryGetValue(entity, out var block))
+        if (Entities.TryGetValue(entity, out var block))
         {
+            if (Utils.BlockLocked(player, block))
+                return;
+
             block.Entity.Remove();
-            Props.Remove(block.Entity);
+            Entities.Remove(block.Entity);
 
             var trigger = Triggers.FirstOrDefault(kvp => kvp.Value == block.Entity).Key;
             if (trigger != null)
@@ -232,8 +143,11 @@ public partial class Blocks
         if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
 
-        if (Props.TryGetValue(entity, out var block))
+        if (Entities.TryGetValue(entity, out var block))
         {
+            if (Utils.BlockLocked(player, block))
+                return;
+
             var BuilderData = instance.BuilderData[player.Slot];
 
             CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!, entity.AbsRotation!, block.Color, block.Transparency, block.Team, block.Effect, block.Properties);
@@ -242,11 +156,11 @@ public partial class Blocks
                 player.EmitSound(config.Sounds.Building.Create);
 
             Utils.PrintToChat(player, $"Copied -" +
-                $" type: {ChatColors.White}{BuilderData.BlockType}{ChatColors.Grey}," +
-                $" size: {ChatColors.White}{BuilderData.BlockSize}{ChatColors.Grey}," +
-                $" color: {ChatColors.White}{BuilderData.BlockColor}{ChatColors.Grey}," +
-                $" team: {ChatColors.White}{BuilderData.BlockTeam}{ChatColors.Grey}," +
-                $" transparency: {ChatColors.White}{BuilderData.BlockTransparency}"
+                $" type: {ChatColors.White}{block.Type}{ChatColors.Grey}," +
+                $" size: {ChatColors.White}{block.Size}{ChatColors.Grey}," +
+                $" color: {ChatColors.White}{block.Color}{ChatColors.Grey}," +
+                $" team: {ChatColors.White}{block.Team}{ChatColors.Grey}," +
+                $" transparency: {ChatColors.White}{block.Transparency}"
             );
         }
     }
@@ -264,7 +178,7 @@ public partial class Blocks
         if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
 
-        if (Props.TryGetValue(entity, out var block))
+        if (Entities.TryGetValue(entity, out var block))
         {
             block.Properties.Locked = !block.Properties.Locked;
 
@@ -278,6 +192,29 @@ public partial class Blocks
         }
     }
 
+    private static bool lockedAll;
+    public static void LockAll(CCSPlayerController player)
+    {
+        if (lockedAll)
+        {
+            foreach (var block in Entities.Values)
+                block.Properties.Locked = false;
+
+            Utils.PrintToChat(player, "Unlocked all blocks");
+
+            lockedAll = false;
+        }
+        else
+        {
+            foreach (var block in Entities.Values)
+                block.Properties.Locked = true;
+
+            Utils.PrintToChat(player, "Locked all blocks");
+
+            lockedAll = true;
+        }
+    }
+
     public static void RenderColor(CCSPlayerController player)
     {
         var entity = player.GetBlockAim();
@@ -288,8 +225,11 @@ public partial class Blocks
         if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             return;
 
-        if (Props.TryGetValue(entity, out var block))
+        if (Entities.TryGetValue(entity, out var block))
         {
+            if (Utils.BlockLocked(player, block))
+                return;
+
             var color = instance.BuilderData[player.Slot].BlockColor;
 
             var clr = Utils.GetColor(color);
@@ -297,7 +237,7 @@ public partial class Blocks
             entity.Render = Color.FromArgb(alpha, clr.R, clr.G, clr.B);
             Utilities.SetStateChanged(entity, "CBaseModelEntity", "m_clrRender");
 
-            Props[entity].Color = color;
+            Entities[entity].Color = color;
 
             Utils.PrintToChat(player, $"Changed block color to {ChatColors.White}{color}");
         }
@@ -321,7 +261,7 @@ public partial class Blocks
             return;
         }
 
-        if (Props.TryGetValue(entity, out var block))
+        if (Entities.TryGetValue(entity, out var block))
         {
             var properties = block.Properties;
             var blocktype = block.Type;
@@ -329,8 +269,8 @@ public partial class Blocks
             switch (type)
             {
                 case "Reset":
-                    var defaultProperties = Files.PropsData.Properties.BlockProperties[blocktype.Split('.')[0]];
-                    block.Properties = new BlockData_Properties
+                    var defaultProperties = Properties.BlockProperties[blocktype.Split('.')[0]];
+                    block.Properties = new Property
                     {
                         Cooldown = defaultProperties.Cooldown,
                         Value = defaultProperties.Value,
@@ -363,11 +303,66 @@ public partial class Blocks
                     break;
                 default:
                     Utils.PrintToChat(player, $"{ChatColors.Red}Unknown property type: {type}");
-                    return;
+                    break;
             }
         }
 
         BuilderData.ChatInput = "";
         BuilderData.PropertyEntity.Remove(type);
+    }
+
+    public static void Transparency(CCSPlayerController player, string value)
+    {
+        var entity = player.GetBlockAim();
+
+        if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+            return;
+
+        if (Entities.TryGetValue(entity, out var block))
+        {
+            if (Utils.BlockLocked(player, block))
+                return;
+
+            Entities[entity].Transparency = value;
+
+            var color = Utils.GetColor(block.Color);
+            int alpha = Utils.GetAlpha(value);
+            entity.Render = Color.FromArgb(alpha, color.R, color.G, color.B);
+            Utilities.SetStateChanged(entity, "CBaseModelEntity", "m_clrRender");
+
+            Utils.PrintToChat(player, $"Changed block transparency to {ChatColors.White}{value}");
+        }
+    }
+
+    public static void ChangeEffect(CCSPlayerController player)
+    {
+        var entity = player.GetBlockAim();
+
+        if (entity == null || entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+            return;
+
+        if (Entities.TryGetValue(entity, out var block))
+        {
+            if (Utils.BlockLocked(player, block))
+                return;
+
+            var BuilderData = instance.BuilderData[player.Slot];
+            Effect effect = BuilderData.BlockEffect;
+            Entities[entity].Effect = effect.Particle;
+
+            block.Entity.Remove();
+            Entities.Remove(block.Entity);
+
+            var trigger = Triggers.FirstOrDefault(kvp => kvp.Value == block.Entity).Key;
+            if (trigger != null)
+            {
+                trigger.Remove();
+                Triggers.Remove(trigger);
+            }
+
+            CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!, entity.AbsRotation!, block.Color, block.Transparency, block.Team, BuilderData.BlockEffect?.Particle ?? "");
+
+            Utils.PrintToChat(player, $"Changed block effect to {ChatColors.White}{effect.Title}");
+        }
     }
 }

@@ -21,12 +21,12 @@ public partial class Blocks
 
         if (particle != null && particle.IsValid && particle.Entity != null)
         {
+            particle.Entity.Name = "blockmaker_effect";
             particle.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
             particle.StartActive = true;
 
             particle.EffectName = effect;
             particle.SetModel(block.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.ModelName);
-            //particle.Teleport(block.AbsOrigin, block.AbsRotation);
             particle.AcceptInput("FollowEntity", block, particle, "!activator");
 
             particle.DispatchSpawn();

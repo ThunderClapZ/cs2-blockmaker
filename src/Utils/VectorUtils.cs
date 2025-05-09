@@ -19,7 +19,13 @@ public static class VectorUtils
 
         var target = new CBaseProp(findPickerEntity.Invoke(GameRules.Handle, player.Handle));
 
-        if (target != null && target.IsValid && target.Entity != null && target.DesignerName.Contains("prop_physics_override")) return target;
+        if (target != null &&
+            target.IsValid &&
+            target.Entity != null &&
+            target.DesignerName.Contains("prop_physics_override") &&
+            target.Entity.Name.StartsWith("blockmaker")
+        )
+            return target;
 
         return null;
     }
@@ -45,14 +51,14 @@ public static class VectorUtils
 
     public static (Vector position, QAngle rotation) GetEndXYZ(CCSPlayerController player, CBaseProp block, double distance = 250, bool grid = false, float gridValue = 0f, bool snapping = false, float snapValue = 0f)
     {
-        if (Blocks.Props.TryGetValue(Blocks.PlayerHolds[player].block, out var locked))
+        if (Blocks.Entities.TryGetValue(Building.PlayerHolds[player].Entity, out var locked))
         {
-            if (Blocks.Props[locked.Entity].Properties.Locked)
+            if (Blocks.Entities[locked.Entity].Properties.Locked)
             {
-                if (Blocks.PlayerHolds[player].lockedmessage == false)
+                if (Building.PlayerHolds[player].LockedMessage == false)
                     Utils.PrintToChat(player, $"{ChatColors.Red}Block is locked");
 
-                Blocks.PlayerHolds[player].lockedmessage = true;
+                Building.PlayerHolds[player].LockedMessage = true;
 
                 return (block.AbsOrigin!, block.AbsRotation!);
             }
@@ -83,7 +89,7 @@ public static class VectorUtils
 
         if (snapping)
         {
-            float scale = Blocks.Props.ContainsKey(block) ? Utils.GetSize(Blocks.Props[block].Size) : 1;
+            float scale = Blocks.Entities.ContainsKey(block) ? Utils.GetSize(Blocks.Entities[block].Size) : 1;
 
             var closestBlock = GetClosestBlock(endPos, block, scale * block.Collision.Maxs.X * 2);
             if (closestBlock != null)
@@ -103,8 +109,8 @@ public static class VectorUtils
         Vector position = block.AbsOrigin!;
         QAngle rotation = closestBlock.AbsRotation!;
 
-        float blockScale = Blocks.Props.ContainsKey(block) ? Utils.GetSize(Blocks.Props[block].Size) : 1;
-        float closestBlockScale = Blocks.Props.ContainsKey(closestBlock) ? Utils.GetSize(Blocks.Props[closestBlock].Size) : 1;
+        float blockScale = Blocks.Entities.ContainsKey(block) ? Utils.GetSize(Blocks.Entities[block].Size) : 1;
+        float closestBlockScale = Blocks.Entities.ContainsKey(closestBlock) ? Utils.GetSize(Blocks.Entities[closestBlock].Size) : 1;
         Vector blockDimensions = (block.Collision.Maxs - block.Collision.Mins) * blockScale;
         Vector closestBlockDimensions = (closestBlock.Collision.Maxs - closestBlock.Collision.Mins) * closestBlockScale;
 

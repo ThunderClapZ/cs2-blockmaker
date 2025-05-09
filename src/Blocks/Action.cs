@@ -10,9 +10,9 @@ public partial class Blocks
     private static Plugin instance = Plugin.Instance;
     private static Config config = instance.Config;
     private static Config_Sounds.Sounds_Blocks sounds = instance.Config.Sounds.Blocks;
-    private static BlockModels blockModels = Files.Models.Props;
+    private static BlockModels blockModels = Files.Models.Entities;
 
-    private static Dictionary<string, Action<CCSPlayerController, BlockData>> blockActions = null!;
+    private static Dictionary<string, Action<CCSPlayerController, Data>> blockActions = null!;
 
     public static void LoadTitles()
     {
@@ -51,7 +51,7 @@ public partial class Blocks
         if (entity == null || entity.Entity == null)
             return;
 
-        if (Props.TryGetValue(entity, out var block))
+        if (Entities.TryGetValue(entity, out var block))
         {
             if (!PlayerCooldowns.ContainsKey(player.Slot))
                 PlayerCooldowns[player.Slot] = new();
@@ -101,7 +101,7 @@ public partial class Blocks
             Server.NextFrame(() => Utils.PrintToChat(player, $"{ChatColors.White}{blocktitle} {ChatColors.Grey}has worn off"));
     }
 
-    private static void Action_Custom(CCSPlayerController player, BlockData data, CustomBlockModel customBlock)
+    private static void Action_Custom(CCSPlayerController player, Data data, CustomBlockModel customBlock)
     {
         var block = data.Entity;
         var settings = data.Properties;
@@ -138,12 +138,12 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_Random(CCSPlayerController player, BlockData data)
+    private static void Action_Random(CCSPlayerController player, Data data)
     {
         var block = data.Entity;
         var settings = data.Properties;
 
-        var availableActions = Props.Where(x =>
+        var availableActions = Entities.Where(x =>
             x.Value.Type != blockModels.Random.Title &&
             x.Value.Type != blockModels.Bhop.Title &&
             x.Value.Type != blockModels.Delay.Title
@@ -163,8 +163,8 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static List<CBaseEntity> TempTimers = new();
-    private static void Action_BhopDelay(CCSPlayerController player, BlockData data)
+    public static List<CBaseEntity> TempTimers = new();
+    private static void Action_BhopDelay(CCSPlayerController player, Data data)
     {
         if (TempTimers.Contains(data.Entity))
             return;
@@ -203,7 +203,7 @@ public partial class Blocks
         });
     }
 
-    private static void Action_Gravity(CCSPlayerController player, BlockData data)
+    private static void Action_Gravity(CCSPlayerController player, Data data)
     {
         var block = data.Entity;
         var title = blockModels.Gravity.Title;
@@ -224,7 +224,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_Health(CCSPlayerController player, BlockData data)
+    private static void Action_Health(CCSPlayerController player, Data data)
     {
         var pawn = player.Pawn();
         if (pawn == null) return;
@@ -240,7 +240,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_Nades(CCSPlayerController player, BlockData data)
+    private static void Action_Nades(CCSPlayerController player, Data data)
     {
         var block = data.Entity;
         var settings = data.Properties;
@@ -268,7 +268,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_Fire(CCSPlayerController player, BlockData data)
+    private static void Action_Fire(CCSPlayerController player, Data data)
     {
         var block = data.Entity;
         var settings = data.Properties;
@@ -300,7 +300,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_Death(CCSPlayerController player, BlockData data)
+    private static void Action_Death(CCSPlayerController player, Data data)
     {
         var pawn = player.Pawn();
         if (pawn == null) return;
@@ -315,7 +315,7 @@ public partial class Blocks
         player.CommitSuicide(false, true);
     }
 
-    private static void Action_Damage(CCSPlayerController player, BlockData data)
+    private static void Action_Damage(CCSPlayerController player, Data data)
     {
         var block = data.Entity;
         var settings = data.Properties;
@@ -325,7 +325,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_Weapons(CCSPlayerController player, BlockData data)
+    private static void Action_Weapons(CCSPlayerController player, Data data)
     {
         var block = data.Entity;
         var weapon = data.Type.Substring(data.Type.LastIndexOf('.') + 1);
@@ -340,11 +340,11 @@ public partial class Blocks
 
             if (!string.IsNullOrEmpty(weaponCategory))
             {
-                int weaponGroup = weaponCategory == Files.Models.Props.Pistol.Title ? 2 : 1;
+                int weaponGroup = weaponCategory == Files.Models.Entities.Pistol.Title ? 2 : 1;
 
                 var hasGroupWeapon = player.PlayerPawn.Value?.WeaponServices?.MyWeapons
                     .Any(w => WeaponList.Categories
-                    .Where(cat => (cat.Key == Files.Models.Props.Pistol.Title ? 2 : 1) == weaponGroup)
+                    .Where(cat => (cat.Key == Files.Models.Entities.Pistol.Title ? 2 : 1) == weaponGroup)
                     .SelectMany(cat => cat.Value)
                     .Contains(w.Value?.DesignerName)) ?? false;
 
@@ -369,7 +369,7 @@ public partial class Blocks
         else Utils.PrintToChatAll($"{ChatColors.Red}The weapon '{weapon}' does not exist in the weapon list.");
     }
 
-    private static void Action_Speed(CCSPlayerController player, BlockData data)
+    private static void Action_Speed(CCSPlayerController player, Data data)
     {
         var block = data.Entity;
         var velocity = player.PlayerPawn.Value!.VelocityModifier;
@@ -389,7 +389,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_SpeedBoost(CCSPlayerController player, BlockData data)
+    private static void Action_SpeedBoost(CCSPlayerController player, Data data)
     {
         var pawn = player.Pawn();
         if (pawn == null) return;
@@ -402,7 +402,7 @@ public partial class Blocks
 
         pawn.AbsVelocity.X = (float)Math.Cos(angleYaw) * boost;
         pawn.AbsVelocity.Y = (float)Math.Sin(angleYaw) * boost;
-        pawn.AbsVelocity.Z = 300;
+        pawn.AbsVelocity.Z = settings.Duration;
 
         pawn.Teleport(null, null, pawn.AbsVelocity);
 
@@ -410,7 +410,7 @@ public partial class Blocks
     }
 
 
-    private static void Action_Slap(CCSPlayerController player, BlockData data)
+    private static void Action_Slap(CCSPlayerController player, Data data)
     {
         var block = data.Entity;
         var settings = data.Properties;
@@ -421,7 +421,7 @@ public partial class Blocks
     }
 
     public static bool nuked;
-    private static void Action_Nuke(CCSPlayerController player, BlockData data)
+    private static void Action_Nuke(CCSPlayerController player, Data data)
     {
         if (nuked)
             return;
@@ -453,7 +453,7 @@ public partial class Blocks
     }
 
     public static HashSet<CCSPlayerController> HiddenPlayers = new();
-    private static void Action_Stealth(CCSPlayerController player, BlockData data)
+    private static void Action_Stealth(CCSPlayerController player, Data data)
     {
         if (HiddenPlayers.Contains(player))
             return;
@@ -477,7 +477,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_Invincibility(CCSPlayerController player, BlockData data)
+    private static void Action_Invincibility(CCSPlayerController player, Data data)
     {
         var pawn = player.Pawn();
         if (pawn == null) return;
@@ -487,27 +487,33 @@ public partial class Blocks
         var title = blockModels.Invincibility.Title;
         var render = pawn.Render;
 
-        pawn.TakesDamage = false;
-        pawn.Render = Color.FromArgb(255, 200, 0, 255);
-        Utilities.SetStateChanged(pawn, "CBaseModelEntity", "m_clrRender");
+        if (pawn.TakesDamage == false)
+            Server.NextFrame(() => Utils.PrintToChat(player, "You are already invincible"));
 
-        player.EmitSound(sounds.Invincibility);
-        player.ColorScreen(Color.FromArgb(50, 255, 0, 255), settings.Duration / 2, settings.Duration, EntityExtends.FadeFlags.FADE_OUT);
-        ActivatedMessage(player, title);
-
-        instance.AddTimer(settings.Duration, () =>
+        else
         {
-            pawn.TakesDamage = true;
-            pawn.Render = render;
+            pawn.TakesDamage = false;
+            pawn.Render = Color.FromArgb(255, 200, 0, 255);
             Utilities.SetStateChanged(pawn, "CBaseModelEntity", "m_clrRender");
 
-            DeactivatedMessage(player, title);
-        });
+            player.EmitSound(sounds.Invincibility);
+            player.ColorScreen(Color.FromArgb(50, 255, 0, 255), settings.Duration / 2, settings.Duration, EntityExtends.FadeFlags.FADE_OUT);
+            ActivatedMessage(player, title);
+
+            instance.AddTimer(settings.Duration, () =>
+            {
+                pawn.TakesDamage = true;
+                pawn.Render = render;
+                Utilities.SetStateChanged(pawn, "CBaseModelEntity", "m_clrRender");
+
+                DeactivatedMessage(player, title);
+            });
+        }
 
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_Camouflage(CCSPlayerController player, BlockData data)
+    private static void Action_Camouflage(CCSPlayerController player, Data data)
     {
         var pawn = player.Pawn();
         if (pawn == null) return;
@@ -534,7 +540,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block, settings.Cooldown);
     }
 
-    private static void Action_Trampoline(CCSPlayerController player, BlockData data)
+    private static void Action_Trampoline(CCSPlayerController player, Data data)
     {
         var pawn = player.Pawn();
         if (pawn == null) return;
@@ -549,7 +555,7 @@ public partial class Blocks
         BlockCooldownTimer(player, block);
     }
 
-    private static void Action_Honey(CCSPlayerController player, BlockData data)
+    private static void Action_Honey(CCSPlayerController player, Data data)
     {
         var block = data.Entity;
         var settings = data.Properties;

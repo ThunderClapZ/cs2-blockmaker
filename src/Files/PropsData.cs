@@ -1,16 +1,14 @@
-﻿using System.Text.Json;
-using CounterStrikeSharp.API.Modules.Utils;
+﻿using CounterStrikeSharp.API.Modules.Utils;
 using CounterStrikeSharp.API;
-using System.Text.Json.Serialization;
-using CounterStrikeSharp.API.Modules.Extensions;
+using System.Text.Json;
 
 public static partial class Files
 {
-    public static class PropsData
+    public static class EntitiesData
     {
         public static void Save(bool autosave = false)
         {
-            if (Blocks.Props.Count <= 0)
+            if (Blocks.Entities.Count <= 0)
             {
                 Utils.Log($"No blocks to save on {Server.MapName}");
                 return;
@@ -22,19 +20,19 @@ public static partial class Files
 
             try
             {
-                var blocksList = new List<SaveBlockData>();
-                var teleportsList = new List<TeleportPairDTO>();
-                var lightsList = new List<SaveLightData>();
+                var blocksList = new List<Blocks.SaveData>();
+                var teleportsList = new List<Teleports.PairSaveData>();
+                var lightsList = new List<Lights.SaveData>();
 
                 // Save blocks
-                foreach (var prop in Blocks.Props)
+                foreach (var prop in Blocks.Entities)
                 {
                     var block = prop.Key;
                     var data = prop.Value;
 
                     if (block != null && block.IsValid)
                     {
-                        blocksList.Add(new SaveBlockData
+                        blocksList.Add(new Blocks.SaveData
                         {
                             Type = data.Type,
                             Pole = data.Pole,
@@ -51,19 +49,19 @@ public static partial class Files
                 }
 
                 // Save teleports
-                foreach (var teleport in Blocks.Teleports)
+                foreach (var teleport in Teleports.Entities)
                 {
                     if (teleport.Entry != null && teleport.Exit != null)
                     {
-                        teleportsList.Add(new TeleportPairDTO
+                        teleportsList.Add(new Teleports.PairSaveData
                         {
-                            Entry = new SaveTeleportData
+                            Entry = new Teleports.SaveData
                             {
                                 Name = teleport.Entry.Name,
                                 Position = new VectorUtils.VectorDTO(teleport.Entry.Entity.AbsOrigin!),
                                 Rotation = new VectorUtils.QAngleDTO(teleport.Entry.Entity.AbsRotation!)
                             },
-                            Exit = new SaveTeleportData
+                            Exit = new Teleports.SaveData
                             {
                                 Name = teleport.Exit.Name,
                                 Position = new VectorUtils.VectorDTO(teleport.Exit.Entity.AbsOrigin!),
@@ -74,14 +72,14 @@ public static partial class Files
                 }
 
                 // Save lights
-                foreach (var prop in Blocks.Lights)
+                foreach (var prop in Lights.Entities)
                 {
                     var entity = prop.Key;
                     var data = prop.Value;
 
                     if (entity != null && entity.IsValid)
                     {
-                        lightsList.Add(new SaveLightData
+                        lightsList.Add(new Lights.SaveData
                         {
                             Color = data.Color,
                             Brightness = data.Brightness,
@@ -141,24 +139,24 @@ public static partial class Files
             if (File.Exists(blocksPath) && Utils.IsValidJson(blocksPath))
             {
                 var blocksJson = File.ReadAllText(blocksPath);
-                var blocksList = JsonSerializer.Deserialize<List<SaveBlockData>>(blocksJson);
+                var blocksList = JsonSerializer.Deserialize<List<Blocks.SaveData>>(blocksJson);
 
                 if (blocksList != null && blocksList.Count > 0)
                 {
-                    foreach (var blockData in blocksList)
+                    foreach (var Data in blocksList)
                     {
                         Blocks.CreateBlock(
                             null,
-                            blockData.Type,
-                            blockData.Pole,
-                            blockData.Size,
-                            new Vector(blockData.Position.X, blockData.Position.Y, blockData.Position.Z),
-                            new QAngle(blockData.Rotation.Pitch, blockData.Rotation.Yaw, blockData.Rotation.Roll),
-                            blockData.Color,
-                            blockData.Transparency,
-                            blockData.Team,
-                            blockData.Effect,
-                            blockData.Properties
+                            Data.Type,
+                            Data.Pole,
+                            Data.Size,
+                            new Vector(Data.Position.X, Data.Position.Y, Data.Position.Z),
+                            new QAngle(Data.Rotation.Pitch, Data.Rotation.Yaw, Data.Rotation.Roll),
+                            Data.Color,
+                            Data.Transparency,
+                            Data.Team,
+                            Data.Effect,
+                            Data.Properties
                         );
                     }
                 }
@@ -169,7 +167,7 @@ public static partial class Files
             if (File.Exists(teleportsPath) && Utils.IsValidJson(teleportsPath))
             {
                 var teleportsJson = File.ReadAllText(teleportsPath);
-                var teleportsList = JsonSerializer.Deserialize<List<TeleportPairDTO>>(teleportsJson);
+                var teleportsList = JsonSerializer.Deserialize<List<Teleports.PairSaveData>>(teleportsJson);
 
                 if (teleportsList != null && teleportsList.Count > 0)
                 {
@@ -178,15 +176,15 @@ public static partial class Files
                         var entryPosition = new Vector(teleportPairData.Entry.Position.X, teleportPairData.Entry.Position.Y, teleportPairData.Entry.Position.Z);
                         var entryRotation = new QAngle(teleportPairData.Entry.Rotation.Pitch, teleportPairData.Entry.Rotation.Yaw, teleportPairData.Entry.Rotation.Roll);
 
-                        var entryEntity = Blocks.CreateTeleportEntity(entryPosition, entryRotation, teleportPairData.Entry.Name);
+                        var entryEntity = Teleports.CreateEntity(entryPosition, entryRotation, teleportPairData.Entry.Name);
 
                         var exitPosition = new Vector(teleportPairData.Exit.Position.X, teleportPairData.Exit.Position.Y, teleportPairData.Exit.Position.Z);
                         var exitRotation = new QAngle(teleportPairData.Exit.Rotation.Pitch, teleportPairData.Exit.Rotation.Yaw, teleportPairData.Exit.Rotation.Roll);
 
-                        var exitEntity = Blocks.CreateTeleportEntity(exitPosition, exitRotation, teleportPairData.Exit.Name);
+                        var exitEntity = Teleports.CreateEntity(exitPosition, exitRotation, teleportPairData.Exit.Name);
 
                         if (entryEntity != null && exitEntity != null)
-                            Blocks.Teleports.Add(new TeleportPair(entryEntity, exitEntity));
+                            Teleports.Entities.Add(new Teleports.Pair(entryEntity, exitEntity));
                     }
                 }
             }
@@ -195,90 +193,19 @@ public static partial class Files
             if (File.Exists(lightsPath) && Utils.IsValidJson(lightsPath))
             {
                 var lightsJson = File.ReadAllText(lightsPath);
-                var lightsList = JsonSerializer.Deserialize<List<SaveLightData>>(lightsJson);
+                var lightsList = JsonSerializer.Deserialize<List<Lights.SaveData>>(lightsJson);
 
                 if (lightsList != null && lightsList.Count > 0)
                 {
                     foreach (var lightData in lightsList)
                     {
-                        Blocks.CreateLight(
+                        Lights.CreateEntity(
                             lightData.Color,
                             lightData.Brightness,
                             lightData.Distance,
                             new Vector(lightData.Position.X, lightData.Position.Y, lightData.Position.Z),
                             new QAngle(lightData.Rotation.Pitch, lightData.Rotation.Yaw, lightData.Rotation.Roll)
                         );
-                    }
-                }
-            }
-        }
-
-        public static class Properties
-        {
-            public static readonly Dictionary<string, BlockData_Properties> BlockDefaultProperties = new Dictionary<string, BlockData_Properties>
-            {
-                { Models.Props.Bhop.Title, new BlockData_Properties { Duration = 0.25f, Cooldown = 1.0f } },
-                { Models.Props.Health.Title, new BlockData_Properties { Value = 8.0f, Cooldown = 0.75f } },
-                { Models.Props.Grenade.Title, new BlockData_Properties { Cooldown = 60.0f } },
-                { Models.Props.Gravity.Title, new BlockData_Properties { Duration = 4.0f, Value = 0.4f, Cooldown = 5.0f } },
-                { Models.Props.Frost.Title, new BlockData_Properties { Cooldown = 60.0f } },
-                { Models.Props.Flash.Title, new BlockData_Properties { Cooldown = 60.0f } },
-                { Models.Props.Fire.Title, new BlockData_Properties { Duration = 5.0f, Value = 8.0f, Cooldown = 5.0f } },
-                { Models.Props.Delay.Title, new BlockData_Properties { Duration = 1.0f, Cooldown = 1.5f } },
-                { Models.Props.Damage.Title, new BlockData_Properties { Value = 8.0f, Cooldown = 0.75f } },
-                { Models.Props.Stealth.Title, new BlockData_Properties { Duration = 7.5f, Cooldown = 60.0f } },
-                { Models.Props.Speed.Title, new BlockData_Properties { Duration = 3.0f, Value = 2.0f, Cooldown = 60.0f } },
-                { Models.Props.SpeedBoost.Title, new BlockData_Properties { Value = 650.0f } },
-                { Models.Props.Camouflage.Title, new BlockData_Properties { Duration = 10.0f, Cooldown = 60.0f } },
-                { Models.Props.Slap.Title, new BlockData_Properties { Value = 2.0f } },
-                { Models.Props.Random.Title, new BlockData_Properties { Cooldown = 60f } },
-                { Models.Props.Invincibility.Title, new BlockData_Properties { Duration = 5.0f, Cooldown = 60.0f } },
-                { Models.Props.Trampoline.Title, new BlockData_Properties { Value = 500.0f } },
-                { Models.Props.Death.Title, new BlockData_Properties { OnTop = false } },
-                { Models.Props.Honey.Title, new BlockData_Properties { Value = 0.3f } },
-                { Models.Props.Platform.Title, new BlockData_Properties() },
-                { Models.Props.NoFallDmg.Title, new BlockData_Properties { OnTop = false } },
-                { Models.Props.Ice.Title, new BlockData_Properties() },
-                { Models.Props.Nuke.Title, new BlockData_Properties() },
-                { Models.Props.Glass.Title, new BlockData_Properties() },
-                { Models.Props.Pistol.Title, new BlockData_Properties{  Value = 1f, Cooldown = 999f } },
-                { Models.Props.Rifle.Title, new BlockData_Properties{ Value = 1f, Cooldown = 999f } },
-                { Models.Props.Sniper.Title, new BlockData_Properties{ Value = 1f, Cooldown = 999f } },
-                { Models.Props.ShotgunHeavy.Title, new BlockData_Properties{ Value = 1f, Cooldown = 999f } },
-                { Models.Props.SMG.Title, new BlockData_Properties{ Value = 1f, Cooldown = 999f } },
-            };
-
-            public static Dictionary<string, BlockData_Properties> BlockProperties { get; set; } = new Dictionary<string, BlockData_Properties>();
-
-            public static void Load()
-            {
-                string directoryPath = Path.GetDirectoryName(Plugin.Instance.Config.GetConfigPath())!;
-                string correctedPath = directoryPath.Replace("/BlockMaker.json", "");
-
-                var propertiesPath = Path.Combine(correctedPath, "default_properties.json");
-
-                if (!string.IsNullOrEmpty(propertiesPath))
-                {
-                    if (!File.Exists(propertiesPath))
-                    {
-                        using (FileStream fs = File.Create(propertiesPath))
-                            fs.Close();
-
-                        var options = new JsonSerializerOptions
-                        {
-                            WriteIndented = true,
-                            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                        };
-
-                        string jsonContent = JsonSerializer.Serialize(BlockDefaultProperties, options);
-
-                        File.WriteAllText(propertiesPath, jsonContent);
-                    }
-
-                    if (File.Exists(propertiesPath))
-                    {
-                        string jsonContent = File.ReadAllText(propertiesPath);
-                        BlockProperties = JsonSerializer.Deserialize<Dictionary<string, BlockData_Properties>>(jsonContent) ?? new Dictionary<string, BlockData_Properties>();
                     }
                 }
             }

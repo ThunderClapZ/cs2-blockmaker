@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 public static class Transmit
 {
     private static Plugin Instance = Plugin.Instance;
-    private static Dictionary<int, BuilderData> BuilderData = Instance.BuilderData;
+    private static Dictionary<int, Building.BuilderData> BuilderData = Instance.BuilderData;
 
     private static readonly MemoryFunctionVoid<CCSPlayerPawn, CSPlayerState> StateTransition = new(GameData.GetSignature("StateTransition"));
     private static readonly INetworkServerService networkServerService = new();

@@ -6,7 +6,7 @@ public static partial class Files
 {
     public static class Models
     {
-        public static BlockModels Props { get; set; } = new BlockModels();
+        public static BlockModels Entities { get; set; } = new BlockModels();
         public static void Load()
         {
             string directoryPath = Path.GetDirectoryName(Plugin.Instance.Config.GetConfigPath())!;
@@ -27,7 +27,7 @@ public static partial class Files
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                     };
 
-                    string jsonContent = JsonSerializer.Serialize(Props, options);
+                    string jsonContent = JsonSerializer.Serialize(Entities, options);
 
                     File.WriteAllText(modelsPath, jsonContent);
                 }
@@ -36,7 +36,7 @@ public static partial class Files
             if (!string.IsNullOrEmpty(modelsPath) && File.Exists(modelsPath))
             {
                 string jsonContent = File.ReadAllText(modelsPath);
-                Props = JsonSerializer.Deserialize<BlockModels>(jsonContent) ?? new BlockModels();
+                Entities = JsonSerializer.Deserialize<BlockModels>(jsonContent) ?? new BlockModels();
 
                 Blocks.LoadTitles();
             }

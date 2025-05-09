@@ -5,18 +5,18 @@ using CounterStrikeSharp.API.Core.Translations;
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
     public override string ModuleName => "Block Maker";
-    public override string ModuleVersion => "0.2.1";
+    public override string ModuleVersion => "0.2.2";
     public override string ModuleAuthor => "exkludera";
 
     public static Plugin Instance = new();
-    public Dictionary<int, BuilderData> BuilderData = new();
+    public Dictionary<int, Building.BuilderData> BuilderData = new();
     public bool buildMode = false;
 
     public override void Load(bool hotReload)
     {
         Instance = this;
 
-        RegisterEvents();
+        Events.Register();
 
         Files.Load();
 
@@ -27,25 +27,25 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
             foreach (var player in Utilities.GetPlayers())
             {
                 if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
-                    BuilderData[player.Slot] = new BuilderData { BlockType = Files.Models.Props.Platform.Title };
+                    BuilderData[player.Slot] = new Building.BuilderData { BlockType = Files.Models.Entities.Platform.Title };
             }
 
             Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Server.MapName);
             Directory.CreateDirectory(Files.mapsFolder);
 
-            Blocks.Clear();
+            Utils.Clear();
 
-            Files.PropsData.Load();
+            Files.EntitiesData.Load();
         }
     }
 
     public override void Unload(bool hotReload)
     {
-        UnregisterEvents();
+        Events.Deregister();
 
         Commands.Unload();
 
-        Blocks.Clear();
+        Utils.Clear();
     }
 
     public Config Config { get; set; } = new();

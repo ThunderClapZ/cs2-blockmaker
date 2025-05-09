@@ -102,7 +102,7 @@ public static class Utils
         int hyphenIndex = blockType.IndexOf('.');
         if (hyphenIndex >= 0)
             blockType = blockType.Substring(0, hyphenIndex);
-        var blockModels = Files.Models.Props;
+        var blockModels = Files.Models.Entities;
 
         foreach (var model in blockModels.GetAllBlocks())
         {
@@ -208,7 +208,7 @@ public static class Utils
         var pos = block.AbsOrigin!;
         var rotation = block.AbsRotation!;
 
-        float scale = Blocks.Props.ContainsKey(block) ? Utils.GetSize(Blocks.Props[block].Size) : 1;
+        float scale = Blocks.Entities.ContainsKey(block) ? Utils.GetSize(Blocks.Entities[block].Size) : 1;
 
         var max = block.Collision!.Maxs * scale;
         var min = block.Collision!.Mins * scale;
@@ -256,10 +256,10 @@ public static class Utils
         };
 
         // Update existing
-        if (Blocks.PlayerHolds[player].beams.Count > 0)
+        if (Building.PlayerHolds[player].Beams.Count > 0)
         {
             int beamCount = 0;
-            foreach (var oldBeam in Blocks.PlayerHolds[player].beams)
+            foreach (var oldBeam in Building.PlayerHolds[player].Beams)
             {
                 oldBeam.EndPos.X = beams[beamCount][1].X;
                 oldBeam.EndPos.Y = beams[beamCount][1].Y;
@@ -278,7 +278,66 @@ public static class Utils
         foreach (var beam in beams)
         {
             var newBeam = DrawBeam(beam[0], beam[1], color);
-            Blocks.PlayerHolds[player].beams.Add(newBeam);
+            Building.PlayerHolds[player].Beams.Add(newBeam);
         }
+    }
+
+    public static bool BlockLocked(CCSPlayerController player, Blocks.Data block)
+    {
+        if (block.Properties.Locked)
+        {
+            PrintToChat(player, "Block is locked");
+            return true;
+        }
+        return false;
+    }
+
+    public static void RemoveEntities()
+    {
+        var entityNames = new HashSet<string>
+        {
+            "prop_physics_override",
+            "trigger_multiple",
+            "light_dynamic",
+            "env_particle_glow"
+        };
+        foreach (var entity in Utilities.GetAllEntities().Where(x => entityNames.Contains(x.DesignerName)))
+        {
+            if (entity.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
+                continue;
+
+            if (entity.Entity.Name.StartsWith("blockmaker"))
+                entity.Remove();
+        }
+    }
+
+    public static void Clear()
+    {
+        RemoveEntities();
+
+        foreach (var timer in Plugin.Instance.Timers)
+        {
+            if (timer == Events.AutoSaveTimer)
+                continue;
+
+            timer?.Kill();
+        }
+
+        Blocks.Entities.Clear();
+        Blocks.Triggers.Clear();
+
+        Teleports.Entities.Clear();
+        Teleports.isNext.Clear();
+
+        Lights.Entities.Clear();
+
+        Blocks.PlayerCooldowns.Clear();
+        Blocks.CooldownsTimers.Clear();
+        Blocks.TempTimers.Clear();
+
+        Blocks.HiddenPlayers.Clear();
+        Blocks.nuked = false;
+
+        Building.PlayerHolds.Clear();
     }
 }

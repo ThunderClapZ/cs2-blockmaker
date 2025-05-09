@@ -11,6 +11,6 @@
 
         Builders.Load();
 
-        PropsData.Properties.Load();
+        Blocks.Properties.Load();
     }
 }
