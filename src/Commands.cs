@@ -118,7 +118,7 @@ public static class Commands
             {
                 if (Utils.HasPermission(target) || Files.Builders.steamids.Contains(target.SteamID.ToString()))
                 {
-                    BuilderData[player.Slot] = new Building.BuilderData { BlockType = Files.Models.Entities.Platform.Title };
+                    BuilderData[player.Slot] = new Building.BuilderData { BlockType = Blocks.Models.Data.Platform.Title };
                     Building.PlayerHolds[target] = new Building.BuildData();
                 }
             }
@@ -161,7 +161,7 @@ public static class Commands
         if (isBuilder)
             BuilderData.Remove(targetPlayer.Slot);
 
-        else BuilderData[player.Slot] = new Building.BuilderData { BlockType = Files.Models.Entities.Platform.Title };
+        else BuilderData[player.Slot] = new Building.BuilderData { BlockType = Blocks.Models.Data.Platform.Title };
 
         var action = isBuilder ? "removed" : "granted";
         var color = isBuilder ? ChatColors.Red : ChatColors.Green;
@@ -213,7 +213,7 @@ public static class Commands
             return;
         }
 
-        var blockModels = Files.Models.Entities;
+        var blockModels = Blocks.Models.Data;
         foreach (var model in blockModels.GetAllBlocks())
         {
             if (string.Equals(model.Title, selectType, StringComparison.OrdinalIgnoreCase))

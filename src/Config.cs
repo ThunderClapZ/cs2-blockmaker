@@ -44,7 +44,7 @@ public class Config_Settings
         public string CamouflageT { get; set; } = "characters/models/ctm_fbi/ctm_fbi.vmdl";
         public string CamouflageCT { get; set; } = "characters/models/tm_leet/tm_leet_variantb.vmdl";
         public string FireParticle { get; set; } = "particles/burning_fx/env_fire_medium.vpcf";
-        public List<BlockSize> Sizes { get; set; } = new()
+        public List<Blocks.BlockSize> Sizes { get; set; } = new()
         {
             new("Small", 0.5f),
             new("Normal", 1.0f),

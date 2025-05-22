@@ -1,12 +1,69 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Extensions;
 using CounterStrikeSharp.API.Modules.Utils;
 using CS2TraceRay.Class;
 using CS2TraceRay.Enum;
+using FixVectorLeak.src;
+using FixVectorLeak.src.Structs;
 using System.Drawing;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 public partial class Blocks
 {
+    public class Data
+    {
+        public Data
+        (
+            CBaseProp block,
+            string type,
+            bool pole,
+            string size = "Normal",
+            string color = "None",
+            string transparency = "100%",
+            string team = "Both",
+            string effect = "None",
+            Property properties = null!
+
+        )
+        {
+            Entity = block;
+            Type = type;
+            Pole = pole;
+            Size = size;
+            Team = team;
+            Color = color;
+            Transparency = transparency;
+            Effect = effect;
+            Properties = properties;
+        }
+
+        public CBaseProp Entity;
+        public string Type { get; set; }
+        public bool Pole { get; set; }
+        public string Size { get; set; }
+        public string Team { get; set; }
+        public string Color { get; set; }
+        public string Transparency { get; set; }
+        public string Effect { get; set; }
+        public Property Properties { get; set; }
+    }
+
+    public class SaveData
+    {
+        public string Type { get; set; } = "";
+        public bool Pole { get; set; } = false;
+        public string Size { get; set; } = "";
+        public string Team { get; set; } = "";
+        public string Color { get; set; } = "";
+        public string Transparency { get; set; } = "";
+        public string Effect { get; set; } = "";
+        public Property Properties { get; set; } = new();
+        public VectorUtils.VectorDTO Position { get; set; } = new();
+        public VectorUtils.QAngleDTO Rotation { get; set; } = new();
+    }
+
     public static void Create(CCSPlayerController player)
     {
         CGameTrace? trace = TraceRay.TraceShape(player.GetEyePosition()!, player.PlayerPawn.Value?.EyeAngles!, TraceMask.MaskShot, player);
@@ -27,7 +84,7 @@ public partial class Blocks
                 BuilderData.BlockPole,
                 BuilderData.BlockSize,
                 new(endPos.X, endPos.Y, endPos.Z),
-                null!,
+                new(),
                 BuilderData.BlockColor,
                 BuilderData.BlockTransparency,
                 BuilderData.BlockTeam,
@@ -58,8 +115,8 @@ public partial class Blocks
         string type,
         bool pole,
         string size,
-        Vector position,
-        QAngle rotation,
+        Vector_t position,
+        QAngle_t rotation,
         string color = "None",
         string transparency = "100%",
         string team = "Both",
@@ -203,4 +260,115 @@ public partial class Blocks
         }
     }
 
+    public class Property
+    {
+        public float Cooldown { get; set; } = 0;
+        public float Value { get; set; } = 0;
+        public float Duration { get; set; } = 0;
+        public bool OnTop { get; set; } = true;
+        public bool Locked { get; set; } = false;
+        public string Builder { get; set; } = "";
+    }
+
+    public static class Properties
+    {
+        public static readonly Dictionary<string, Property> BlockDefaultProperties = new()
+        {
+            { Models.Data.Bhop.Title, new Property { Duration = 0.25f, Cooldown = 1.0f } },
+            { Models.Data.Health.Title, new Property { Value = 4.0f, Cooldown = 0.75f } },
+            { Models.Data.Grenade.Title, new Property { Cooldown = 60.0f } },
+            { Models.Data.Gravity.Title, new Property { Duration = 4.0f, Value = 0.4f, Cooldown = 5.0f } },
+            { Models.Data.Frost.Title, new Property { Cooldown = 60.0f } },
+            { Models.Data.Flash.Title, new Property { Cooldown = 60.0f } },
+            { Models.Data.Fire.Title, new Property { Duration = 5.0f, Value = 8.0f, Cooldown = 5.0f } },
+            { Models.Data.Delay.Title, new Property { Duration = 1.0f, Cooldown = 1.5f } },
+            { Models.Data.Damage.Title, new Property { Value = 8.0f, Cooldown = 0.75f } },
+            { Models.Data.Stealth.Title, new Property { Duration = 7.5f, Cooldown = 60.0f } },
+            { Models.Data.Speed.Title, new Property { Duration = 3.0f, Value = 2.0f, Cooldown = 60.0f } },
+            { Models.Data.SpeedBoost.Title, new Property { Duration = 300.0f, Value = 650.0f } },
+            { Models.Data.Camouflage.Title, new Property { Duration = 10.0f, Cooldown = 60.0f } },
+            { Models.Data.Slap.Title, new Property { Value = 2.0f } },
+            { Models.Data.Random.Title, new Property { Cooldown = 60f } },
+            { Models.Data.Invincibility.Title, new Property { Duration = 5.0f, Cooldown = 60.0f } },
+            { Models.Data.Trampoline.Title, new Property { Value = 500.0f } },
+            { Models.Data.Death.Title, new Property { OnTop = false } },
+            { Models.Data.Honey.Title, new Property { Value = 0.3f } },
+            { Models.Data.Platform.Title, new Property() },
+            { Models.Data.NoFallDmg.Title, new Property { OnTop = false } },
+            { Models.Data.Ice.Title, new Property() },
+            { Models.Data.Nuke.Title, new Property() },
+            { Models.Data.Glass.Title, new Property() },
+            { Models.Data.Pistol.Title, new Property{  Value = 1f, Cooldown = 999f } },
+            { Models.Data.Rifle.Title, new Property{ Value = 1f, Cooldown = 999f } },
+            { Models.Data.Sniper.Title, new Property{ Value = 1f, Cooldown = 999f } },
+            { Models.Data.ShotgunHeavy.Title, new Property{ Value = 1f, Cooldown = 999f } },
+            { Models.Data.SMG.Title, new Property{ Value = 1f, Cooldown = 999f } },
+            { Models.Data.Barrier.Title, new Property{ Duration = 0.01f, Value = 0f, Cooldown = 2.0f } },
+        };
+
+        public static Dictionary<string, Property> BlockProperties { get; set; } = new();
+
+        public static void Load()
+        {
+            string directoryPath = Path.GetDirectoryName(Plugin.Instance.Config.GetConfigPath())!;
+            string correctedPath = directoryPath.Replace("/BlockMaker.json", "");
+
+            var propertiesPath = Path.Combine(correctedPath, "default_properties.json");
+
+            if (!string.IsNullOrEmpty(propertiesPath))
+            {
+                if (!File.Exists(propertiesPath))
+                {
+                    using (FileStream fs = File.Create(propertiesPath))
+                        fs.Close();
+
+                    var options = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    };
+
+                    string jsonContent = JsonSerializer.Serialize(BlockDefaultProperties, options);
+
+                    File.WriteAllText(propertiesPath, jsonContent);
+                }
+
+                if (File.Exists(propertiesPath))
+                {
+                    string jsonContent = File.ReadAllText(propertiesPath);
+                    BlockProperties = JsonSerializer.Deserialize<Dictionary<string, Property>>(jsonContent) ?? new();
+                }
+            }
+        }
+    }
+
+    public class Effect
+    {
+        public string Title { get; set; } = "None";
+        public string Particle { get; set; } = "";
+
+        public Effect(string title, string particle)
+        {
+            Title = title;
+            Particle = particle;
+        }
+    }
+
+    private static void CreateParticle(CBaseProp block, string effect, string size)
+    {
+        var particle = Utilities.CreateEntityByName<CEnvParticleGlow>("env_particle_glow");
+
+        if (particle != null && particle.IsValid && particle.Entity != null)
+        {
+            particle.Entity.Name = "blockmaker_effect";
+            particle.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= ~(uint)(1 << 2);
+            particle.StartActive = true;
+
+            particle.EffectName = effect;
+            particle.SetModel(block.CBodyComponent!.SceneNode!.GetSkeletonInstance().ModelState.ModelName);
+            particle.AcceptInput("FollowEntity", block, particle, "!activator");
+
+            particle.DispatchSpawn();
+        }
+    }
 }

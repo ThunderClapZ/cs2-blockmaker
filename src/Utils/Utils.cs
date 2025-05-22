@@ -2,6 +2,8 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Utils;
+using FixVectorLeak.src;
+using FixVectorLeak.src.Structs;
 using Microsoft.Extensions.Logging;
 using System.Drawing;
 using System.Text.Json;
@@ -102,7 +104,7 @@ public static class Utils
         int hyphenIndex = blockType.IndexOf('.');
         if (hyphenIndex >= 0)
             blockType = blockType.Substring(0, hyphenIndex);
-        var blockModels = Files.Models.Entities;
+        var blockModels = Blocks.Models.Data;
 
         foreach (var model in blockModels.GetAllBlocks())
         {
@@ -188,59 +190,59 @@ public static class Utils
         return blockSize?.Size ?? config.Settings.Blocks.Sizes.First(bs => bs.Size == 1.0f).Size;
     }
 
-    public static CBeam DrawBeam(Vector startPos, Vector endPos, Color color, float width = 0.25f)
+    public static CBeam DrawBeam(Vector_t startPos, Vector_t endPos, Color color, float width = 0.25f)
     {
         var beam = Utilities.CreateEntityByName<CBeam>("beam")!;
 
         beam.Entity!.Name = "blockmaker_beam";
         beam.Render = color;
         beam.Width = width;
-        beam.EndPos.Add(endPos);
+        beam.EndPos.Add(new(endPos.X, endPos.Y, endPos.Z));
 
-        beam.DispatchSpawn();
         beam.Teleport(startPos);
+        beam.DispatchSpawn();
 
         return beam;
     }
 
     public static void DrawBeamsAroundBlock(CCSPlayerController player, CBaseProp block, Color color)
     {
-        var pos = block.AbsOrigin!;
-        var rotation = block.AbsRotation!;
+        Vector_t pos = block.AbsOrigin!.ToVector_t();
+        QAngle_t rotation = block.AbsRotation!.ToQAngle_t();
 
         float scale = Blocks.Entities.ContainsKey(block) ? Utils.GetSize(Blocks.Entities[block].Size) : 1;
 
         var max = block.Collision!.Maxs * scale;
         var min = block.Collision!.Mins * scale;
 
-        Vector forward = new Vector(
+        Vector_t forward = new(
             (float)Math.Cos(rotation.Y * Math.PI / 180) * (float)Math.Cos(rotation.X * Math.PI / 180),
             (float)Math.Sin(rotation.Y * Math.PI / 180) * (float)Math.Cos(rotation.X * Math.PI / 180),
             (float)-Math.Sin(rotation.X * Math.PI / 180)
         );
-        Vector right = new Vector(
+        Vector_t right = new(
             (float)Math.Cos((rotation.Y + 90) * Math.PI / 180),
             (float)Math.Sin((rotation.Y + 90) * Math.PI / 180),
             0
         );
-        Vector up = VectorUtils.Cross(forward, right);
+        Vector_t up = VectorUtils.Cross(forward, right);
 
-        Vector[] localCorners =
+        Vector_t[] localCorners =
         {
-            new Vector(min.X, min.Y, min.Z), // Bottom-back-left
-            new Vector(max.X, min.Y, min.Z), // Bottom-back-right
-            new Vector(max.X, max.Y, min.Z), // Bottom-front-right
-            new Vector(min.X, max.Y, min.Z), // Bottom-front-left
-            new Vector(min.X, min.Y, max.Z), // Top-back-left
-            new Vector(max.X, min.Y, max.Z), // Top-back-right
-            new Vector(max.X, max.Y, max.Z), // Top-front-right
-            new Vector(min.X, max.Y, max.Z)  // Top-front-left
+            new(min.X, min.Y, min.Z), // Bottom-back-left
+            new(max.X, min.Y, min.Z), // Bottom-back-right
+            new(max.X, max.Y, min.Z), // Bottom-front-right
+            new(min.X, max.Y, min.Z), // Bottom-front-left
+            new(min.X, min.Y, max.Z), // Top-back-left
+            new(max.X, min.Y, max.Z), // Top-back-right
+            new(max.X, max.Y, max.Z), // Top-front-right
+            new(min.X, max.Y, max.Z)  // Top-front-left
         };
 
-        Vector[] corners = new Vector[8];
+        Vector_t[] corners = new Vector_t[8];
         for (int i = 0; i < localCorners.Length; i++)
         {
-            Vector localCorner = localCorners[i];
+            Vector_t localCorner = localCorners[i];
             corners[i] =
                 pos +
                 forward * localCorner.X +
@@ -248,7 +250,7 @@ public static class Utils
                 up * localCorner.Z;
         }
 
-        var beams = new List<Vector[]>
+        var beams = new List<Vector_t[]>
         {
             new[] {corners[0], corners[1]}, new[] {corners[1], corners[2]}, new[] {corners[2], corners[3]}, new[] {corners[3], corners[0]},
             new[] {corners[4], corners[5]}, new[] {corners[5], corners[6]}, new[] {corners[6], corners[7]}, new[] {corners[7], corners[4]},
@@ -267,7 +269,7 @@ public static class Utils
 
                 oldBeam.DispatchSpawn();
 
-                oldBeam.Teleport(beams[beamCount][0], block.AbsRotation);
+                oldBeam.Teleport(beams[beamCount][0], block.AbsRotation!.ToQAngle_t());
 
                 beamCount++;
             }
@@ -298,7 +300,7 @@ public static class Utils
         {
             "prop_physics_override",
             "trigger_multiple",
-            "light_dynamic",
+            "light_omni2",
             "env_particle_glow"
         };
         foreach (var entity in Utilities.GetAllEntities().Where(x => entityNames.Contains(x.DesignerName)))

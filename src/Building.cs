@@ -3,6 +3,8 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using CS2TraceRay.Class;
 using CS2TraceRay.Enum;
+using FixVectorLeak.src;
+using FixVectorLeak.src.Structs;
 using System.Data;
 using System.Drawing;
 
@@ -18,8 +20,9 @@ public static class Building
         public string BlockTransparency = "100%";
         public Blocks.Effect BlockEffect = new("None", "");
         public string LightColor = "White";
-        public string LightBrightness = "5";
-        public string LightDistance = "1000";
+        public string LightStyle = "None";
+        public string LightBrightness = "1";
+        public string LightDistance = "500";
         public bool Grid = false;
         public float GridValue = 32f;
         public float SnapValue = 0f;
@@ -36,7 +39,7 @@ public static class Building
     public class BuildData
     {
         public CBaseProp Entity = null!;
-        public Vector Offset = new();
+        public Vector_t Offset = new();
         public int Distance = 0;
         public List<CBeam> Beams = new();
         public bool LockedMessage = false;
@@ -126,7 +129,7 @@ public static class Building
 
             var pawn = player.Pawn()!;
 
-            Vector position = new Vector(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
+            Vector_t position = new(pawn.AbsOrigin!.X, pawn.AbsOrigin.Y, pawn.AbsOrigin.Z + pawn.CameraServices!.OldPlayerViewOffsetZ);
 
             CGameTrace? trace = TraceRay.TraceShape(player.GetEyePosition()!, pawn.EyeAngles, TraceMask.MaskShot, player);
             if (trace == null || !trace.HasValue || trace.Value.Position.Length() == 0)
@@ -139,13 +142,13 @@ public static class Building
             if (block)
                 size = Blocks.Entities[entity].Size;
 
-            if (VectorUtils.CalculateDistance(entity.AbsOrigin!, new(endPos.X, endPos.Y, endPos.Z)) > (entity.Collision.Maxs.X * 2 * Utils.GetSize(size)))
+            if (VectorUtils.CalculateDistance(entity.AbsOrigin!.ToVector_t(), new(endPos.X, endPos.Y, endPos.Z)) > (entity.Collision.Maxs.X * 2 * Utils.GetSize(size)))
             {
                 //Utils.PrintToChat(player, $"{ChatColors.Red}Distance too large between block and aim location");
                 return;
             }
 
-            int distance = (int)VectorUtils.CalculateDistance(entity.AbsOrigin!, position);
+            int distance = (int)VectorUtils.CalculateDistance(entity.AbsOrigin!.ToVector_t(), position);
 
             if (block)
             {
@@ -200,9 +203,9 @@ public static class Building
 
         var playerHolds = PlayerHolds[player];
 
-        QAngle currentEyeAngle = player.Pawn()!.EyeAngles;
+        QAngle_t currentEyeAngle = player.Pawn()!.EyeAngles.ToQAngle_t();
 
-        QAngle blockRotation = new(
+        QAngle_t blockRotation = new(
             0 + (currentEyeAngle.X * 7.5f),
             0 + (currentEyeAngle.Y * 7.5f),
             0 + (currentEyeAngle.Z * 7.5f)

@@ -5,6 +5,8 @@ using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
+using FixVectorLeak.src;
+using FixVectorLeak.src.Structs;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 public static class Events
@@ -105,7 +107,7 @@ public static class Events
         foreach (var effect in Config.Settings.Blocks.Effects)
             resources.Add(effect.Particle);
 
-        foreach (var model in Files.Models.Entities.GetAllBlocks())
+        foreach (var model in Blocks.Models.Data.GetAllBlocks())
         {
             resources.Add(model.Block);
             resources.Add(model.Pole);
@@ -130,7 +132,7 @@ public static class Events
             Files.Builders.Load();
 
             if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
-                Instance.BuilderData[player.Slot] = new Building.BuilderData { BlockType = Files.Models.Entities.Platform.Title };
+                Instance.BuilderData[player.Slot] = new Building.BuilderData { BlockType = Blocks.Models.Data.Platform.Title };
         }
 
         return HookResult.Continue;
@@ -284,10 +286,14 @@ public static class Events
 
             if (Data.Properties.OnTop)
             {
-                var playerMaxs = pawn.Collision.Maxs * 2;
-                var blockMaxs = block.Collision.Maxs * Utils.GetSize(Data.Size) * 2;
+                Vector_t playerMaxs = pawn.Collision.Maxs.ToVector_t() * 2;
+                Vector_t blockMaxs = block.Collision.Maxs.ToVector_t() * Utils.GetSize(Data.Size) * 2;
 
-                if (!VectorUtils.IsTopOnly(block.AbsOrigin!, pawn.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
+                Vector_t blockOrigin = block.AbsOrigin!.ToVector_t();
+                Vector_t pawnOrigin = pawn.AbsOrigin!.ToVector_t();
+                QAngle_t blockRotation = block.AbsRotation!.ToQAngle_t();
+
+                if (!VectorUtils.IsTopOnly(blockOrigin, pawnOrigin, blockMaxs, playerMaxs, blockRotation))
                     return HookResult.Continue;
             }
 
@@ -311,9 +317,9 @@ public static class Events
         if (pawn.DesignerName == "player" && info.Attacker.Value?.DesignerName == "player")
             return HookResult.Continue;
 
-        var Entities = Files.Models.Entities;
-        string NoFallDmg = Entities.NoFallDmg.Title;
-        string Trampoline = Entities.Trampoline.Title;
+        var blockModels = Blocks.Models.Data;
+        string NoFallDmg = blockModels.NoFallDmg.Title;
+        string Trampoline = blockModels.Trampoline.Title;
 
         foreach (var blocktarget in Blocks.Entities.Where(x => x.Value.Type.Equals(NoFallDmg) || x.Value.Type.Equals(Trampoline)))
         {
@@ -322,14 +328,18 @@ public static class Events
             if (pawn.AbsOrigin == null || block.AbsOrigin == null)
                 return HookResult.Continue;
 
-            var playerMaxs = pawn.Collision.Maxs * 2;
-            var blockMaxs = block.Collision!.Maxs * Utils.GetSize(blocktarget.Value.Size) * 2;
+            Vector_t playerMaxs = pawn.Collision.Maxs.ToVector_t() * 2;
+            Vector_t blockMaxs = block.Collision!.Maxs.ToVector_t() * Utils.GetSize(blocktarget.Value.Size) * 2;
 
-            if (VectorUtils.IsWithinBounds(block.AbsOrigin, pawn.AbsOrigin, blockMaxs, playerMaxs))
+            if (VectorUtils.IsWithinBounds(block.AbsOrigin.ToVector_t(), pawn.AbsOrigin.ToVector_t(), blockMaxs, playerMaxs))
             {
                 if (blocktarget.Value.Properties.OnTop)
                 {
-                    if (VectorUtils.IsTopOnly(block.AbsOrigin!, pawn.AbsOrigin!, blockMaxs, playerMaxs, block.AbsRotation!))
+                    Vector_t blockOrigin = block.AbsOrigin!.ToVector_t();
+                    Vector_t pawnOrigin = pawn.AbsOrigin!.ToVector_t();
+                    QAngle_t blockRotation = block.AbsRotation!.ToQAngle_t();
+
+                    if (VectorUtils.IsTopOnly(blockOrigin, pawnOrigin, blockMaxs, playerMaxs, blockRotation))
                         return HookResult.Handled;
                 }
                 else return HookResult.Handled;

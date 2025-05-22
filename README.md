@@ -302,7 +302,7 @@
 }
 ```
 </details>
-<details> <summary>default_properties</summary>
+<details> <summary>default_properties.json</summary>
   
 ```json
 {

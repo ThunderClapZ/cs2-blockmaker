@@ -1,6 +1,8 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
+using FixVectorLeak.src;
+using FixVectorLeak.src.Structs;
 using System.Drawing;
 
 public partial class Blocks
@@ -31,8 +33,8 @@ public partial class Blocks
             var Rotation = block.Entity.AbsRotation!;
             var Position = block.Entity.AbsOrigin!;
 
-            QAngle rot = new(Rotation.X, Rotation.Y, Rotation.Z);
-            Vector pos = new(Position.X, Position.Y, Position.Z);
+            QAngle_t rot = new(Rotation.X, Rotation.Y, Rotation.Z);
+            Vector_t pos = new(Position.X, Position.Y, Position.Z);
 
             if (string.Equals(input, "x-", StringComparison.OrdinalIgnoreCase))
             {
@@ -66,7 +68,7 @@ public partial class Blocks
             }
             else if (string.Equals(input, "reset", StringComparison.OrdinalIgnoreCase))
             {
-                rot = new QAngle();
+                rot = new QAngle_t();
             }
 
             else
@@ -118,7 +120,7 @@ public partial class Blocks
 
             var BuilderData = instance.BuilderData[player.Slot];
 
-            CreateBlock(player, BuilderData.BlockType, BuilderData.BlockPole, BuilderData.BlockSize, entity.AbsOrigin!, entity.AbsRotation!, BuilderData.BlockColor, BuilderData.BlockTransparency, BuilderData.BlockTeam, BuilderData.BlockEffect?.Particle ?? "");
+            CreateBlock(player, BuilderData.BlockType, BuilderData.BlockPole, BuilderData.BlockSize, entity.AbsOrigin!.ToVector_t(), entity.AbsRotation!.ToQAngle_t(), BuilderData.BlockColor, BuilderData.BlockTransparency, BuilderData.BlockTeam, BuilderData.BlockEffect?.Particle ?? "");
 
             Utils.PrintToChat(player, $"Converted -" +
                 $" type: {ChatColors.White}{BuilderData.BlockType}{ChatColors.Grey}," +
@@ -150,7 +152,7 @@ public partial class Blocks
 
             var BuilderData = instance.BuilderData[player.Slot];
 
-            CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!, entity.AbsRotation!, block.Color, block.Transparency, block.Team, block.Effect, block.Properties);
+            CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!.ToVector_t(), entity.AbsRotation!.ToQAngle_t(), block.Color, block.Transparency, block.Team, block.Effect, block.Properties);
 
             if (config.Sounds.Building.Enabled)
                 player.EmitSound(config.Sounds.Building.Create);
@@ -360,7 +362,7 @@ public partial class Blocks
                 Triggers.Remove(trigger);
             }
 
-            CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!, entity.AbsRotation!, block.Color, block.Transparency, block.Team, BuilderData.BlockEffect?.Particle ?? "");
+            CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!.ToVector_t(), entity.AbsRotation!.ToQAngle_t(), block.Color, block.Transparency, block.Team, BuilderData.BlockEffect?.Particle ?? "");
 
             Utils.PrintToChat(player, $"Changed block effect to {ChatColors.White}{effect.Title}");
         }

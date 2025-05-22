@@ -3,14 +3,17 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
+using FixVectorLeak.src;
 using System.Drawing;
+
+using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 public partial class Blocks
 {
     private static Plugin instance = Plugin.Instance;
     private static Config config = instance.Config;
     private static Config_Sounds.Sounds_Blocks sounds = instance.Config.Sounds.Blocks;
-    private static BlockModels blockModels = Files.Models.Entities;
+    private static Models blockModels = Models.Data;
 
     private static Dictionary<string, Action<CCSPlayerController, Data>> blockActions = null!;
 
@@ -43,6 +46,7 @@ public partial class Blocks
             { blockModels.Sniper.Title, Action_Weapons },
             { blockModels.SMG.Title, Action_Weapons },
             { blockModels.ShotgunHeavy.Title, Action_Weapons },
+            { blockModels.Barrier.Title, Action_Barrier },
         };
     }
 
@@ -99,6 +103,38 @@ public partial class Blocks
     {
         if (!player.NotValid() && player.IsAlive())
             Server.NextFrame(() => Utils.PrintToChat(player, $"{ChatColors.White}{blocktitle} {ChatColors.Grey}has worn off"));
+    }
+
+    public static Dictionary<int, List<CBaseProp>> PlayerCooldowns = new();
+    public static Dictionary<int, List<Timer>> CooldownsTimers = new();
+    private static void BlockCooldownTimer(CCSPlayerController player, CBaseProp block, float timer = 0, bool message = false)
+    {
+        if (timer <= 0 || block == null || block.Entity == null)
+            return;
+
+        var cooldown = PlayerCooldowns[player.Slot];
+
+        if (!BlockCooldown(player, block))
+            cooldown.Add(block);
+
+        var cdtimer = instance.AddTimer(timer, () =>
+        {
+            if (cooldown.Contains(block))
+            {
+                cooldown.Remove(block);
+
+                if (message)
+                    Utils.PrintToChat(player, $"{ChatColors.White}{block.Entity.Name} {ChatColors.Grey}block is no longer on cooldown");
+            }
+
+            //else Utils.PrintToChat(player, $"{ChatColors.Red}Error: could not reset cooldown for {block} block");
+        });
+
+        CooldownsTimers[player.Slot].Add(cdtimer);
+    }
+    private static bool BlockCooldown(CCSPlayerController player, CBaseProp block)
+    {
+        return PlayerCooldowns.TryGetValue(player.Slot, out var blockList) && blockList.Contains(block);
     }
 
     private static void Action_Custom(CCSPlayerController player, Data data, CustomBlockModel customBlock)
@@ -340,11 +376,11 @@ public partial class Blocks
 
             if (!string.IsNullOrEmpty(weaponCategory))
             {
-                int weaponGroup = weaponCategory == Files.Models.Entities.Pistol.Title ? 2 : 1;
+                int weaponGroup = weaponCategory == Models.Data.Pistol.Title ? 2 : 1;
 
                 var hasGroupWeapon = player.PlayerPawn.Value?.WeaponServices?.MyWeapons
                     .Any(w => WeaponList.Categories
-                    .Where(cat => (cat.Key == Files.Models.Entities.Pistol.Title ? 2 : 1) == weaponGroup)
+                    .Where(cat => (cat.Key == Models.Data.Pistol.Title ? 2 : 1) == weaponGroup)
                     .SelectMany(cat => cat.Value)
                     .Contains(w.Value?.DesignerName)) ?? false;
 
@@ -408,7 +444,6 @@ public partial class Blocks
 
         BlockCooldownTimer(player, block, 0.25f);
     }
-
 
     private static void Action_Slap(CCSPlayerController player, Data data)
     {
@@ -561,6 +596,26 @@ public partial class Blocks
         var settings = data.Properties;
 
         player.SetVelocity(settings.Value);
+
+        BlockCooldownTimer(player, block);
+    }
+
+    private static void Action_Barrier(CCSPlayerController player, Data data)
+    {
+        var pawn = player.Pawn();
+        if (pawn == null) return;
+
+        var block = data.Entity;
+        var settings = data.Properties;
+
+        if ((data.Team == "CT" && player.Team == CsTeam.Terrorist) ||
+            (data.Team == "T" && player.Team == CsTeam.CounterTerrorist))
+        {
+            pawn.Teleport(pawn.AbsOrigin!.ToVector_t(), velocity: new());
+            return;
+        }
+
+        Action_BhopDelay(player, data);
 
         BlockCooldownTimer(player, block);
     }

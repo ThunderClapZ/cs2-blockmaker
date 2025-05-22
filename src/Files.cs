@@ -1,9 +1,81 @@
 ﻿using CounterStrikeSharp.API.Modules.Utils;
 using CounterStrikeSharp.API;
+using FixVectorLeak.src.Structs;
+using FixVectorLeak.src;
 using System.Text.Json;
 
 public static partial class Files
 {
+    public static string mapsFolder = "";
+
+    public static void Load()
+    {
+        mapsFolder = Path.Combine(Plugin.Instance.ModuleDirectory, "maps");
+        Directory.CreateDirectory(mapsFolder);
+
+        Blocks.Models.Load();
+
+        Blocks.Properties.Load();
+
+        Builders.Load();
+    }
+
+    public static class Builders
+    {
+        public static List<string> steamids = new List<string>();
+        private static readonly string filepath = Path.Combine(Plugin.Instance.ModuleDirectory, "builders.txt");
+        private static readonly char[] separator = ['#', '/', ' '];
+
+        public static void Load()
+        {
+            if (!File.Exists(filepath) || String.IsNullOrEmpty(File.ReadAllText(filepath)))
+            {
+                File.WriteAllText(filepath, "# List of builders\n76561197960287930 // example");
+                steamids = new List<string>();
+                return;
+            }
+
+            var builders = new List<string>();
+
+            foreach (var line in File.ReadAllLines(filepath))
+            {
+                string? steamId = line.Split(separator, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(steamId))
+                    builders.Add(steamId);
+            }
+
+            steamids = builders;
+        }
+
+        public static void Save(List<string> builders)
+        {
+            var lines = File.ReadAllLines(filepath).ToList();
+            var updatedLines = new List<string>();
+            var steamIdToLineMap = new Dictionary<string, string>();
+
+            foreach (var line in lines)
+            {
+                string? steamId = line.Split(separator, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(steamId))
+                    steamIdToLineMap[steamId] = line;
+
+                else updatedLines.Add(line);
+            }
+
+            foreach (var steamId in builders)
+            {
+                if (steamIdToLineMap.ContainsKey(steamId))
+                    updatedLines.Add(steamIdToLineMap[steamId]);
+
+                else updatedLines.Add($"{steamId} // added by system");
+            }
+
+            File.WriteAllLines(filepath, updatedLines);
+        }
+    }
+
     public static class EntitiesData
     {
         public static void Save(bool autosave = false)
@@ -42,8 +114,8 @@ public static partial class Files
                             Transparency = data.Transparency,
                             Effect = data.Effect,
                             Properties = data.Properties,
-                            Position = new VectorUtils.VectorDTO(block.AbsOrigin!),
-                            Rotation = new VectorUtils.QAngleDTO(block.AbsRotation!)
+                            Position = new VectorUtils.VectorDTO(block.AbsOrigin!.ToVector_t()),
+                            Rotation = new VectorUtils.QAngleDTO(block.AbsRotation!.ToQAngle_t())
                         });
                     }
                 }
@@ -58,14 +130,14 @@ public static partial class Files
                             Entry = new Teleports.SaveData
                             {
                                 Name = teleport.Entry.Name,
-                                Position = new VectorUtils.VectorDTO(teleport.Entry.Entity.AbsOrigin!),
-                                Rotation = new VectorUtils.QAngleDTO(teleport.Entry.Entity.AbsRotation!)
+                                Position = new VectorUtils.VectorDTO(teleport.Entry.Entity.AbsOrigin!.ToVector_t()),
+                                Rotation = new VectorUtils.QAngleDTO(teleport.Entry.Entity.AbsRotation!.ToQAngle_t())
                             },
                             Exit = new Teleports.SaveData
                             {
                                 Name = teleport.Exit.Name,
-                                Position = new VectorUtils.VectorDTO(teleport.Exit.Entity.AbsOrigin!),
-                                Rotation = new VectorUtils.QAngleDTO(teleport.Exit.Entity.AbsRotation!)
+                                Position = new VectorUtils.VectorDTO(teleport.Exit.Entity.AbsOrigin!.ToVector_t()),
+                                Rotation = new VectorUtils.QAngleDTO(teleport.Exit.Entity.AbsRotation!.ToQAngle_t())
                             }
                         });
                     }
@@ -82,10 +154,11 @@ public static partial class Files
                         lightsList.Add(new Lights.SaveData
                         {
                             Color = data.Color,
+                            Style = data.Style,
                             Brightness = data.Brightness,
                             Distance = data.Distance,
-                            Position = new VectorUtils.VectorDTO(entity.AbsOrigin!),
-                            Rotation = new VectorUtils.QAngleDTO(entity.AbsRotation!)
+                            Position = new VectorUtils.VectorDTO(entity.AbsOrigin!.ToVector_t()),
+                            Rotation = new VectorUtils.QAngleDTO(entity.AbsRotation!.ToQAngle_t())
                         });
                     }
                 }
@@ -150,8 +223,8 @@ public static partial class Files
                             Data.Type,
                             Data.Pole,
                             Data.Size,
-                            new Vector(Data.Position.X, Data.Position.Y, Data.Position.Z),
-                            new QAngle(Data.Rotation.Pitch, Data.Rotation.Yaw, Data.Rotation.Roll),
+                            new(Data.Position.X, Data.Position.Y, Data.Position.Z),
+                            new(Data.Rotation.Pitch, Data.Rotation.Yaw, Data.Rotation.Roll),
                             Data.Color,
                             Data.Transparency,
                             Data.Team,
@@ -173,13 +246,13 @@ public static partial class Files
                 {
                     foreach (var teleportPairData in teleportsList)
                     {
-                        var entryPosition = new Vector(teleportPairData.Entry.Position.X, teleportPairData.Entry.Position.Y, teleportPairData.Entry.Position.Z);
-                        var entryRotation = new QAngle(teleportPairData.Entry.Rotation.Pitch, teleportPairData.Entry.Rotation.Yaw, teleportPairData.Entry.Rotation.Roll);
+                        var entryPosition = new Vector_t(teleportPairData.Entry.Position.X, teleportPairData.Entry.Position.Y, teleportPairData.Entry.Position.Z);
+                        var entryRotation = new QAngle_t(teleportPairData.Entry.Rotation.Pitch, teleportPairData.Entry.Rotation.Yaw, teleportPairData.Entry.Rotation.Roll);
 
                         var entryEntity = Teleports.CreateEntity(entryPosition, entryRotation, teleportPairData.Entry.Name);
 
-                        var exitPosition = new Vector(teleportPairData.Exit.Position.X, teleportPairData.Exit.Position.Y, teleportPairData.Exit.Position.Z);
-                        var exitRotation = new QAngle(teleportPairData.Exit.Rotation.Pitch, teleportPairData.Exit.Rotation.Yaw, teleportPairData.Exit.Rotation.Roll);
+                        var exitPosition = new Vector_t(teleportPairData.Exit.Position.X, teleportPairData.Exit.Position.Y, teleportPairData.Exit.Position.Z);
+                        var exitRotation = new QAngle_t(teleportPairData.Exit.Rotation.Pitch, teleportPairData.Exit.Rotation.Yaw, teleportPairData.Exit.Rotation.Roll);
 
                         var exitEntity = Teleports.CreateEntity(exitPosition, exitRotation, teleportPairData.Exit.Name);
 
@@ -201,10 +274,11 @@ public static partial class Files
                     {
                         Lights.CreateEntity(
                             lightData.Color,
+                            lightData.Style,
                             lightData.Brightness,
                             lightData.Distance,
-                            new Vector(lightData.Position.X, lightData.Position.Y, lightData.Position.Z),
-                            new QAngle(lightData.Rotation.Pitch, lightData.Rotation.Yaw, lightData.Rotation.Roll)
+                            new Vector_t(lightData.Position.X, lightData.Position.Y, lightData.Position.Z),
+                            new QAngle_t(lightData.Rotation.Pitch, lightData.Rotation.Yaw, lightData.Rotation.Roll)
                         );
                     }
                 }

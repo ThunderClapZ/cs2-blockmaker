@@ -3,6 +3,8 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using CounterStrikeSharp.API.Modules.Memory;
 using System.Runtime.InteropServices;
+using FixVectorLeak.src.Structs;
+using FixVectorLeak.src;
 
 public static class VectorUtils
 {
@@ -30,7 +32,7 @@ public static class VectorUtils
         return null;
     }
 
-    public static CBaseProp? GetClosestBlock(Vector endPos, CBaseProp excludeBlock, double threshold)
+    public static CBaseProp? GetClosestBlock(Vector_t endPos, CBaseProp excludeBlock, double threshold)
     {
         CBaseProp? closestBlock = null;
 
@@ -41,7 +43,7 @@ public static class VectorUtils
             if (currentProp == excludeBlock)
                 continue;
 
-            double distance = CalculateDistance(endPos, currentProp.AbsOrigin!);
+            double distance = CalculateDistance(endPos, currentProp.AbsOrigin!.ToVector_t());
             if (distance < threshold)
                 closestBlock = currentProp;
         }
@@ -49,7 +51,7 @@ public static class VectorUtils
         return closestBlock;
     }
 
-    public static (Vector position, QAngle rotation) GetEndXYZ(CCSPlayerController player, CBaseProp block, double distance = 250, bool grid = false, float gridValue = 0f, bool snapping = false, float snapValue = 0f)
+    public static (Vector_t position, QAngle_t rotation) GetEndXYZ(CCSPlayerController player, CBaseProp block, double distance = 250, bool grid = false, float gridValue = 0f, bool snapping = false, float snapValue = 0f)
     {
         if (Blocks.Entities.TryGetValue(Building.PlayerHolds[player].Entity, out var locked))
         {
@@ -60,14 +62,14 @@ public static class VectorUtils
 
                 Building.PlayerHolds[player].LockedMessage = true;
 
-                return (block.AbsOrigin!, block.AbsRotation!);
+                return (block.AbsOrigin!.ToVector_t(), block.AbsRotation!.ToQAngle_t());
             }
         }
 
         var pawn = player.Pawn()!;
         var playerpos = pawn.AbsOrigin!;
 
-        Vector aim = new Vector(playerpos.X, playerpos.Y, playerpos.Z + pawn.CameraServices!.OldPlayerViewOffsetZ); 
+        Vector_t aim = new(playerpos.X, playerpos.Y, playerpos.Z + pawn.CameraServices!.OldPlayerViewOffsetZ); 
 
         double angleA = -pawn.EyeAngles.X;
         double angleB = pawn.EyeAngles.Y;
@@ -84,8 +86,8 @@ public static class VectorUtils
             z = (float)Math.Round(z / gridValue) * gridValue;
         }
 
-        Vector endPos = new((float)x, (float)y, (float)z);
-        QAngle endRotation = block.AbsRotation!;
+        Vector_t endPos = new((float)x, (float)y, (float)z);
+        QAngle_t endRotation = block.AbsRotation!.ToQAngle_t();
 
         if (snapping)
         {
@@ -104,31 +106,31 @@ public static class VectorUtils
         return (endPos, endRotation);
     }
 
-    public static (Vector Position, QAngle Rotation) SnapToClosestBlock(CBaseProp block, CBaseProp closestBlock, float snapValue, Vector playerEyePos)
+    public static (Vector_t Position, QAngle_t Rotation) SnapToClosestBlock(CBaseProp block, CBaseProp closestBlock, float snapValue, Vector_t playerEyePos)
     {
-        Vector position = block.AbsOrigin!;
-        QAngle rotation = closestBlock.AbsRotation!;
+        Vector_t position = block.AbsOrigin!.ToVector_t();
+        QAngle_t rotation = closestBlock.AbsRotation!.ToQAngle_t();
 
         float blockScale = Blocks.Entities.ContainsKey(block) ? Utils.GetSize(Blocks.Entities[block].Size) : 1;
         float closestBlockScale = Blocks.Entities.ContainsKey(closestBlock) ? Utils.GetSize(Blocks.Entities[closestBlock].Size) : 1;
-        Vector blockDimensions = (block.Collision.Maxs - block.Collision.Mins) * blockScale;
-        Vector closestBlockDimensions = (closestBlock.Collision.Maxs - closestBlock.Collision.Mins) * closestBlockScale;
+        Vector_t blockDimensions = (block.Collision.Maxs - block.Collision.Mins).ToVector_t() * blockScale;
+        Vector_t closestBlockDimensions = (closestBlock.Collision.Maxs - closestBlock.Collision.Mins).ToVector_t() * closestBlockScale;
 
         // Get the forward, right, and up vectors based on the closest block's rotation
-        Vector forward = new Vector(
+        Vector_t forward = new(
             (float)Math.Cos(rotation.Y * Math.PI / 180) * (float)Math.Cos(rotation.X * Math.PI / 180),
             (float)Math.Sin(rotation.Y * Math.PI / 180) * (float)Math.Cos(rotation.X * Math.PI / 180),
             (float)-Math.Sin(rotation.X * Math.PI / 180)
         );
-        Vector right = new Vector(
+        Vector_t right = new(
             (float)Math.Cos((rotation.Y + 90) * Math.PI / 180),
             (float)Math.Sin((rotation.Y + 90) * Math.PI / 180),
             0
         );
-        Vector up = Cross(forward, right);
+        Vector_t up = Cross(forward, right);
 
         // Calculate face directions
-        Vector[] faceDirections =
+        Vector_t[] faceDirections =
         {
             -forward,  // -X face
             forward,   // +X face
@@ -139,8 +141,8 @@ public static class VectorUtils
         };
 
         // Calculate face centers for the closest block (edge positions)
-        Vector[] closestBlockFaceCenters = new Vector[6];
-        Vector[] blockFaceOffsets = new Vector[6];
+        Vector_t[] closestBlockFaceCenters = new Vector_t[6];
+        Vector_t[] blockFaceOffsets = new Vector_t[6];
 
         for (int i = 0; i < 6; i++)
         {
@@ -148,7 +150,7 @@ public static class VectorUtils
             bool isMinFace = i % 2 == 0; // Even indices are min faces (-X, -Y, -Z)
 
             // Calculate closest block's face center (at its edge)
-            Vector closestBlockFaceCenter = closestBlock.AbsOrigin!;
+            Vector_t closestBlockFaceCenter = closestBlock.AbsOrigin!.ToVector_t();
             if (axis == 0) // X axis
                 closestBlockFaceCenter += faceDirections[i] * closestBlockDimensions.X * 0.5f;
             else if (axis == 1) // Y axis
@@ -188,26 +190,26 @@ public static class VectorUtils
         return (position, rotation);
     }
 
-    public static Vector Cross(Vector a, Vector b)
+    public static Vector_t Cross(Vector_t a, Vector_t b)
     {
-        return new Vector(
+        return new(
             a.Y * b.Z - a.Z * b.Y,
             a.Z * b.X - a.X * b.Z,
             a.X * b.Y - a.Y * b.X
         );
     }
 
-    public static float Dot(Vector a, Vector b)
+    public static float Dot(Vector_t a, Vector_t b)
     {
         return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
     }
 
-    public static float CalculateDistance(Vector a, Vector b)
+    public static float CalculateDistance(Vector_t a, Vector_t b)
     {
         return (float)Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2) + Math.Pow(a.Z - b.Z, 2));
     }
 
-    public static bool IsWithinBounds(Vector entityPosition, Vector playerPosition, Vector entitySize, Vector playerSize)
+    public static bool IsWithinBounds(Vector_t entityPosition, Vector_t playerPosition, Vector_t entitySize, Vector_t playerSize)
     {
         bool overlapX = Math.Abs(entityPosition.X - playerPosition.X) <= (entitySize.X + playerSize.X) / 2;
         bool overlapY = Math.Abs(entityPosition.Y - playerPosition.Y) <= (entitySize.Y + playerSize.Y) / 2;
@@ -216,21 +218,21 @@ public static class VectorUtils
         return overlapX && overlapY && overlapZ;
     }
 
-    public static bool IsTopOnly(Vector entityPosition, Vector playerPosition, Vector entitySize, Vector playerSize, QAngle entityRotation)
+    public static bool IsTopOnly(Vector_t entityPosition, Vector_t playerPosition, Vector_t entitySize, Vector_t playerSize, QAngle_t entityRotation)
     {
-        Vector forward = new Vector(
+        Vector_t forward = new(
             (float)(Math.Cos(entityRotation.Y * Math.PI / 180) * Math.Cos(entityRotation.X * Math.PI / 180)),
             (float)(Math.Sin(entityRotation.Y * Math.PI / 180) * Math.Cos(entityRotation.X * Math.PI / 180)),
             (float)(-Math.Sin(entityRotation.X * Math.PI / 180))
         );
-        Vector right = new Vector(
+        Vector_t right = new(
             (float)(Math.Cos((entityRotation.Y + 90) * Math.PI / 180)),
             (float)(Math.Sin((entityRotation.Y + 90) * Math.PI / 180)),
             0
         );
-        Vector up = Cross(forward, right);
+        Vector_t up = Cross(forward, right);
 
-        Vector[] faceDirections =
+        Vector_t[] faceDirections =
         {
             -forward,  // -X face
             forward,   // +X face
@@ -252,8 +254,8 @@ public static class VectorUtils
             }
         }
 
-        Vector topFaceNormal = faceDirections[topFaceIndex];
-        Vector localX, localY, localZ;
+        Vector_t topFaceNormal = faceDirections[topFaceIndex];
+        Vector_t localX, localY, localZ;
         float faceWidth, faceHeight, faceDepth;
 
         // Map the face to its local coordinate system and dimensions
@@ -293,10 +295,10 @@ public static class VectorUtils
         }
 
         // Calculate the center of the top face
-        Vector topFaceCenter = entityPosition + topFaceNormal * (faceDepth / 2);
+        Vector_t topFaceCenter = entityPosition + topFaceNormal * (faceDepth / 2);
 
         // Player position relative to the top face center
-        Vector relativePos = playerPosition - topFaceCenter;
+        Vector_t relativePos = playerPosition - topFaceCenter;
 
         // Project relative position onto the block's local axes
         float localXProj = Dot(relativePos, localX); // Along local X (should map to faceHeight)
@@ -330,17 +332,14 @@ public static class VectorUtils
 
         public VectorDTO() { }
 
-        public VectorDTO(Vector vector)
+        public VectorDTO(Vector_t vector)
         {
             X = vector.X;
             Y = vector.Y;
             Z = vector.Z;
         }
 
-        public Vector ToVector()
-        {
-            return new Vector(X, Y, Z);
-        }
+        public Vector_t ToVector() => new (X, Y, Z);
     }
 
     public class QAngleDTO
@@ -351,17 +350,13 @@ public static class VectorUtils
 
         public QAngleDTO() { }
 
-        public QAngleDTO(QAngle qangle)
+        public QAngleDTO(QAngle_t qangle)
         {
             Pitch = qangle.X;
             Yaw = qangle.Y;
             Roll = qangle.Z;
         }
 
-        public QAngle ToQAngle()
-        {
-            return new QAngle(Pitch, Yaw, Roll);
-        }
+        public QAngle_t ToQAngle() => new (Pitch, Yaw, Roll);
     }
-
 }

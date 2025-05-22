@@ -2,6 +2,8 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Entities.Constants;
 using CounterStrikeSharp.API.Modules.Utils;
+using FixVectorLeak.src;
+using FixVectorLeak.src.Structs;
 using Microsoft.Extensions.Logging;
 
 public static class Teleports
@@ -25,8 +27,8 @@ public static class Teleports
     public class SaveData
     {
         public string Name { get; set; } = "";
-        public VectorUtils.VectorDTO Position { get; set; } = new VectorUtils.VectorDTO(Vector.Zero);
-        public VectorUtils.QAngleDTO Rotation { get; set; } = new VectorUtils.QAngleDTO(QAngle.Zero);
+        public VectorUtils.VectorDTO Position { get; set; } = new();
+        public VectorUtils.QAngleDTO Rotation { get; set; } = new();
     }
 
     public class Pair
@@ -57,8 +59,8 @@ public static class Teleports
     {
         var BuilderData = Instance.BuilderData[player.Slot];
         var playerPawn = player.PlayerPawn.Value!;
-        var position = new Vector(playerPawn.AbsOrigin!.X, playerPawn.AbsOrigin.Y, playerPawn.AbsOrigin.Z + playerPawn.Collision.Maxs.Z / 2);
-        var rotation = playerPawn.AbsRotation!;
+        var position = new Vector_t(playerPawn.AbsOrigin!.X, playerPawn.AbsOrigin.Y, playerPawn.AbsOrigin.Z + playerPawn.Collision.Maxs.Z / 2);
+        var rotation = playerPawn.AbsRotation!.ToQAngle_t();
 
         if (!isNext.ContainsKey(player))
             isNext.Add(player, false);
@@ -100,7 +102,7 @@ public static class Teleports
         }
     }
 
-    public static Data? CreateEntity(Vector position, QAngle rotation, string name)
+    public static Data? CreateEntity(Vector_t position, QAngle_t rotation, string name)
     {
         var teleport = Utilities.CreateEntityByName<CPhysicsPropOverride>("prop_physics_override");
 

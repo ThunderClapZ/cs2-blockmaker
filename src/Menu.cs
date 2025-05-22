@@ -3,8 +3,6 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using CS2MenuManager.API.Class;
 using CS2MenuManager.API.Interface;
-using CS2TraceRay.Class;
-using CS2TraceRay.Enum;
 
 public partial class Menu
 {
@@ -96,15 +94,15 @@ public partial class Menu
             Menu_Commands(player, menuType, Parent);
         });
 
-        Menu.AddItem("Lock", (player, option) =>
-        {
-            Commands.LockBlock(player);
-            Menu_Commands(player, menuType, Parent);
-        });
-
         Menu.AddItem("Convert", (player, option) =>
         {
             Commands.ConvertBlock(player);
+            Menu_Commands(player, menuType, Parent);
+        });
+
+        Menu.AddItem("Lock", (player, option) =>
+        {
+            Commands.LockBlock(player);
             Menu_Commands(player, menuType, Parent);
         });
 
@@ -224,7 +222,7 @@ public partial class Menu
 
         IMenu Menu = Create($"Select Type ({BuilderData.BlockType})", menuType, Parent);
 
-        var blockmodels = Files.Models.Entities;
+        var blockmodels = Blocks.Models.Data;
 
         foreach (var block in blockmodels.GetAllBlocks())
         {
@@ -270,7 +268,7 @@ public partial class Menu
                 {
                     Menu.AddItem(weapon.Name, (player, option) =>
                     {
-                        var blockModels = Files.Models.Entities;
+                        var blockModels = Blocks.Models.Data;
                         foreach (var model in blockModels.GetAllBlocks())
                         {
                             if (string.Equals(model.Title, gunType, StringComparison.OrdinalIgnoreCase))
@@ -389,7 +387,7 @@ public partial class Menu
 
                 Menu.AddItem("Builder Info", (player, option) =>
                 {
-                    Utils.PrintToChat(player, $"{ChatColors.White}{block.Type} {ChatColors.Grey}created by player: {ChatColors.White}{name} {ChatColors.Grey}date: {ChatColors.White}{date}");
+                    Utils.PrintToChat(player, $"{ChatColors.White}{block.Type} {ChatColors.Grey}created by: {ChatColors.White}{name} {ChatColors.Grey}date: {ChatColors.White}{date}");
                     PropertiesMenuOptions(player, menuType, Parent, entity);
                 });
             }
@@ -400,6 +398,8 @@ public partial class Menu
             PropertyMenuOption(Menu, menuType, Parent, "Value", properties.Value, player, entity);
             PropertyMenuOption(Menu, menuType, Parent, "Cooldown", properties.Cooldown, player, entity);
             PropertyMenuOption(Menu, menuType, Parent, "Locked", 1, player, entity);
+
+            Menu.Display(player, 0);
         }
     }
 
@@ -437,8 +437,6 @@ public partial class Menu
                 }
             });
         }
-
-        Menu.Display(player, 0);
     }
 
     /* Menu_BlockSettings */
@@ -501,13 +499,32 @@ public partial class Menu
                 {
                     BuilderData.LightColor = color;
 
-                    Utils.PrintToChat(player, $"Selected Light Color: {ChatColors.White}{color}");
+                    Lights.Delete(player, false, true);
 
                     Menu_Lights(player, menuType, Parent);
                 });
             }
 
             ColorsMenu.Display(player, 0);
+        });
+
+        Menu.AddItem($"Style: " + BuilderData.LightStyle, (player, option) =>
+        {
+            IMenu StylesMenu = Create($"Select Style ({BuilderData.LightStyle})", menuType, Menu);
+
+            foreach (var style in Lights.Styles.Keys)
+            {
+                StylesMenu.AddItem(style, (player, option) =>
+                {
+                    BuilderData.LightStyle = style;
+
+                    Lights.Delete(player, false, true);
+
+                    Menu_Lights(player, menuType, Parent);
+                });
+            }
+
+            StylesMenu.Display(player, 0);
         });
 
         Menu.AddItem($"Brightness: " + BuilderData.LightBrightness, (player, option) =>
@@ -599,7 +616,7 @@ public partial class Menu
         {
             IMenu BuildersMenu = Create($"Manage Builders", menuType, Menu);
 
-            var targets = Utilities.GetPlayers().Where(x => x != player);
+            var targets = Utilities.GetPlayers().Where(x => x != player && !x.IsBot);
             if (targets.Count() <= 0)
             {
                 Utils.PrintToChat(player, $"{ChatColors.Red}No players available");
