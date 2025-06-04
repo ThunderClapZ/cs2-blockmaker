@@ -1,10 +1,11 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Translations;
+using StarCore.Utils;
 
 public partial class Plugin : BasePlugin, IPluginConfig<Config>
 {
-    public override string ModuleName => "Block Maker";
+    public override string ModuleName => "BB";
     public override string ModuleVersion => "0.2.3";
     public override string ModuleAuthor => "exkludera";
 
@@ -24,10 +25,15 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
         if (hotReload)
         {
+            // foreach (var player in Utilities.GetPlayers())
+            // {
+            //     if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
+            //         BuilderData[player.Slot] = new Building.BuilderData { BlockType = Blocks.Models.Data.Platform.Title };
+            // }
             foreach (var player in Utilities.GetPlayers())
             {
-                if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
-                    BuilderData[player.Slot] = new Building.BuilderData { BlockType = Blocks.Models.Data.Platform.Title };
+                if (!Lib.IsPlayerValid(player)) continue;
+                BuilderData[player.Slot] = new Building.BuilderData { BlockType = Blocks.Models.Data.Platform.Title };
             }
 
             Files.mapsFolder = Path.Combine(ModuleDirectory, "maps", Server.MapName);
@@ -35,7 +41,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<Config>
 
             Utils.Clear();
 
-            Files.EntitiesData.Load();
+            Files.EntitiesData.LoadDefault();
         }
     }
 

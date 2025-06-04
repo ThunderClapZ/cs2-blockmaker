@@ -194,7 +194,131 @@ public static partial class Files
                 int blocks = Utils.GetPlacedBlocksCount();
                 var s = blocks == 1 ? "" : "s";
 
-                Utils.PrintToChatAll($"{(autosave ? "Auto-" : "")}Saved {ChatColors.White}{blocks} {ChatColors.Grey}block{s} on {ChatColors.White}{Server.MapName}");
+                // Utils.PrintToChatAll($"{(autosave ? "Auto-" : "")}Saved {ChatColors.White}{blocks} {ChatColors.Grey}block{s} on {ChatColors.White}{Server.MapName}");
+            }
+            catch (Exception ex)
+            {
+                Utils.Log($"Failed to save data: {ex.Message}");
+            }
+        }
+
+        public static void SaveDefault(bool autosave = false)
+        {
+            if (Blocks.Entities.Count <= 0)
+            {
+                Utils.Log($"No blocks to save on {Server.MapName}");
+                return;
+            }
+
+            var blocksPath = Path.Combine(mapsFolder, "blocks_default.json");
+            var teleportsPath = Path.Combine(mapsFolder, "teleports_default.json");
+            var lightsPath = Path.Combine(mapsFolder, "lights_default.json");
+
+            try
+            {
+                var blocksList = new List<Blocks.SaveData>();
+                var teleportsList = new List<Teleports.PairSaveData>();
+                var lightsList = new List<Lights.SaveData>();
+
+                // Save blocks
+                foreach (var prop in Blocks.Entities)
+                {
+                    var block = prop.Key;
+                    var data = prop.Value;
+
+                    if (block != null && block.IsValid)
+                    {
+                        blocksList.Add(new Blocks.SaveData
+                        {
+                            Type = data.Type,
+                            Pole = data.Pole,
+                            Size = data.Size,
+                            Team = data.Team,
+                            Color = data.Color,
+                            Transparency = data.Transparency,
+                            Effect = data.Effect,
+                            Properties = data.Properties,
+                            Position = new VectorUtils.VectorDTO(block.AbsOrigin!.ToVector_t()),
+                            Rotation = new VectorUtils.QAngleDTO(block.AbsRotation!.ToQAngle_t())
+                        });
+                    }
+                }
+
+                // Save teleports
+                foreach (var teleport in Teleports.Entities)
+                {
+                    if (teleport.Entry != null && teleport.Exit != null)
+                    {
+                        teleportsList.Add(new Teleports.PairSaveData
+                        {
+                            Entry = new Teleports.SaveData
+                            {
+                                Name = teleport.Entry.Name,
+                                Position = new VectorUtils.VectorDTO(teleport.Entry.Entity.AbsOrigin!.ToVector_t()),
+                                Rotation = new VectorUtils.QAngleDTO(teleport.Entry.Entity.AbsRotation!.ToQAngle_t())
+                            },
+                            Exit = new Teleports.SaveData
+                            {
+                                Name = teleport.Exit.Name,
+                                Position = new VectorUtils.VectorDTO(teleport.Exit.Entity.AbsOrigin!.ToVector_t()),
+                                Rotation = new VectorUtils.QAngleDTO(teleport.Exit.Entity.AbsRotation!.ToQAngle_t())
+                            }
+                        });
+                    }
+                }
+
+                // Save lights
+                foreach (var prop in Lights.Entities)
+                {
+                    var entity = prop.Key;
+                    var data = prop.Value;
+
+                    if (entity != null && entity.IsValid)
+                    {
+                        lightsList.Add(new Lights.SaveData
+                        {
+                            Color = data.Color,
+                            Style = data.Style,
+                            Brightness = data.Brightness,
+                            Distance = data.Distance,
+                            Position = new VectorUtils.VectorDTO(entity.AbsOrigin!.ToVector_t()),
+                            Rotation = new VectorUtils.QAngleDTO(entity.AbsRotation!.ToQAngle_t())
+                        });
+                    }
+                }
+
+                int blocksCount = blocksList.Count;
+                int teleportsCount = teleportsList.Count;
+                int lightsCount = lightsList.Count;
+
+                // Save blocks to blocks.json
+                if (blocksCount > 0)
+                {
+                    string blocksJson = JsonSerializer.Serialize(blocksList, new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(blocksPath, blocksJson);
+                }
+
+                // Save teleports to teleports.json
+                if (teleportsCount > 0)
+                {
+                    string teleportsJson = JsonSerializer.Serialize(teleportsList, new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(teleportsPath, teleportsJson);
+                }
+
+                // Save lights to lights.json
+                if (lightsCount > 0)
+                {
+                    string lightsJson = JsonSerializer.Serialize(lightsList, new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(lightsPath, lightsJson);
+                }
+
+                if (Plugin.Instance.Config.Sounds.Building.Enabled)
+                    Utils.PlaySoundAll(Plugin.Instance.Config.Sounds.Building.Save);
+
+                int blocks = Utils.GetPlacedBlocksCount();
+                var s = blocks == 1 ? "" : "s";
+
+                // Utils.PrintToChatAll($"{(autosave ? "Auto-" : "")}Saved {ChatColors.White}{blocks} {ChatColors.Grey}block{s} on {ChatColors.White}{Server.MapName}");
             }
             catch (Exception ex)
             {
@@ -207,6 +331,125 @@ public static partial class Files
             var blocksPath = Path.Combine(mapsFolder, "blocks.json");
             var teleportsPath = Path.Combine(mapsFolder, "teleports.json");
             var lightsPath = Path.Combine(mapsFolder, "lights.json");
+
+            // spawn blocks
+            if (File.Exists(blocksPath) && Utils.IsValidJson(blocksPath))
+            {
+                var blocksJson = File.ReadAllText(blocksPath);
+                var blocksList = JsonSerializer.Deserialize<List<Blocks.SaveData>>(blocksJson);
+
+                if (blocksList != null && blocksList.Count > 0)
+                {
+                    foreach (var Data in blocksList)
+                    {
+                        Blocks.CreateBlock(
+                            null,
+                            Data.Type,
+                            Data.Pole,
+                            Data.Size,
+                            new(Data.Position.X, Data.Position.Y, Data.Position.Z),
+                            new(Data.Rotation.Pitch, Data.Rotation.Yaw, Data.Rotation.Roll),
+                            Data.Color,
+                            Data.Transparency,
+                            Data.Team,
+                            Data.Effect,
+                            Data.Properties
+                        );
+                    }
+                }
+            }
+            else Utils.Log($"Failed to spawn Blocks. File for {Server.MapName} is empty or invalid");
+
+            // spawn teleports
+            if (File.Exists(teleportsPath) && Utils.IsValidJson(teleportsPath))
+            {
+                var teleportsJson = File.ReadAllText(teleportsPath);
+                var teleportsList = JsonSerializer.Deserialize<List<Teleports.PairSaveData>>(teleportsJson);
+
+                if (teleportsList != null && teleportsList.Count > 0)
+                {
+                    foreach (var teleportPairData in teleportsList)
+                    {
+                        var entryPosition = new Vector_t(teleportPairData.Entry.Position.X, teleportPairData.Entry.Position.Y, teleportPairData.Entry.Position.Z);
+                        var entryRotation = new QAngle_t(teleportPairData.Entry.Rotation.Pitch, teleportPairData.Entry.Rotation.Yaw, teleportPairData.Entry.Rotation.Roll);
+
+                        var entryEntity = Teleports.CreateEntity(entryPosition, entryRotation, teleportPairData.Entry.Name);
+
+                        var exitPosition = new Vector_t(teleportPairData.Exit.Position.X, teleportPairData.Exit.Position.Y, teleportPairData.Exit.Position.Z);
+                        var exitRotation = new QAngle_t(teleportPairData.Exit.Rotation.Pitch, teleportPairData.Exit.Rotation.Yaw, teleportPairData.Exit.Rotation.Roll);
+
+                        var exitEntity = Teleports.CreateEntity(exitPosition, exitRotation, teleportPairData.Exit.Name);
+
+                        if (entryEntity != null && exitEntity != null)
+                            Teleports.Entities.Add(new Teleports.Pair(entryEntity, exitEntity));
+                    }
+                }
+            }
+
+            // spawn lights
+            if (File.Exists(lightsPath) && Utils.IsValidJson(lightsPath))
+            {
+                var lightsJson = File.ReadAllText(lightsPath);
+                var lightsList = JsonSerializer.Deserialize<List<Lights.SaveData>>(lightsJson);
+
+                if (lightsList != null && lightsList.Count > 0)
+                {
+                    foreach (var lightData in lightsList)
+                    {
+                        Lights.CreateEntity(
+                            lightData.Color,
+                            lightData.Style,
+                            lightData.Brightness,
+                            lightData.Distance,
+                            new Vector_t(lightData.Position.X, lightData.Position.Y, lightData.Position.Z),
+                            new QAngle_t(lightData.Rotation.Pitch, lightData.Rotation.Yaw, lightData.Rotation.Roll)
+                        );
+                    }
+                }
+            }
+        }
+
+        public static void ClearAllSavedData()
+        {
+            try
+            {
+                var filesToDelete = new List<string>
+                {
+                    Path.Combine(mapsFolder, "blocks.json"),
+                    Path.Combine(mapsFolder, "teleports.json"),
+                    Path.Combine(mapsFolder, "lights.json")
+                };
+
+                int deletedCount = 0;
+                
+                foreach (var filePath in filesToDelete)
+                {
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                        deletedCount++;
+                        Utils.Log($"Deleted saved data file: {Path.GetFileName(filePath)}");
+                    }
+                }
+
+                // Clear in-memory collections
+                Blocks.Entities.Clear();
+                Teleports.Entities.Clear();
+                Lights.Entities.Clear();
+
+                Utils.Log($"Cleared all saved data. Deleted {deletedCount} files.");
+            }
+            catch (Exception ex)
+            {
+                Utils.Log($"Failed to clear saved data: {ex.Message}");
+            }
+        }
+
+        public static void LoadDefault()
+        {
+            var blocksPath = Path.Combine(mapsFolder, "blocks_default.json");
+            var teleportsPath = Path.Combine(mapsFolder, "teleports_default.json");
+            var lightsPath = Path.Combine(mapsFolder, "lights_default.json");
 
             // spawn blocks
             if (File.Exists(blocksPath) && Utils.IsValidJson(blocksPath))

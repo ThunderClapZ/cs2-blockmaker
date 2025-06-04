@@ -9,7 +9,7 @@ public class Config : BasePluginConfig
 
 public class Config_Settings
 {
-    public string Prefix { get; set; } = "{purple}BlockMaker {grey}|";
+    public string Prefix { get; set; } = "[{purple}ZombieZeta-BaseBuilder {grey}]";
     public string MenuType { get; set; } = "CenterHtmlMenu";
     public class Settings_Building
     {

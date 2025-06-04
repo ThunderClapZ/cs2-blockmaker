@@ -68,18 +68,18 @@ public partial class Lights
         CGameTrace? trace = TraceRay.TraceShape(player.GetEyePosition()!, player.PlayerPawn.Value?.EyeAngles!, TraceMask.MaskShot, player);
         if (trace == null || !trace.HasValue || trace.Value.Position.Length() == 0)
         {
-            Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a valid location to create light");
+            Utils.PrintToChat(player, $"{ChatColors.Red}找不到合适的位置");
             return;
         }
 
         var endPos = trace.Value.Position;
 
         CreateEntity(BuilderData.LightColor, BuilderData.LightStyle, BuilderData.LightBrightness, BuilderData.LightDistance, new(endPos.X, endPos.Y, endPos.Z), null);
-        Utils.PrintToChat(player, $"Created Light -" +
-            $" color: {ChatColors.White}{BuilderData.LightColor}{ChatColors.Grey}," +
-            $" style: {ChatColors.White}{BuilderData.LightStyle}{ChatColors.Grey}," +
-            $" brightness: {ChatColors.White}{BuilderData.LightBrightness}{ChatColors.Grey}," +
-            $" distance: {ChatColors.White}{BuilderData.LightDistance}"
+        Utils.PrintToChat(player, $"创建光源 -" +
+            $" 颜色: {ChatColors.White}{BuilderData.LightColor}{ChatColors.Grey}," +
+            $" 样式: {ChatColors.White}{BuilderData.LightStyle}{ChatColors.Grey}," +
+            $" 亮度: {ChatColors.White}{BuilderData.LightBrightness}{ChatColors.Grey}," +
+            $" 距离: {ChatColors.White}{BuilderData.LightDistance}"
         );
     }
 
@@ -140,11 +140,11 @@ public partial class Lights
             entity.Remove();
 
             if (message)
-                Utils.PrintToChat(player, $"Deleted Light -" +
-                    $" color: {ChatColors.White}{light.Color}{ChatColors.Grey}," +
-                    $" style: {ChatColors.White}{light.Style}{ChatColors.Grey}," +
-                    $" brightness: {ChatColors.White}{light.Brightness}{ChatColors.Grey}," +
-                    $" distance: {ChatColors.White}{light.Distance}"
+                Utils.PrintToChat(player, $"移除光源 -" +
+                    $" 颜色: {ChatColors.White}{light.Color}{ChatColors.Grey}," +
+                    $" 样式: {ChatColors.White}{light.Style}{ChatColors.Grey}," +
+                    $" 亮度: {ChatColors.White}{light.Brightness}{ChatColors.Grey}," +
+                    $" 距离: {ChatColors.White}{light.Distance}"
                 );
 
             return true;
@@ -152,7 +152,7 @@ public partial class Lights
         else
         {
             if (message)
-                Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a light to delete");
+                Utils.PrintToChat(player, $"{ChatColors.Red}找不到任何光源");
 
             return false;
         }
@@ -166,16 +166,16 @@ public partial class Lights
         {
             case "LightBrightness":
                 data.LightBrightness = input;
-                Utils.PrintToChat(player, $"Light Brightness Value: {ChatColors.White}{input}");
+                Utils.PrintToChat(player, $"亮度: {ChatColors.White}{input}");
                 Delete(player, false, true);
                 break;
             case "LightDistance":
                 data.LightDistance = input;
-                Utils.PrintToChat(player, $"Light Distance Value: {ChatColors.White}{input}");
+                Utils.PrintToChat(player, $"距离: {ChatColors.White}{input}");
                 Delete(player, false, true);
                 break;
             default:
-                Utils.PrintToChat(player, $"{ChatColors.Red}Unknown property type: {type}");
+                Utils.PrintToChat(player, $"{ChatColors.Red}无效类型: {type}");
                 break;
         }
 

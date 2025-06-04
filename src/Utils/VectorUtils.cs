@@ -5,6 +5,8 @@ using CounterStrikeSharp.API.Modules.Memory;
 using System.Runtime.InteropServices;
 using FixVectorLeak.src.Structs;
 using FixVectorLeak.src;
+using StarCore.Utils;
+using StarCore.Module.MathModule.Utils;
 
 public static class VectorUtils
 {
@@ -20,6 +22,18 @@ public static class VectorUtils
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) findPickerEntity = new(GameRules.Handle, 28);
 
         var target = new CBaseProp(findPickerEntity.Invoke(GameRules.Handle, player.Handle));
+
+        if (target == null || !target.IsValid) return null;
+        
+        var pawn = Lib.GetAlivePawn(player);
+        if (pawn == null) return null;
+        var playerPos = pawn.AbsOrigin!.Vec3();
+        var targetPos = target.AbsOrigin!.Vec3();
+        var distance = StarMath.DistanceXYZ(playerPos, targetPos);
+        if (distance > 250)
+        {
+            return null;
+        }
 
         if (target != null &&
             target.IsValid &&

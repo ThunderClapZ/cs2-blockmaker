@@ -397,12 +397,12 @@ public partial class Blocks
 
             player.FindWeapon(designer).SetAmmo((int)settings.Value, 0);
 
-            Utils.PrintToChatAll($"{ChatColors.LightPurple}{player.PlayerName} {ChatColors.Grey}equipped a {ChatColors.White}{weapon}");
+            Utils.PrintToChatAll($"{ChatColors.LightPurple}{player.PlayerName} {ChatColors.Grey}拿到了 {ChatColors.White}{weapon}");
 
             BlockCooldownTimer(player, block, settings.Cooldown);
         }
 
-        else Utils.PrintToChatAll($"{ChatColors.Red}The weapon '{weapon}' does not exist in the weapon list.");
+        else Utils.PrintToChatAll($"{ChatColors.Red}武器 '{weapon}' 不存在.");
     }
 
     private static void Action_Speed(CCSPlayerController player, Data data)
@@ -480,7 +480,7 @@ public partial class Blocks
         foreach (var playerToNuke in playersToNuke)
             playerToNuke.CommitSuicide(false, true);
 
-        Utils.PrintToChatAll($"{ChatColors.LightPurple}{player.PlayerName} {ChatColors.Grey}has nuked the {teamName} team");
+        Utils.PrintToChatAll($"{ChatColors.LightPurple}{player.PlayerName} {ChatColors.Grey}用核弹炸飞了 {teamName}");
 
         Utils.PlaySoundAll(sounds.Nuke);
 

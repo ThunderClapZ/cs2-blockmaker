@@ -138,7 +138,7 @@ public partial class Blocks
 
         if (entity == null)
         {
-            Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a block to copy");
+            Utils.PrintToChat(player, $"{ChatColors.Red}无板块可以复制");
             return;
         }
 
@@ -149,21 +149,26 @@ public partial class Blocks
         {
             if (Utils.BlockLocked(player, block))
                 return;
+            
+            // 复制板块
+            if (Utils.GetMoney(player) < 500) return;
+            if (block.Type.Contains("平台"))
+            {
+                Utils.PrintToChat(player, "复制成功");
+                Utils.ReduceMoney(player, 500);
+            }
+            else
+            {
+                Utils.PrintToChat(player, "特殊板块无法复制");
+                return;
+            }
 
             var BuilderData = instance.BuilderData[player.Slot];
 
-            CreateBlock(player, block.Type, block.Pole, block.Size, entity.AbsOrigin!.ToVector_t(), entity.AbsRotation!.ToQAngle_t(), block.Color, block.Transparency, block.Team, block.Effect, block.Properties);
+            CreateBlock(null, block.Type, block.Pole, block.Size, entity.AbsOrigin!.ToVector_t(), entity.AbsRotation!.ToQAngle_t(), block.Color, block.Transparency, block.Team, block.Effect, block.Properties);
 
             if (config.Sounds.Building.Enabled)
                 player.EmitSound(config.Sounds.Building.Create);
-
-            Utils.PrintToChat(player, $"Copied -" +
-                $" type: {ChatColors.White}{block.Type}{ChatColors.Grey}," +
-                $" size: {ChatColors.White}{block.Size}{ChatColors.Grey}," +
-                $" color: {ChatColors.White}{block.Color}{ChatColors.Grey}," +
-                $" team: {ChatColors.White}{block.Team}{ChatColors.Grey}," +
-                $" transparency: {ChatColors.White}{block.Transparency}"
-            );
         }
     }
 

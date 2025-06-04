@@ -7,6 +7,8 @@ using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using FixVectorLeak.src;
 using FixVectorLeak.src.Structs;
+using StarCore.Module.TimerModule;
+using StarCore.Utils;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 public static class Events
@@ -16,7 +18,7 @@ public static class Events
 
     public static void Register()
     {
-        Instance.RegisterListener<Listeners.OnTick>(Building.OnTick);
+        // Instance.RegisterListener<Listeners.OnTick>(Building.OnTick);
         Instance.RegisterListener<Listeners.OnMapStart>(OnMapStart);
         Instance.RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
         Instance.RegisterListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
@@ -38,7 +40,7 @@ public static class Events
 
     public static void Deregister()
     {
-        Instance.RemoveListener<Listeners.OnTick>(Building.OnTick);
+        // Instance.RemoveListener<Listeners.OnTick>(Building.OnTick);
         Instance.RemoveListener<Listeners.OnMapStart>(OnMapStart);
         Instance.RemoveListener<Listeners.OnMapEnd>(OnMapEnd);
         Instance.RemoveListener<Listeners.OnServerPrecacheResources>(OnServerPrecacheResources);
@@ -61,6 +63,7 @@ public static class Events
     public static Timer? AutoSaveTimer;
     private static void OnMapStart(string mapname)
     {
+        // Files.EntitiesData.LoadDefault();
         Files.mapsFolder = Path.Combine(Instance.ModuleDirectory, "maps", Server.MapName);
         Directory.CreateDirectory(Files.mapsFolder);
 
@@ -89,6 +92,7 @@ public static class Events
     private static void OnMapEnd()
     {
         Utils.Clear();
+        Files.EntitiesData.ClearAllSavedData();
     }
 
     private static void OnServerPrecacheResources(ResourceManifest manifest)
@@ -127,13 +131,14 @@ public static class Events
         if (player == null || player.NotValid())
             return HookResult.Continue;
 
-        if (Instance.buildMode)
-        {
-            Files.Builders.Load();
+        // if (Instance.buildMode)
+        // {
+        //     Files.Builders.Load();
 
-            if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
-                Instance.BuilderData[player.Slot] = new Building.BuilderData { BlockType = Blocks.Models.Data.Platform.Title };
-        }
+        //     if (Utils.HasPermission(player) || Files.Builders.steamids.Contains(player.SteamID.ToString()))
+        //         Instance.BuilderData[player.Slot] = new Building.BuilderData { BlockType = Blocks.Models.Data.Platform.Title };
+        // }
+        Instance.BuilderData[player.Slot] = new Building.BuilderData { BlockType = Blocks.Models.Data.Platform.Title };
 
         return HookResult.Continue;
     }
@@ -141,15 +146,25 @@ public static class Events
     private static HookResult EventRoundStart(EventRoundStart @event, GameEventInfo info)
     {
         Utils.Clear();
-        Files.EntitiesData.Load();
+        if (Lib.IsWarmupPeriod())
+        {
+            Files.EntitiesData.LoadDefault();
+            Files.EntitiesData.Save();
+        }
+        else
+        {
+            Files.EntitiesData.Load();
+        }
+        StarTimerManager.AddTimer(Instance, 0.05f, Building.OnTick, TimerLifeState.Repeat | TimerLifeState.CurrentRound);
 
         return HookResult.Continue;
     }
 
     private static HookResult EventRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
-        if (Instance.buildMode && Config.Settings.Building.AutoSave.Enable)
-            Files.EntitiesData.Save();
+        // if (Instance.buildMode && Config.Settings.Building.AutoSave.Enable)
+        //     Files.EntitiesData.Save();
+        Files.EntitiesData.Save();
 
         return HookResult.Continue;
     }
@@ -194,7 +209,7 @@ public static class Events
 
                 if (!float.TryParse(input, out float number) || (number <= 0 && type != "Snap"))
                 {
-                    Utils.PrintToChat(player, $"{ChatColors.Red}Invalid input value: {ChatColors.White}{input}");
+                    Utils.PrintToChat(player, $"{ChatColors.Red}无效输入: {ChatColors.White}{input}");
                     return HookResult.Handled;
                 }
 
@@ -202,19 +217,19 @@ public static class Events
                 {
                     case "Grid":
                         pData.GridValue = number;
-                        Utils.PrintToChat(player, $"Grid Value: {ChatColors.White}{number}");
+                        Utils.PrintToChat(player, $"网格: {ChatColors.White}{number}");
                         break;
                     case "Snap":
                         pData.SnapValue = number;
-                        Utils.PrintToChat(player, $"Snap Value: {ChatColors.White}{number}");
+                        Utils.PrintToChat(player, $"吸附: {ChatColors.White}{number}");
                         break;
                     case "Rotation":
                         pData.RotationValue = number;
-                        Utils.PrintToChat(player, $"Rotation Value: {ChatColors.White}{number}");
+                        Utils.PrintToChat(player, $"旋转: {ChatColors.White}{number}");
                         break;
                     case "Position":
                         pData.PositionValue = number;
-                        Utils.PrintToChat(player, $"Position Value: {ChatColors.White}{number}");
+                        Utils.PrintToChat(player, $"位置: {ChatColors.White}{number}");
                         break;
                     case "LightBrightness":
                         Commands.LightSettings(player, type, input);

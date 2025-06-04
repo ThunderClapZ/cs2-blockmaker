@@ -1,7 +1,10 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
+using StarCore.Module.MathModule.Utils;
+using StarCore.Utils;
 using System.Drawing;
 
 public static class Commands
@@ -33,6 +36,9 @@ public static class Commands
         AddCommands(commands.Building.CopyBlock, CopyBlock);
         AddCommands(commands.Building.LockBlock, LockBlock);
         AddCommands(commands.Building.LockAll, LockAll);
+        Instance.AddCommand("css_clearblockwithinspawn", "移除出生点附近的板块", RemoveBlockWhinSpawn);
+        Instance.AddCommand("css_enablebuildmode", "允许搭建", EnableBuildMode);
+        Instance.AddCommand("css_disablebuildmode", "关闭搭建", DisableBuildMode);
     }
     private static void AddCommands(List<string> commands, Action<CCSPlayerController?> action)
     {
@@ -68,6 +74,46 @@ public static class Commands
         RemoveCommands(commands.Building.LockBlock, LockBlock);
         RemoveCommands(commands.Building.LockAll, LockAll);
     }
+
+    private static void RemoveBlockWhinSpawn(CCSPlayerController? player, CommandInfo cmdInfo)
+    {
+        var tSpawns = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_terrorist").ToList();
+        var ctSPawns = Utilities.FindAllEntitiesByDesignerName<SpawnPoint>("info_player_counterterrorist").ToList();
+        var spawnPoints = tSpawns.Concat(ctSPawns).ToList();
+        foreach (var spawnPoint in spawnPoints)
+        {
+            var spawnPointPos = spawnPoint.AbsOrigin!.Vec3();
+            foreach (var prop in Utilities.GetAllEntities().Where(e => 
+            e != null && e.IsValid
+            && !string.IsNullOrWhiteSpace(e.Entity!.Name)
+            && e.DesignerName.Contains("prop_physics_override") 
+            && e.Entity!.Name.StartsWith("blockmaker")))
+            {
+                var currentProp = prop.As<CBaseProp>();
+                var currentPropPos = currentProp.AbsOrigin!.Vec3();
+                var distance = StarMath.DistanceXYZ(spawnPointPos, currentPropPos);
+                if (distance < 400)
+                {
+                    Blocks.DeleteBlock(currentProp);
+                }
+                if (currentProp.Render.A != 255)
+                {
+                    Blocks.DeleteBlock(currentProp);
+                }
+            }
+        }
+    }
+
+    private static void EnableBuildMode(CCSPlayerController? player, CommandInfo cmdInfo)
+    {
+        Instance.buildMode = true;
+    }
+
+    private static void DisableBuildMode(CCSPlayerController? player, CommandInfo cmdInfo)
+    {
+        Instance.buildMode = false;
+    }
+
     private static void RemoveCommands(List<string> commands, Action<CCSPlayerController?> action)
     {
         foreach (var cmd in commands)
@@ -107,7 +153,7 @@ public static class Commands
 
         if (!Utils.HasPermission(player))
         {
-            Utils.PrintToChatAll($"{ChatColors.Red}You don't have permission to change Build Mode");
+            Utils.PrintToChatAll($"{ChatColors.Red}无权限");
             return;
         }
 
@@ -130,10 +176,10 @@ public static class Commands
             Building.PlayerHolds.Clear();
         }
 
-        string status = Instance.buildMode ? "Enabled" : "Disabled";
+        string status = Instance.buildMode ? "开启" : "关闭";
         char color = Instance.buildMode ? ChatColors.Green : ChatColors.Red;
 
-        Utils.PrintToChatAll($"Build Mode: {color}{status} {ChatColors.Grey}by {ChatColors.LightPurple}{player.PlayerName}");
+        Utils.PrintToChatAll($"建造模式: {color}{status} {ChatColors.Grey}- {ChatColors.LightPurple}{player.PlayerName}");
     }
 
     public static void ManageBuilder(CCSPlayerController? player, string input)
@@ -143,7 +189,7 @@ public static class Commands
 
         if (!Utils.HasPermission(player))
         {
-            Utils.PrintToChat(player, $"{ChatColors.Red}You don't have permission to manage Builders");
+            Utils.PrintToChat(player, $"{ChatColors.Red}无权限");
             return;
         }
 
@@ -152,7 +198,7 @@ public static class Commands
 
         if (string.IsNullOrEmpty(input) || targetPlayer == null)
         {
-            Utils.PrintToChat(player, $"{ChatColors.Red}Player not found");
+            Utils.PrintToChat(player, $"{ChatColors.Red}找不到玩家");
             return;
         }
 
@@ -166,8 +212,8 @@ public static class Commands
         var action = isBuilder ? "removed" : "granted";
         var color = isBuilder ? ChatColors.Red : ChatColors.Green;
 
-        Utils.PrintToChat(targetPlayer, $"{ChatColors.LightPurple}{player.PlayerName} {color}{action} your access to Build");
-        Utils.PrintToChat(player, $"{color}You {action} {ChatColors.LightPurple}{targetPlayer.PlayerName} {color}access to Build");
+        Utils.PrintToChat(targetPlayer, $"{ChatColors.LightPurple}{player.PlayerName} {color}{action} 给与了你建造权限");
+        Utils.PrintToChat(player, $"{color}你给了 {action} {ChatColors.LightPurple}{targetPlayer.PlayerName} {color}建造权限");
 
         var builders = Files.Builders.steamids;
         string steamId = targetPlayer.SteamID.ToString();
@@ -202,14 +248,14 @@ public static class Commands
 
         if (string.IsNullOrEmpty(selectType))
         {
-            Utils.PrintToChat(player, $"{ChatColors.Red}No block type specified");
+            Utils.PrintToChat(player, $"{ChatColors.Red}未指定板块类型");
             return;
         }
 
         if (string.Equals("Teleport", selectType, StringComparison.OrdinalIgnoreCase))
         {
             BuilderData[player.Slot].BlockType = "Teleport";
-            Utils.PrintToChat(player, $"Selected Type: {ChatColors.White}Teleport");
+            Utils.PrintToChat(player, $"选择种类: {ChatColors.White}传送");
             return;
         }
 
@@ -219,12 +265,12 @@ public static class Commands
             if (string.Equals(model.Title, selectType, StringComparison.OrdinalIgnoreCase))
             {
                 BuilderData[player.Slot].BlockType = model.Title;
-                Utils.PrintToChat(player, $"Selected Type: {ChatColors.White}{model.Title}");
+                Utils.PrintToChat(player, $"选择种类: {ChatColors.White}{model.Title}");
                 return;
             }
         }
 
-        Utils.PrintToChat(player, $"{ChatColors.Red}Could not find {ChatColors.White}{selectType} {ChatColors.Red}in block types");
+        Utils.PrintToChat(player, $"{ChatColors.Red}查询不到 {ChatColors.White}{selectType}");
     }
 
     public static void BlockColor(CCSPlayerController? player, string selectColor = "None")
@@ -234,7 +280,7 @@ public static class Commands
 
         if (string.IsNullOrEmpty(selectColor))
         {
-            Utils.PrintToChat(player, $"{ChatColors.Red}No color specified");
+            Utils.PrintToChat(player, $"{ChatColors.Red}未指定颜色");
             return;
         }
 
@@ -243,7 +289,7 @@ public static class Commands
             if (string.Equals(color, selectColor, StringComparison.OrdinalIgnoreCase))
             {
                 BuilderData[player.Slot].BlockColor = color;
-                Utils.PrintToChat(player, $"Selected Color: {ChatColors.White}{color}");
+                Utils.PrintToChat(player, $"选择颜色: {ChatColors.White}{color}");
 
                 Blocks.RenderColor(player);
 
@@ -251,7 +297,7 @@ public static class Commands
             }
         }
 
-        Utils.PrintToChat(player, $"{ChatColors.Red}Could not find a matching color");
+        Utils.PrintToChat(player, $"{ChatColors.Red}找不到匹配的颜色");
     }
 
     public static void CreateBlock(CCSPlayerController? player)
@@ -264,7 +310,7 @@ public static class Commands
 
     public static void DeleteBlock(CCSPlayerController? player)
     {
-        if (player == null || !AllowedCommand(player))
+        if (player == null)
             return;
 
         Blocks.Delete(player);
@@ -293,11 +339,11 @@ public static class Commands
 
         if (Utils.GetPlacedBlocksCount() <= 0)
         {
-             Utils.PrintToChatAll($"{ChatColors.Red}No blocks to save");
+             Utils.PrintToChatAll($"{ChatColors.Red}无可保存板块");
             return;
         }
 
-        Files.EntitiesData.Save();
+        Files.EntitiesData.SaveDefault();
     }
 
     public static void Snapping(CCSPlayerController? player)
@@ -321,7 +367,7 @@ public static class Commands
 
         BuilderData[player.Slot].GridValue = float.Parse(grid);
 
-        Utils.PrintToChat(player, $"Selected Grid: {ChatColors.White}{grid} Units");
+        Utils.PrintToChat(player, $"网格: {ChatColors.White}{grid} 单位");
     }
 
     public static void Noclip(CCSPlayerController? player)
@@ -378,7 +424,7 @@ public static class Commands
         Blocks.Delete(player, true);
 
         Utils.PlaySoundAll(config.Sounds.Building.Delete);
-        Utils.PrintToChatAll($"{ChatColors.Red}Blocks cleared by {ChatColors.LightPurple}{player.PlayerName}");
+        Utils.PrintToChatAll($"{ChatColors.Red}板块被 {ChatColors.LightPurple}{player.PlayerName} 清空");
     }
 
     public static void ConvertBlock(CCSPlayerController? player)
@@ -393,7 +439,6 @@ public static class Commands
     {
         if (player == null || !AllowedCommand(player))
             return;
-
         Blocks.Copy(player);
     }
 
@@ -445,7 +490,7 @@ public static class Commands
                 return;
 
             Blocks.Entities[entity].Team = team;
-            Utils.PrintToChat(player, $"Changed block team to {ChatColors.White}{team}");
+            Utils.PrintToChat(player, $"将板块阵营变更为 {ChatColors.White}{team}");
         }
     }
 
@@ -480,7 +525,7 @@ public static class Commands
 
         if (!Utils.HasPermission(player))
         {
-            Utils.PrintToChat(player, $"{ChatColors.Red}You don't have permission to reset properties");
+            Utils.PrintToChat(player, $"{ChatColors.Red}无权");
             return;
         }
 
@@ -498,8 +543,8 @@ public static class Commands
                     Builder = block.Properties.Builder,
                 };
             }
-            else Utils.PrintToChatAll($"{ChatColors.Red}Failed to find {ChatColors.White}{block.Type} {ChatColors.Red}default properties");
+            else Utils.PrintToChatAll($"{ChatColors.Red}找不到 {ChatColors.White}{block.Type} {ChatColors.Red}的基础属性");
         }
-        Utils.PrintToChatAll($"{ChatColors.Red}All placed blocks properties have been reset!");
+        Utils.PrintToChatAll($"{ChatColors.Red}所有板块已被重置!");
     }
 }

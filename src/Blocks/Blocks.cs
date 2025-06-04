@@ -9,6 +9,7 @@ using FixVectorLeak.src.Structs;
 using System.Drawing;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Text;
 
 public partial class Blocks
 {
@@ -19,18 +20,19 @@ public partial class Blocks
             CBaseProp block,
             string type,
             bool pole,
+            CCSPlayerController? owner,  // 新增Owner参数
             string size = "Normal",
             string color = "None",
             string transparency = "100%",
             string team = "Both",
             string effect = "None",
             Property properties = null!
-
         )
         {
             Entity = block;
             Type = type;
             Pole = pole;
+            Owner = owner;  // 设置Owner
             Size = size;
             Team = team;
             Color = color;
@@ -42,6 +44,7 @@ public partial class Blocks
         public CBaseProp Entity;
         public string Type { get; set; }
         public bool Pole { get; set; }
+        public CCSPlayerController? Owner { get; set; }  // 新增Owner属性
         public string Size { get; set; }
         public string Team { get; set; }
         public string Color { get; set; }
@@ -94,13 +97,13 @@ public partial class Blocks
             if (config.Sounds.Building.Enabled)
                 player.EmitSound(config.Sounds.Building.Create);
 
-            Utils.PrintToChat(player, $"Created -" +
-                $" type: {ChatColors.White}{BuilderData.BlockType}{ChatColors.Grey}," +
-                $" size: {ChatColors.White}{BuilderData.BlockSize}{ChatColors.Grey}," +
-                $" color: {ChatColors.White}{BuilderData.BlockColor}{ChatColors.Grey}," +
-                $" team: {ChatColors.White}{BuilderData.BlockTeam}{ChatColors.Grey}," +
-                $" transparency: {ChatColors.White}{BuilderData.BlockTransparency},"
-            );
+            // Utils.PrintToChat(player, $"Created -" +
+            //     $" type: {ChatColors.White}{BuilderData.BlockType}{ChatColors.Grey}," +
+            //     $" size: {ChatColors.White}{BuilderData.BlockSize}{ChatColors.Grey}," +
+            //     $" color: {ChatColors.White}{BuilderData.BlockColor}{ChatColors.Grey}," +
+            //     $" team: {ChatColors.White}{BuilderData.BlockTeam}{ChatColors.Grey}," +
+            //     $" transparency: {ChatColors.White}{BuilderData.BlockTransparency},"
+            // );
         }
         catch
         {
@@ -111,7 +114,7 @@ public partial class Blocks
 
     public static Dictionary<CBaseEntity, Data> Entities = new();
     public static void CreateBlock(
-        CCSPlayerController? player,
+        CCSPlayerController? player,  // 这个参数现在也用作Owner
         string type,
         bool pole,
         string size,
@@ -180,7 +183,7 @@ public partial class Blocks
                 };
             }
 
-            Entities[block] = new Data(block, type, pole, size, color, transparency, team, effect, properties);
+            Entities[block] = new Data(block, type, pole, player, size, color, transparency, team, effect, properties);
         }
     }
 
@@ -247,15 +250,32 @@ public partial class Blocks
                 if (config.Sounds.Building.Enabled)
                     player.EmitSound(config.Sounds.Building.Delete);
 
-                Utils.PrintToChat(player, $"Deleted -" +
-                    $" type: {ChatColors.White}{block.Type}{ChatColors.Grey}," +
-                    $" size: {ChatColors.White}{block.Size}{ChatColors.Grey}," +
-                    $" color: {ChatColors.White}{block.Color}{ChatColors.Grey}," +
-                    $" team: {ChatColors.White}{block.Team}{ChatColors.Grey}," +
-                    $" transparency: {ChatColors.White}{block.Transparency},"
-                );
+                // Utils.PrintToChat(player, $"Deleted -" +
+                //     $" type: {ChatColors.White}{block.Type}{ChatColors.Grey}," +
+                //     $" size: {ChatColors.White}{block.Size}{ChatColors.Grey}," +
+                //     $" color: {ChatColors.White}{block.Color}{ChatColors.Grey}," +
+                //     $" team: {ChatColors.White}{block.Team}{ChatColors.Grey}," +
+                //     $" transparency: {ChatColors.White}{block.Transparency},"
+                // );
 
                 return;
+            }
+        }
+    }
+
+    public static void DeleteBlock(CBaseProp entity)
+    {
+        if (entity == null) return;
+        if (Entities.TryGetValue(entity, out var block))
+        {
+            block.Entity.Remove();
+            Entities.Remove(block.Entity);
+
+            var trigger = Triggers.FirstOrDefault(kvp => kvp.Value == block.Entity).Key;
+            if (trigger != null)
+            {
+                trigger.Remove();
+                Triggers.Remove(trigger);
             }
         }
     }
@@ -325,17 +345,19 @@ public partial class Blocks
                     var options = new JsonSerializerOptions
                     {
                         WriteIndented = true,
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping // 防止特殊字符被转义
                     };
 
                     string jsonContent = JsonSerializer.Serialize(BlockDefaultProperties, options);
 
-                    File.WriteAllText(propertiesPath, jsonContent);
+                    File.WriteAllText(propertiesPath, jsonContent, Encoding.UTF8);
                 }
 
                 if (File.Exists(propertiesPath))
                 {
-                    string jsonContent = File.ReadAllText(propertiesPath);
+                    // 使用 UTF-8 读取
+                    string jsonContent = File.ReadAllText(propertiesPath, Encoding.UTF8);
                     BlockProperties = JsonSerializer.Deserialize<Dictionary<string, Property>>(jsonContent) ?? new();
                 }
             }

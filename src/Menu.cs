@@ -121,7 +121,7 @@ public partial class Menu
         Menu.AddItem($"Select Units", (player, option) =>
         {
             BuilderData.ChatInput = rotate ? "Rotation" : "Position";
-            Utils.PrintToChat(player, $"Write your desired number in the chat");
+            Utils.PrintToChat(player, $"在聊天框输入数字");
             PositionMenuOptions(player, menuType, Parent, options, rotate);
         });
 
@@ -187,7 +187,7 @@ public partial class Menu
 
             if (entity?.Entity == null || string.IsNullOrEmpty(entity.Entity.Name))
             {
-                Utils.PrintToChat(player, "Could not find a block to edit properties");
+                Utils.PrintToChat(player, "找不到板块");
                 Menu_BlockSettings(player, menuType, Parent);
                 return;
             }
@@ -274,7 +274,7 @@ public partial class Menu
                             if (string.Equals(model.Title, gunType, StringComparison.OrdinalIgnoreCase))
                             {
                                 BuilderData.BlockType = $"{model.Title}.{weapon.Name}";
-                                Utils.PrintToChat(player, $"Selected Type: {ChatColors.White}{model.Title}.{weapon.Name}");
+                                Utils.PrintToChat(player, $"类型: {ChatColors.White}{model.Title}.{weapon.Name}");
 
                                 Menu_BlockSettings(player, menuType, Parent);
                                 return;
@@ -377,7 +377,7 @@ public partial class Menu
             {
                 string name = "";
                 string date = "unknown";
-                var parts = properties.Builder.Split(['-'], StringSplitOptions.None);
+                var parts = properties.Builder.Split('-', StringSplitOptions.None);
                 if (parts.Length >= 2)
                 {
                     name = string.Join("-", parts.Take(parts.Length - 1)).Trim();

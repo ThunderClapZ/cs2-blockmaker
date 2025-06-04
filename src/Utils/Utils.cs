@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Utils;
 using FixVectorLeak.src;
 using FixVectorLeak.src.Structs;
 using Microsoft.Extensions.Logging;
+using StarCore.Utils;
 using System.Drawing;
 using System.Text.Json;
 
@@ -341,5 +342,65 @@ public static class Utils
         Blocks.nuked = false;
 
         Building.PlayerHolds.Clear();
+    }
+
+    /// <summary>
+    /// 获取玩家的money
+    /// </summary>
+    /// <param name="player"></param>
+    public static int GetMoney(CCSPlayerController player)
+    {
+        if (!Lib.IsPlayerValid(player) || player.InGameMoneyServices is null) return -1;
+        return player.InGameMoneyServices.Account;
+    }
+
+    /// <summary>
+    /// 设置玩家的money
+    /// </summary>
+    /// <param name="player"></param>
+    /// <param name="money"></param>
+    public static void SetMoney(CCSPlayerController player, int money, bool ignoreLimit = false)
+    {
+        if (!Lib.IsPlayerValid(player) || player.InGameMoneyServices is null) return;
+        player.InGameMoneyServices.Account = money;
+        if (!ignoreLimit)
+        {
+            if (player.InGameMoneyServices.Account > 32000)
+            {
+                player.InGameMoneyServices.Account = 32000;
+            }
+        }
+        Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
+    }
+    
+    /// <summary>
+    /// 增加玩家的money
+    /// </summary>
+    /// <param name="player"></param>
+    /// <param name="money">只支持正数</param>
+    public static void AddMoney(CCSPlayerController player, int money, bool ignoreLimit = false)
+    {
+        if (!Lib.IsPlayerValid(player) || money <=0 || player.InGameMoneyServices is null) return;
+        player.InGameMoneyServices.Account += money;
+        if (!ignoreLimit)
+        {
+            if (player.InGameMoneyServices.Account > 32000)
+            {
+                player.InGameMoneyServices.Account = 32000;
+            }
+        }
+        Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
+    }
+
+    /// <summary>
+    /// 减少玩家的money
+    /// </summary>
+    /// <param name="player"></param>
+    /// <param name="money">只支持正数</param>
+    public static void ReduceMoney(CCSPlayerController player, int money)
+    {
+        if (!Lib.IsPlayerValid(player) || money <= 0 || player.InGameMoneyServices is null) return;
+        player.InGameMoneyServices.Account -= money;
+        Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
     }
 }
